@@ -25,10 +25,14 @@ main() {
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    dx download "$genome" -o genome.fa
+    dx download "$genome" -o genome.fa.bz2
+    echo "uncompressing genome"
+    bunzip2 genome.fa.bz2
     for i in ${!reads[@]}
     do
-        dx download "${reads[$i]}" -o reads-$i.fq
+        dx download "${reads[$i]}" -o reads-$i.fq.bz2
+        echo "uncompressing read file $i"
+        bunzip2 reads-$i.fq.bz2
     done
 
     echo "Reads and genome downloaded"
