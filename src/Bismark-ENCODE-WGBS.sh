@@ -25,12 +25,10 @@ main() {
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    dx download "$genome" -o genome.fa.bz2
-    bunzip2 genome.fa.bz2
+    dx download "$genome" -o genome.fa
     for i in ${!reads[@]}
     do
-        dx download "${reads[$i]}" -o reads-$i.fq.bz2
-        bunzip2 reads-$i.fq.bz2
+        dx download "${reads[$i]}" -o reads-$i.fq
     done
 
     echo "Reads and genome downloaded"
