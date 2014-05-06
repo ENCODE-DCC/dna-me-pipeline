@@ -1,5 +1,5 @@
 <!-- dx-header -->
-# Bismark-ENCODE-WGBS (DNAnexus Platform App)
+# Bismark-ENCODE-WGBS (DNAnexus Platform Workflow)
 
 Pipeline for ENCODE WGBS analysis using Bismark
 
