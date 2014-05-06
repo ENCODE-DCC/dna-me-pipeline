@@ -19,7 +19,7 @@
   ],
   "outputSpec": [
     {
-      "name": "MeIndex",
+      "name": "meIndex",
       "label": "Converted Genome Index",
       "class": "file"
     }
