@@ -18,12 +18,16 @@
 main() {
 
     echo "getting files"
+    dx download "$genome" -o genome.fa.gz
     dx download "$meIndex" -o Bisulfite_Genome.tgz
     dx download "$trimmed_reads" -o trimmed-reads.fq.gz
 
     echo "uncompressing files"
+    gunzip genome.fa.gz
     tar zxvf Bisulfite_Genome.tgz
-    gunzip -c trimmed-reads.fq.gz > input/trimmed-reads.fq
+    gunzip -c trimmed-reads.fq.gz > trimmed-reads.fq
+
+    mv genome.fa input
 
     echo `ls input`
     mkdir output

@@ -1,11 +1,12 @@
 {
-  "name": "Bismark-ENCODE-WGBS",
-  "title": "Bismark-ENCODE-WGBS",
-  "summary": "Pipeline step [ Extracting Methylation ] for ENCODE WGBS analysis using Bismark",
+  "name": "WGBS-extract-report",
+  "title": "WGBS-extract-report",
+  "summary": "WGBS ENCODE Pipeline step: Extract methylation and report Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
   "version": "0.0.1",
   "categories": [
-    "DNA Methylation"
+    "DNA Methylation",
+    "ENCODE"
   ],
   "inputSpec": [
     {
@@ -13,14 +14,13 @@
       "label": "A genome",
       "class": "file",
       "optional": false,
-      "patterns": ["*.bz2"]
+      "patterns": ["*.gz"]
       },
     {
-      "name": "reads",
-      "label": "The reads that ought to be methylated",
-      "class": "array:file",
-      "optional": false,
-      "patterns": ["*.bz2"]
+      "name": "mapped_files",
+      "label": "tgz file of mapped bismark outputs",
+      "class": "file"
+      "patterns": ["*.tgz"]
     }
   ],
   "outputSpec": [
@@ -57,7 +57,7 @@
   ],
   "runSpec": {
     "interpreter": "bash",
-    "file": "src/Bismark-ENCODE-WGBS.sh",
+    "file": "src/extract.sh",
     "systemRequirements": {
       "main": {
         "instanceType": "mem3_hdd2_x2"

@@ -53,8 +53,8 @@ main() {
     # that you have used the output field name for the filename for each output,
     # but you can change that behavior to suit your needs.  Run "dx upload -h"
     # to see more options to set metadata.
-    tar zcvf /home/dnanexus/input/Bisulfite_Genome.tgz /home/dnanexus/input/Bisulfite_Genome/
-    meIndex=$(dx upload /home/dnanexus/input/Bisulfite_Genome.tgz --brief)
+    tar zcvf input/Bisulfite_Genome.tgz input/Bisulfite_Genome/
+    meIndex=$(dx upload input/Bisulfite_Genome.tgz --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output

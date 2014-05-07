@@ -17,36 +17,19 @@
 
 main() {
 
-    echo "Value of genome: '$genome'"
-    echo "Value of reads: '${reads[@]}'"
-
     # The following line(s) use the dx command-line tool to download your file
     # inputs to the local file system using variable names for the filenames. To
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    dx download "$genome" -o genome.fa.bz2
-    echo "uncompressing genome"
-    bunzip2 genome.fa.bz2
-    for i in ${!reads[@]}
-    do
-        dx download "${reads[$i]}" -o reads-$i.fq.bz2
-        echo "uncompressing read file $i"
-        bunzip2 reads-$i.fq.bz2
-    done
+    echo "getting files"
+    dx download "$genome" -o genome.fa.gz
+    dx download "$mapped_files" -o mapped_files.tgz
+    tar zxvf mapped_files.tgz
 
-    echo "Reads and genome downloaded"
 
     mkdir input
     mv genome.fa input
-    echo "Prep Genome"
-    bismark_genome_preparation --path_to_bowtie /usr/bin/ input
-    echo "Pre reads"
-    cat reads-*.fq > all-reads.fq
-    mott-trim.py -q 3 -m 30 -t sanger all-reads.fq > trimmed-reads.fq
-    mkdir output
-    echo "Map using bismarck"
-    bismark -n 1 -l 28 -output_dir output --temp_dir output input trimmed-reads.fq
     echo "Analyse methylation"
     bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context --ample_mem\
       --output /home/dnanexus/output/ --zero_based --genome_folder input output/trimmed-reads.fq_bismark.sam

@@ -1,6 +1,6 @@
 {
   "name": "Bismark-mapper",
-  "title": "Mapping Reads to Converted Geneom using Bismark",
+  "title": "Mapping Reads to Converted Genome using Bismark",
   "summary": "WGBS ENCODE Pipeline step: Mapping",
   "dxapi": "1.0.0",
   "version": "0.0.1",
@@ -21,7 +21,14 @@
       "class": "file",
       "optional": false,
       "patterns": ["*.gz"]
-    }
+    },
+    {
+      "name": "genome",
+      "label": "A genome",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.gz"]
+      }
   ],
   "outputSpec": [
     {
@@ -32,7 +39,7 @@
   ],
   "runSpec": {
     "interpreter": "bash",
-    "file": "src/Bismark-ENCODE-WGBS.sh",
+    "file": "src/map.sh",
     "systemRequirements": {
       "main": {
         "instanceType": "mem3_hdd2_x2"
