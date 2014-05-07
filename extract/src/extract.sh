@@ -26,6 +26,7 @@ main() {
     dx download "$genome" -o genome.fa.gz
     dx download "$mapped_files" -o mapped_files.tgz
     tar zxvf mapped_files.tgz
+    gunzip genome.fa.gz
 
 
     mkdir input
