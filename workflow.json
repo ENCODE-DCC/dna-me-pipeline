@@ -1,0 +1,219 @@
+{
+    "links": [], 
+    "inputSpec": [
+        {
+            "group": "stage-BJbFpK00y92JZ41P44VQ0B8q", 
+            "name": "stage-BJbFpK00y92JZ41P44VQ0B8q.genome", 
+            "label": "A genome", 
+            "patterns": [
+                "*.gz"
+            ], 
+            "optional": false, 
+            "class": "file"
+        }, 
+        {
+            "group": "stage-BJbFgqQ0y92JZ41P44VQ0B8j", 
+            "name": "stage-BJbFgqQ0y92JZ41P44VQ0B8j.reads", 
+            "label": "The reads that ought to be methylated", 
+            "patterns": [
+                "*.gz", 
+                "*.tgz"
+            ], 
+            "optional": false, 
+            "class": "array:file"
+        }, 
+        {
+            "group": "stage-BJbFj100y92JZ41P44VQ0B8k", 
+            "name": "stage-BJbFj100y92JZ41P44VQ0B8k.meIndex", 
+            "default": {
+                "$dnanexus_link": {
+                    "outputField": "meIndex", 
+                    "stage": "stage-BJbFpK00y92JZ41P44VQ0B8q"
+                }
+            }, 
+            "label": "A directory of converted genome files (C->T, G->A)", 
+            "patterns": [
+                "*.tgz"
+            ], 
+            "optional": false, 
+            "class": "file"
+        }, 
+        {
+            "group": "stage-BJbFj100y92JZ41P44VQ0B8k", 
+            "name": "stage-BJbFj100y92JZ41P44VQ0B8k.trimmed_reads", 
+            "default": {
+                "$dnanexus_link": {
+                    "outputField": "trimmed_reads", 
+                    "stage": "stage-BJbFgqQ0y92JZ41P44VQ0B8j"
+                }
+            }, 
+            "label": "Prepared Reads", 
+            "patterns": [
+                "*.gz"
+            ], 
+            "optional": false, 
+            "class": "file"
+        }, 
+        {
+            "group": "stage-BJbFj100y92JZ41P44VQ0B8k", 
+            "name": "stage-BJbFj100y92JZ41P44VQ0B8k.genome", 
+            "label": "A genome", 
+            "patterns": [
+                "*.gz"
+            ], 
+            "optional": false, 
+            "class": "file"
+        }, 
+        {
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.genome", 
+            "label": "A genome", 
+            "patterns": [
+                "*.gz"
+            ], 
+            "optional": false, 
+            "class": "file"
+        }, 
+        {
+            "patterns": [
+                "*.tgz"
+            ], 
+            "label": "tgz file of mapped bismark outputs", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.mapped_files", 
+            "class": "file"
+        }
+    ], 
+    "id": "workflow-BJbFgbj0y92JZ41P44VQ0B8f", 
+    "title": "WGBS ENCODE Bismark Workflow", 
+    "class": "workflow", 
+    "state": "open", 
+    "editVersion": 17, 
+    "folder": "/", 
+    "description": "", 
+    "tags": [], 
+    "outputSpec": [
+        {
+            "label": "Converted Genome Index", 
+            "group": "stage-BJbFpK00y92JZ41P44VQ0B8q", 
+            "name": "stage-BJbFpK00y92JZ41P44VQ0B8q.meIndex", 
+            "class": "file"
+        }, 
+        {
+            "label": "Mott Trimmed Reads for input into Bismark", 
+            "group": "stage-BJbFgqQ0y92JZ41P44VQ0B8j", 
+            "name": "stage-BJbFgqQ0y92JZ41P44VQ0B8j.trimmed_reads", 
+            "class": "file"
+        }, 
+        {
+            "label": "tgz file of mapped bismark outputs", 
+            "group": "stage-BJbFj100y92JZ41P44VQ0B8k", 
+            "name": "stage-BJbFj100y92JZ41P44VQ0B8k.mapped_files", 
+            "class": "file"
+        }, 
+        {
+            "label": "CG methyation BED file", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.CG", 
+            "class": "file"
+        }, 
+        {
+            "label": "CHG methyation BED file", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.CHG", 
+            "class": "file"
+        }, 
+        {
+            "label": "CHH methyation BED file", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.CHH", 
+            "class": "file"
+        }, 
+        {
+            "label": "the sam file", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.mapped_reads", 
+            "class": "file"
+        }, 
+        {
+            "label": "QC report 1 (SE)", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.SE_report", 
+            "class": "file"
+        }, 
+        {
+            "label": "QC report 2 (M-Bias)", 
+            "group": "stage-BJbFzPQ0y92949JbBQVQ00KG", 
+            "name": "stage-BJbFzPQ0y92949JbBQVQ00KG.M_bias_report", 
+            "class": "file"
+        }
+    ], 
+    "sponsored": false, 
+    "createdBy": {
+        "user": "user-hitz"
+    }, 
+    "outputFolder": null, 
+    "properties": {}, 
+    "types": [], 
+    "hidden": false, 
+    "name": "WGBS ENCODE Bismark Workflow", 
+    "created": 1399503831000, 
+    "modified": 1399504283137, 
+    "summary": "", 
+    "project": "project-BJ8qBG80y921bxpfZ99Q090F", 
+    "stages": [
+        {
+            "accessible": true, 
+            "executable": "applet-BJZfZ100y92JZ41P44VQ0029", 
+            "name": null, 
+            "systemRequirements": {}, 
+            "executionPolicy": {}, 
+            "input": {}, 
+            "folder": null, 
+            "id": "stage-BJbFpK00y92JZ41P44VQ0B8q"
+        }, 
+        {
+            "accessible": true, 
+            "executable": "applet-BJZZb5Q0y9235Qx1302Q0035", 
+            "name": null, 
+            "systemRequirements": {}, 
+            "executionPolicy": {}, 
+            "input": {}, 
+            "folder": null, 
+            "id": "stage-BJbFgqQ0y92JZ41P44VQ0B8j"
+        }, 
+        {
+            "accessible": true, 
+            "executable": "applet-BJZg6Jj0y929xkxZ3jVQ001p", 
+            "name": null, 
+            "systemRequirements": {}, 
+            "executionPolicy": {}, 
+            "input": {
+                "meIndex": {
+                    "$dnanexus_link": {
+                        "outputField": "meIndex", 
+                        "stage": "stage-BJbFpK00y92JZ41P44VQ0B8q"
+                    }
+                }, 
+                "trimmed_reads": {
+                    "$dnanexus_link": {
+                        "outputField": "trimmed_reads", 
+                        "stage": "stage-BJbFgqQ0y92JZ41P44VQ0B8j"
+                    }
+                }
+            }, 
+            "folder": null, 
+            "id": "stage-BJbFj100y92JZ41P44VQ0B8k"
+        }, 
+        {
+            "accessible": true, 
+            "executable": "applet-BJbFxG80y92Ff1kX9GX0016P", 
+            "name": null, 
+            "systemRequirements": {}, 
+            "executionPolicy": {}, 
+            "input": {}, 
+            "folder": null, 
+            "id": "stage-BJbFzPQ0y92949JbBQVQ00KG"
+        }
+    ]
+}
