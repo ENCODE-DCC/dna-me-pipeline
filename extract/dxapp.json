@@ -22,7 +22,7 @@
       "class": "file",
       "patterns": ["*.tgz"]
     }
-  ],
+   ],
   "outputSpec": [
     {
       "name": "CG",
@@ -60,10 +60,10 @@
     "file": "src/extract.sh",
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x2"
+        "instanceType": "mem3_hdd2_x4"
       },
       "myEntryPoint": {
-        "instanceType": "mem3_hdd2_x2"
+        "instanceType": "mem3_hdd2_x4"
       }
     }
   },
