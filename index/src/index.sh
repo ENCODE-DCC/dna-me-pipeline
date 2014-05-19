@@ -24,8 +24,10 @@ main() {
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
+    genome_name=`dx describe --name "$genome"`
+
     dx download "$genome" -o genome.fa.gz
-    echo "uncompressing genome"
+    echo "uncompressing $genome_name"
     gunzip genome.fa.gz
 
     mkdir input
@@ -53,14 +55,15 @@ main() {
     # that you have used the output field name for the filename for each output,
     # but you can change that behavior to suit your needs.  Run "dx upload -h"
     # to see more options to set metadata.
-    tar zcvf input/Bisulfite_Genome.tgz input/Bisulfite_Genome/
-    meIndex=$(dx upload input/Bisulfite_Genome.tgz --brief)
+    outname=input/"$genome_name".tgz
+    tar zcvf "$outname" input/Bisulfite_Genome/
+    meIndex=$(dx upload "$outname" --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output
     # class.  Run "dx-jobutil-add-output -h" for more information on what it
     # does.
-    echo "Adding output -- files should be renamed"
+    #echo "Adding output -- files should be renamed"
 
     dx-jobutil-add-output meIndex "$meIndex" --class=file
 }
