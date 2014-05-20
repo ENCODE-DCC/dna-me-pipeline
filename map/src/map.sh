@@ -20,18 +20,19 @@ main() {
     echo "getting files"
     dx download "$genome" -o genome.fa.gz
     dx download "$meIndex" -o Bisulfite_Genome.tgz
-    dx download "$trimmed_reads" -o trimmed-reads.fq.gz
+    read_fn=`dx describe "$trimmed_reads" --name | cut -d'.' -f1`
+    dx download "$trimmed_reads" -o "$read_fn".gz
 
     echo "uncompressing files"
     gunzip genome.fa.gz
     tar zxvf Bisulfite_Genome.tgz
-    gunzip -c trimmed-reads.fq.gz > trimmed-reads.fq
+    gunzip -c "$read_fn" > "$read_fn".fq
 
     mv genome.fa input
 
     echo `ls input`
     mkdir output
-    bismark -n 1 -l 28 -output_dir output --temp_dir output input trimmed-reads.fq
+    bismark -n 1 -l 28 -output_dir output --temp_dir output input "$read_fn".fq
 
     # Fill in your application code here.
     #
@@ -54,8 +55,9 @@ main() {
     # to see more options to set metadata.
 
     echo `ls /home/dnanexus/output`
-    tar zcvf mapped_methylseq.tgz output
-    mapped_files=$(dx upload /home/dnanexus/mapped_methylseq.tgz --brief)
+    outfile="$read_fn".mapped_methylseq.tgz
+    tar zcvf $outfile output
+    mapped_files=$(dx upload /home/dnanexus/$outfile --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output

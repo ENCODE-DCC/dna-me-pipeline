@@ -24,6 +24,7 @@ main() {
 
     echo "getting files"
     dx download "$genome" -o genome.fa.gz
+    mapped_fn=`dx describe "$mapped_files" --name | cut -d'.' -f1`
     dx download "$mapped_files" -o mapped_files.tgz
     tar zxvf mapped_files.tgz
     gunzip genome.fa.gz
@@ -32,10 +33,11 @@ main() {
     mkdir input
     mv genome.fa input
     echo "Analyse methylation"
+    outfile="$mapped_fn"_bismark.sam
     bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context --ample_mem\
-      --output /home/dnanexus/output/ --zero_based --genome_folder input output/trimmed-reads.fq_bismark.sam
+      --output /home/dnanexus/output/ --zero_based --genome_folder input output/"$outfile"
     echo "Creat QC reports"
-    cxrepo-bed.py -o /home/dnanexus/output /home/dnanexus/output/trimmed-reads.fq_bismark.CX_report.txt
+    cxrepo-bed.py -o /home/dnanexus/output /home/dnanexus/output/"$outfile"_bismark.CX_report.txt
 
     # Fill in your application code here.
     #
@@ -58,12 +60,16 @@ main() {
     # to see more options to set metadata.
 
     echo `ls /home/dnanexus/output`
-    CG=$(dx upload /home/dnanexus/output/CG_trimmed-reads.fq_bismark.CX_report.txt --brief)
-    CHG=$(dx upload /home/dnanexus/output/CHG_trimmed-reads.fq_bismark.CX_report.txt --brief)
-    CHH=$(dx upload /home/dnanexus/output/CHH_trimmed-reads.fq_bismark.CX_report.txt --brief)
-    mapped_reads=$(dx upload /home/dnanexus/output/trimmed-reads.fq_bismark.sam --brief)
-    SE_report=$(dx upload /home/dnanexus/output/trimmed-reads.fq_bismark_SE_report.txt --brief)
-    M_bias_report=$(dx upload /home/dnanexus/output/trimmed-reads.fq_bismark.M-bias.txt --brief)
+    mv /home/dnanexus/output/CG_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CG_bismark.bed
+    mv /home/dnanexus/output/CHG_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CHG_bismark.bed
+    mv /home/dnanexus/output/CHH_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
+    CG=$(dx upload "$outfile"_CG_bismark.bed --brief)
+    CHG=$(dx upload "$outfile"_CHG_bismark.bed --brief)
+    CHH=$(dx upload "$outfile"_CHH_bismark.bed --brief)
+
+    mapped_reads=$(dx upload /home/dnanexus/output/"$outfile" --brief)
+    SE_report=$(dx upload /home/dnanexus/output/"$mapped_fn".bismark_SE_report.txt --brief)
+    M_bias_report=$(dx upload /home/dnanexus/output/"$mapped_fn"_bismark.M-bias.txt --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output

@@ -26,19 +26,21 @@ main() {
 
     for i in ${!reads[@]}
     do
-        dx download "${reads[$i]}" -o reads-$i.fq.gz
-        echo "uncompressing read file $i"
-        gunzip reads-$i.fq.gz
+        filename=`dx describe "${reads[$i]}" --name`
+        dx download "${reads[$i]}" -o "$filename"
+        echo "uncompressing read file $i ($filename)"
+        gunzip $filename
     done
 
     echo "Reads  downloaded"
 
     mkdir input
-    cat reads-*.fq > all-reads.fq
-    mott-trim.py -q 3 -m 30 -t sanger all-reads.fq | gzip -c > trimmed-reads.fq.gz
+    cat *.fq > all-reads.fq
+    outfile="$filename.trimmed-reads.fq.gz"
+    mott-trim.py -q 3 -m 30 -t sanger all-reads.fq | gzip -c > $outfile
 
     echo `ls /home/dnanexus`
-    trimmed_reads=$(dx upload /home/dnanexus/trimmed-reads.fq.gz --brief)
+    trimmed_reads=$(dx upload /home/dnanexus/$outfile --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output

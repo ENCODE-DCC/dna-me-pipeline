@@ -24,7 +24,7 @@ main() {
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    genome_name=`dx describe --name "$genome"`
+    genome_name=`dx describe --name "$genome" | cut -d'.' -f1`
 
     dx download "$genome" -o genome.fa.gz
     echo "uncompressing $genome_name"
@@ -55,7 +55,7 @@ main() {
     # that you have used the output field name for the filename for each output,
     # but you can change that behavior to suit your needs.  Run "dx upload -h"
     # to see more options to set metadata.
-    outname=input/"$genome_name".tgz
+    outname=input/"$genome_name".bisulfite.tgz
     tar zcvf "$outname" input/Bisulfite_Genome/
     meIndex=$(dx upload "$outname" --brief)
 
