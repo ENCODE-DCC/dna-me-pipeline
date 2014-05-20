@@ -60,16 +60,16 @@ main() {
     # to see more options to set metadata.
 
     echo `ls /home/dnanexus/output`
-    mv /home/dnanexus/output/CG_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CG_bismark.bed
-    mv /home/dnanexus/output/CHG_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CHG_bismark.bed
-    mv /home/dnanexus/output/CHH_trimmed-reads.fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
-    CG=$(dx upload "$outfile"_CG_bismark.bed --brief)
-    CHG=$(dx upload "$outfile"_CHG_bismark.bed --brief)
-    CHH=$(dx upload "$outfile"_CHH_bismark.bed --brief)
+    mv /home/dnanexus/output/CG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CG_bismark.bed
+    mv /home/dnanexus/output/CHG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHG_bismark.bed
+    mv /home/dnanexus/output/CHH_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
+    CG=$(dx upload "$mapped_fn"_CG_bismark.bed --brief)
+    CHG=$(dx upload "$mapped_fn"_CHG_bismark.bed --brief)
+    CHH=$(dx upload "$mapped_fn"_CHH_bismark.bed --brief)
 
     mapped_reads=$(dx upload /home/dnanexus/output/"$outfile" --brief)
-    SE_report=$(dx upload /home/dnanexus/output/"$mapped_fn".bismark_SE_report.txt --brief)
-    M_bias_report=$(dx upload /home/dnanexus/output/"$mapped_fn"_bismark.M-bias.txt --brief)
+    SE_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark_SE_report.txt --brief)
+    M_bias_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark.M-bias.txt --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output
