@@ -26,10 +26,10 @@ main() {
 
     for i in ${!reads[@]}
     do
-        filename=`dx describe "${reads[$i]}" --name`
-        dx download "${reads[$i]}" -o "$filename"
+        filename=`dx describe "${reads[$i]}" --name | cut -d'.' -f1`
+        dx download "${reads[$i]}" -o "$filename".fq.gz
         echo "uncompressing read file $i ($filename)"
-        gunzip $filename
+        gunzip $filename.fq.gz
     done
 
     echo "Reads  downloaded"
