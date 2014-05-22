@@ -53,3 +53,5 @@ Output
         [4] trinucleotide at mC context
         [5] mC ratio
         [6] strand
+        [7] mC reads
+        [8] non-mC reads (i.e. all reads - mC reads)
