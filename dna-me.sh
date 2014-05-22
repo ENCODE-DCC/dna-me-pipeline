@@ -16,25 +16,34 @@ source software.path
 script="script"
 prog=`basename $0`
 verbose="TRUE"
-index=""
-output=""
-genome=""
-rawreads=""
+unset index
+unset output
+unset genome
+unset rawreads
+unset rawread1
+unset rawread2
+unset alnmode
+minins="0"
+maxins="500"
 
 # usage function
 function usage {
 echo -en "\e[1;35m"
 cat <<EOF
 
-Usage: $0 [options] -i reads.fq -g reference.fa -o outputDir
+Usage: $0 [options] -g reference.fa -o outputDir {-i <single.fq> | -1 <pair1.fq> -2 <pair2.fq>}
 
-    -i   Single-read fastq input file
+    -i   Single-end fastq input file
+    -1   Paired-end fastq file containing the #1 mates
+    -2   Paired-end fastq file containing the #2 mates
     -g   Reference genome sequences
     -o   Output directory
 
 Options:
     [Option to skip generating an index]
     -d   Genome index
+    -I   Minimum insert size for paired-end alignments (default=0)
+    -X   Maximum insert size for paired-end alignments (default=500)
 
     [Cosmetic options]
     -h   Show this message
@@ -45,7 +54,7 @@ echo -en "\e[0m"
 }
 
 function message {
-    if [[ $verbose = "TRUE" ]]; then
+    if [ "$verbose" = "TRUE" ]; then
         echo "$prog: "$1
     fi
 }
@@ -57,11 +66,15 @@ if [[ $# -eq 0 ]]; then
   usage && exit 1;
 fi
 
-while getopts "hqi:g:d:o:" OPT
+while getopts "hqi:1:2:g:d:o:I:X:" OPT
 do
   case $OPT in
     "q") verbose="FALSE" ;;
     "i") rawreads=$OPTARG;;
+    "1") rawread1=$OPTARG;;
+    "2") rawread2=$OPTARG;;
+    "I") minins=$OPTARG  ;;
+    "X") maxins=$OPTARG  ;;
     "g") genome=$OPTARG  ;;
     "d") index=$OPTARG   ;;
     "o") output=$OPTARG  ;;
@@ -71,63 +84,112 @@ do
 done
 
 # check files
-if [[ $output = "" ]]; then
+if [ -z "$output" ]; then
     echo "$prog: input output directory"
     exit 1;
 fi
-if [[ $rawreads = "" ]]; then
+
+if [ -z "$rawreads" ] && [ -z "$rawread1" -a -z "$rawread2" ]; then
     echo "$prog: input read fastq"
     exit 1;
-elif [ ! -f $rawreads ]; then
-    echo "$prog: can't read $rawreads"
-    exit 1;
-fi
-if [[ $genome = "" ]]; then
-    echo "$prog: input reference genome"
-    exit 1;
-elif [ ! -f $genome ]; then
-    echo "$prog: can't read $genome"
+elif [ -f "$rawreads" -a -f "$rawread1" ] || [ -f "$rawreads" -a -f "$rawread2" ]; then
+    echo "$prog: respecify single-end or paired-end reads"
     exit 1;
 fi
 
+if [ -f "$rawreads" ]; then
+    alnmode="single-end"
+elif [ -f "$rawread1" -a -f "$rawread2" ]; then
+    alnmode="paired-end"
+    if [ ! -z "$minins" ]; then
+        if [ $(echo "$minins" | sed 's/^[+0-9][0-9]*//' | wc -c) -ne 1 ]; then
+            echo "$prog: input number for minimum insert size"
+            exit 1;
+        fi
+    fi
+    if [ ! -z "$maxins" ]; then
+        if [ $(echo "$maxins" | sed 's/^[+0-9][0-9]*//' | wc -c) -ne 1 ]; then
+            echo "$prog: input number for maximum insert size"
+            exit 1;
+        fi
+    fi
+else
+    echo "$prog: can't read file(s)"
+    exit 1;
+fi
+
+if [ -z "$genome" ]; then
+    echo "$prog: input reference genome"
+    exit 1;
+elif [ ! -f "$genome" ]; then
+    echo "$prog: can't read reference"
+    exit 1;
+fi
 
 # make output directory
 mkdir $output
 log=$output"/run.log"
+outfull=`readlink -f $output`
 
-if [[ $index = "" ]]; then
+if [ -z "$index" ]; then
     message "generating index"
     index=$output/`basename $genome`
     mkdir $index && cp $genome $index
     $bismark/bismark_genome_preparation --path_to_bowtie $bowtie $index &>> $log
 fi
-if [ ! -r $index ]; then
+if [ ! -r "$index" ]; then
     echo "$prog: can't read $index"
     exit 1;
 fi
 
-trimmed=$output/`basename $rawreads`.trimmed
+message "activating $alnmode mode"
+if [ "$alnmode" = "paired-end" ]; then
+    mode="PE"
+    prefix=`basename $rawread1`
+    trimmed1=$output/`basename $rawread1`.trimmed
+    trimmed2=$output/`basename $rawread2`.trimmed
+    alnsam=`basename $trimmed1`"_bismark_pe.sam"
+    cx_repo=`basename $trimmed1`"_bismark_pe.CX_report.txt"
+    mode_repo=`basename $trimmed1`"_bismark_PE_report.txt"
+    mbias_repo=`basename $trimmed1`"_bismark_pe.M-bias.txt"
+
+    trimArgument="$trimmed1,$trimmed2 $rawread1,$rawread2"
+    alnArgument="-I $minins -X $maxins $index -1 $trimmed1 -2 $trimmed2"
+    callArgument="-p -no_overlap"
+else
+    mode="SE"
+    prefix=`basename $rawreads`
+    trimmed=$output/`basename $rawreads`.trimmed
+    alnsam=`basename $trimmed`"_bismark.sam"
+    cx_repo=`basename $trimmed`"_bismark.CX_report.txt"
+    mode_repo=`basename $trimmed`"_bismark_SE_report.txt"
+    mbias_repo=`basename $trimmed`"_bismark.M-bias.txt"
+
+    trimArgument="$trimmed $rawreads"
+    alnArgument="$index $trimmed"
+    callArgument="-s"
+fi
+
 message "trimming reads"
-python $script/mott-trim.py -q 3 -m 30 -t sanger $rawreads > $trimmed
+python $script/mott-trim.py -q 3 -m 30 -t sanger $trimArgument
 
-message "run bismark"
-$bismark/bismark -n 1 -l 28 -output_dir $output --temp_dir $output $index $trimmed &>> $log
+message "run bismark ($alnmode)"
+$bismark/bismark -n 1 -l 28 -output_dir $output --path_to_bowtie $bowtie \
+  --temp_dir $output $alnArgument &>> $log
 
-outfull=`readlink -f $output`
 message "call methylated cytosines"
-$bismark/bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context \
-      --output $outfull --zero_based --genome_folder $index $trimmed"_bismark.sam" &>> $log
+$bismark/bismark_methylation_extractor $callArgument --comprehensive --cytosine_report --CX_context \
+  --output $outfull --zero_based --genome_folder $index $outfull/$alnsam &>> $log
 
-prefix=`basename $rawreads`
-trimmed=`basename $trimmed`
 message "clean up ..."
-python $script/cxrepo-bed.py -o $outfull $outfull/$trimmed"_bismark.CX_report.txt"
+python $script/cxrepo-bed.py -o $outfull $outfull/$cx_repo
 
 # If you want to leave all outputs of Bismark, please comment out all lines below
-mv $output/"CG_"$trimmed"_bismark.CX_report.txt" $output/"CG_"$prefix".bed"
-mv $output/"CHG_"$trimmed"_bismark.CX_report.txt" $output/"CHG_"$prefix".bed"
-mv $output/"CHH_"$trimmed"_bismark.CX_report.txt" $output/"CHH_"$prefix".bed"
-mv $output/$trimmed"_bismark.sam" $output/$prefix".sam"
-mv $output/$trimmed"_bismark_SE_report.txt" $output/$prefix"_SE.report"
-mv $output/$trimmed"_bismark.M-bias.txt" $output/$prefix"_M.bias"
-rm $output/*CX_report.txt $output/*.bedGraph $output/*.cov $output/*_bismark.txt
+mv $output/"CG_"$cx_repo $output/"CG_"$prefix".bed"
+mv $output/"CHG_"$cx_repo $output/"CHG_"$prefix".bed"
+mv $output/"CHH_"$cx_repo $output/"CHH_"$prefix".bed"
+mv $output/$alnsam $output/$prefix".sam"
+mv $output/$mode_repo $output/$prefix"_$mode.report"
+mv $output/$mbias_repo $output/$prefix"_M.bias"
+rm $output/*.bedGraph $output/*.cov $output/*_bismark*.txt
+

@@ -6,15 +6,11 @@
   ##                         ##
   #############################
 
-
   # Bowtie (short read mapper)
   # http://bowtie-bio.sourceforge.net/index.shtml
-
-  bowtie="/home/XXXX/soft/bowtie-1.0.0"
-
+  bowtie="/home/tsujij/soft/bowtie-1.0.0"
 
   # Bismark (bisulfite-converted read mapper)
   # http://www.bioinformatics.babraham.ac.uk/projects/bismark/
-
-  bismark="/home/XXXX/soft/bismark_v0.10.1"
+  bismark="/home/tsujij/soft/bismark_v0.10.1"
 
