@@ -7,6 +7,7 @@
 # algorithm (mott trimming algorithm) to trim 3'
 # ends of reads, with the score below threshould.
 
+from itertools import izip
 from optparse import OptionParser
 import sys, os.path, re
 
@@ -74,7 +75,7 @@ def mottTrim(opts, args):
         if opts.single_pair == True:
             sg1 = open(outFastq[0]+".single", "w")
             sg2 = open(outFastq[1]+".single", "w")
-        for r1, r2 in zip(readFastq(inFastq[0]), readFastq(inFastq[1])):
+        for r1, r2 in izip(readFastq(inFastq[0]), readFastq(inFastq[1])):
             r1 = dotrim(r1, opts.cutoff, base, opts.minlen)
             r2 = dotrim(r2, opts.cutoff, base, opts.minlen)
             if r1 != [] and r2 != []:
