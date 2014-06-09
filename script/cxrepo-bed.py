@@ -15,13 +15,15 @@ def write(w, line):
     beg    = line[1]
     end    = str( int(line[1])+1 )
     strand = line[2]
+    meth   = line[3]
+    nometh = line[4]
     sum    = float(line[3])+float(line[4])
     genome = line[6]
     if sum > 0:
         mc = "{0:.4f}".format(float(line[3])/sum*100)
     else:
         mc = "0.0000"
-    w.write("\t".join([ chrom, beg, end, genome, mc, strand ])+"\n")
+    w.write("\t".join([ chrom, beg, end, genome, mc, strand, meth, nometh ])+"\n")
 
 
 def outAll(files, f):
