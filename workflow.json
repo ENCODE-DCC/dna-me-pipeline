@@ -71,8 +71,8 @@
             "class": "file"
         }, 
         {
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.genome", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.genome", 
             "default": {
                 "$dnanexus_link": {
                     "inputField": "genome", 
@@ -87,8 +87,8 @@
             "class": "file"
         }, 
         {
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.mapped_files", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.mapped_files", 
             "default": {
                 "$dnanexus_link": {
                     "outputField": "mapped_files", 
@@ -106,7 +106,7 @@
     "title": "WGBS ENCODE Bismark Workflow", 
     "class": "workflow", 
     "state": "open", 
-    "editVersion": 71, 
+    "editVersion": 79, 
     "folder": "/", 
     "description": "", 
     "tags": [], 
@@ -131,38 +131,38 @@
         }, 
         {
             "label": "CG methyation BED file", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.CG", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.CG", 
             "class": "file"
         }, 
         {
             "label": "CHG methyation BED file", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.CHG", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.CHG", 
             "class": "file"
         }, 
         {
             "label": "CHH methyation BED file", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.CHH", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.CHH", 
             "class": "file"
         }, 
         {
             "label": "the sam file", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.mapped_reads", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.mapped_reads", 
             "class": "file"
         }, 
         {
             "label": "Mapping QC report", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.map_report", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.map_report", 
             "class": "file"
         }, 
         {
             "label": "M-Biast QC report", 
-            "group": "stage-BK72z8Q0y924GX5Kv46Q119y", 
-            "name": "stage-BK72z8Q0y924GX5Kv46Q119y.M_bias_report", 
+            "group": "stage-BKQz7pQ0y92KK48319KQ01b3", 
+            "name": "stage-BKQz7pQ0y92KK48319KQ01b3.M_bias_report", 
             "class": "file"
         }
     ], 
@@ -231,7 +231,7 @@
         }, 
         {
             "accessible": true, 
-            "executable": "applet-BK72vPQ0y929QzKxBky019p5", 
+            "executable": "applet-BKPXvXQ0y9206bgfv8GQ0FzB", 
             "name": null, 
             "systemRequirements": {}, 
             "executionPolicy": {}, 
@@ -250,7 +250,7 @@
                 }
             }, 
             "folder": null, 
-            "id": "stage-BK72z8Q0y924GX5Kv46Q119y"
+            "id": "stage-BKQz7pQ0y92KK48319KQ01b3"
         }
     ]
 }
