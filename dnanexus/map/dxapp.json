@@ -1,0 +1,53 @@
+{
+  "name": "Bismark-mapper",
+  "title": "Mapping Reads to Converted Genome using Bismark",
+  "summary": "WGBS ENCODE Pipeline step: Mapping",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "categories": [
+    "DNA Methylation"
+  ],
+  "inputSpec": [
+    {
+      "name": "meIndex",
+      "label": "A directory of converted genome files (C->T, G->A)",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.tgz"]
+      },
+    {
+      "name": "trimmed_reads",
+      "label": "Prepared Reads",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.gz"]
+    },
+    {
+      "name": "genome",
+      "label": "A genome",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.gz"]
+      }
+  ],
+  "outputSpec": [
+    {
+      "name": "mapped_files",
+      "label": "tgz file of mapped bismark outputs",
+      "class": "file"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/map.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x4"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x4"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

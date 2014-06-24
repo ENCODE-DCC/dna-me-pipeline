@@ -1,0 +1,15 @@
+#!/bin/bash
+
+applet_dest='ChIP-Seq Applets'
+applets='hotspot_spot idr merge_bams pseudoreplicator sort_and_filter_bams spp spp_nodups wiggler'
+
+project=$(dx find projects --name "$applet_dest")
+if [ -z "$project" ]
+  then
+    dx new project "$applet_dest" --brief
+fi
+
+for applet in $applets; do
+    echo "Building $applet at $applet_dest..."
+    dx build "${applet}" --archive --destination "${applet_dest}:/"
+done
