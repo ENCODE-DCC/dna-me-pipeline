@@ -6,7 +6,7 @@ import subprocess
 import dxpy
 
 
-ENCODE_DNA_ME_PROJECT_NAME = 'encode-dna-methylation'
+ENCODE_DNA_ME_PROJECT_NAME = 'Methylation Prototype'
 ''' This DNA Nexus project holds all the created applets and folders'''
 
 REPLICATES_FOLDER = '/replicates'
@@ -168,15 +168,18 @@ def resolve_applets_project():
         project = dxpy.find_one_project(name=ENCODE_DNA_ME_PROJECT_NAME, name_mode='exact', return_handler=False)
     except:
         print 'Could not find 1 and only 1 project named {0}.'.format(ENCODE_DNA_ME_PROJECT_NAME)
+        exit(0)
 
-    return project['id']
+    return dxpy.DXProject(project)
 
 def main():
     args = get_args()
 
-    applets_project_id = resolve_applets_project()
-    project = get_project(args.project_name)
+    project = resolve_applets_project()
+    #project = get_project(args.project_name)
+    #print project.keys()
     print 'Project: ' + project.describe()['name']
+    #print project.keys()
     project_folder = project_has_folder(project, args.experiment)
     if not project_folder:
         project_folder = project.new_folder(args.experiment)
@@ -206,7 +209,7 @@ def main():
                              description='The ENCODE Bismark pipeline for WGBS shotgun methylation analysis',
                              project=project.get_id())
 
-    populate_workflow(wf, replicates, args.experiment, paired, gender, organism, applets_project_id)
+    populate_workflow(wf, replicates, args.experiment, paired, gender, organism, project['id'])
     #TODO - run the workflow automatically
     #TODO - export template workflows
 
