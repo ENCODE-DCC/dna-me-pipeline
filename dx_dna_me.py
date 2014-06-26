@@ -170,7 +170,7 @@ def resolve_applets_project():
         print 'Could not find 1 and only 1 project named {0}.'.format(ENCODE_DNA_ME_PROJECT_NAME)
         exit(0)
 
-    return dxpy.DXProject(project)
+    return dxpy.DXProject(project['id]'])
 
 def main():
     args = get_args()
