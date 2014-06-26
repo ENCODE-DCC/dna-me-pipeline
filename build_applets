@@ -1,7 +1,7 @@
 #!/bin/bash
 
-applet_dest='ChIP-Seq Applets'
-applets='hotspot_spot idr merge_bams pseudoreplicator sort_and_filter_bams spp spp_nodups wiggler'
+applet_dest='dna-me-pipeline'
+applets='index trim-se trim-pe map-se map-pe extract'
 
 project=$(dx find projects --name "$applet_dest")
 if [ -z "$project" ]

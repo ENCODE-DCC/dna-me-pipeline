@@ -6,7 +6,7 @@ import subprocess
 import dxpy
 
 
-ENCODE_DNA_ME_PROJECT_NAME = 'Methylation Prototype'
+ENCODE_DNA_ME_PROJECT_NAME = 'dna-me-pipeline'
 ''' This DNA Nexus project holds all the created applets and folders'''
 
 ENCODE_REFERENCES_PROJECT = 'Encode Reference Files'
@@ -15,12 +15,11 @@ ENCODE_REFERENCES_PROJECT = 'Encode Reference Files'
 ENCODE_SNAPSHOT_PROJECT = 'ENCODE-SDSC-snapshot-20140505'
 ''' This DNA Nexus project holds ENCFF files; should be replaced by a more permanent store '''
 
-REPLICATES_FOLDER = '/replicates'
-
 GENOME_REFERENCES = {
 # Note this should be referred to by: biosample.donor.organism.name for any dataset
     'mouse':  'mm10.fa.gz',
-    'human':  'hg19.fa.gz'
+    'human':  'hg19.fa.gz',
+    'test':   'chr21.fa.gz'
 }
 
 REFERENCE_FILES = {}
