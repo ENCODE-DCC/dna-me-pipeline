@@ -1,9 +1,9 @@
 {
-  "name": "WGBS-genome-index",
+  "name": "index",
   "title": "WGBS-genome-index",
   "summary": "WGBS ENCODE Pipeline step: Creates C->T indexed genomic files used for Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "categories": [
     "DNA Methylation",
     "ENCODE"

@@ -1,9 +1,9 @@
 {
-  "name": "Mott Trimmer",
-  "title": "Mott Read Trimmer",
-  "summary": "WGBS ENCODE Pipeline step: Read trimming",
+  "name": "trim-se",
+  "title": "WGBS-mott-read-trimmer-se",
+  "summary": "WGBS ENCODE Pipeline step: Read trimming (single end)",
   "dxapi": "1.0.0",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "categories": [
     "DNA Methylation",
     "ENCODE"

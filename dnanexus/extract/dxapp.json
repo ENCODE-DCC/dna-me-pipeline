@@ -1,9 +1,9 @@
 {
-  "name": "WGBS-extract-report",
+  "name": "extract",
   "title": "WGBS-extract-report",
   "summary": "WGBS ENCODE Pipeline step: Extract methylation and report Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "categories": [
     "DNA Methylation",
     "ENCODE"

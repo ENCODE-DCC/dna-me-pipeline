@@ -1,9 +1,9 @@
 {
-  "name": "Bismark-mapper",
-  "title": "Mapping Reads to Converted Genome using Bismark",
-  "summary": "WGBS ENCODE Pipeline step: Mapping",
+  "name": "map-se",
+  "title": "WGBS-bismark-map-se",
+  "summary": "WGBS ENCODE Pipeline step: Mapping single ended reads using Bismark",
   "dxapi": "1.0.0",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "categories": [
     "DNA Methylation"
   ],
