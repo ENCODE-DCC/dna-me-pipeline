@@ -58,6 +58,11 @@ def get_args():
                     action='store_true',
                     required=False)
 
+    ap.add_argument('-o', '--organism',
+                    help='Organism to map to',
+                    default='human',
+                    required=False)
+
     ap.add_argument('-t', '--test',
                     help='Use test input folder',
                     action='store_true',
@@ -159,7 +164,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
 def copy_files(fids, project_id, folder):
     new_fids = []
     for file_dict in fids:
-        (pid, fid) = file_dict.values()[0].next().values()
+        (pid, fid) = file_dict.values()[0].values()
         f = dxpy.DXFile(dxid=fid,project=pid)
         fn = f.describe()['name']
         found_file = dxpy.find_one_data_object(classname='file', project=project_id, folder=folder, zero_ok=True, name=fn)
@@ -205,7 +210,7 @@ def main():
         source_id = project.get_id()
     else:
         source_name = ENCODE_SNAPSHOT_PROJECT
-        source_prj = dxpy.find_one_project(name=source_name, name_mode='exact', return_handler=False)
+        source_prj = dxpy.find_one_project(name=source_name, name_mode='exact', return_handler=False, level='VIEW')
         source_id = source_prj['id']
 
 
@@ -220,7 +225,7 @@ def main():
         replicates.extend([ dxpy.dxlink(r) for r in dx_rep ])
 
     if not args.test:
-        replicates = copy_files(replicates, source_id, "/"+args.experiment)
+        replicates = copy_files(replicates, project.id, "/"+args.experiment)
 
     if not replicates:
         print "No replicates found in project: " + project.name
@@ -233,8 +238,9 @@ def main():
     organism = 'human'
     #TODO determine paired or gender from ENCSR metadata
     # Now create a new workflow ()
-    wf = dxpy.new_dxworkflow(title='dx_dna_me_wgsbs_'+args.experiment,
-                             name='ENCODE Bismark DNA-ME pipeline: '+args.experiment,
+    spec_name = args.experiment+'-'+'-'.join([ r.split('.')[0] for r in args.replicates])
+    wf = dxpy.new_dxworkflow(title='dx_dna_me_'+spec_name,
+                             name='ENCODE Bismark DNA-ME pipeline: '+spec_name,
                              description='The ENCODE Bismark pipeline for WGBS shotgun methylation analysis for experiment' + args.experiment,
                              folder='/'+args.experiment,
                              project=project.get_id())
