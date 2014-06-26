@@ -128,10 +128,11 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
         'outputField': 'meIndex'
     })
     ### TRIM
-    trim_input = {
-        'reads': replicates
-    }
     if not paired:
+        trim_input = {
+            'reads': replicates
+        }
+
         stage_id = wf.add_stage(find_applet_by_name('trim-se', applets_project_id), stage_input=trim_input, folder=experiment)
         trim_output = dxpy.dxlink({
             'stage': stage_id,
@@ -150,8 +151,36 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
             'outputField': 'mapped_files'
         })
     else:
-        print "Paired end not implemented"
-        sys.exit(1)
+        if len(replicates) != 2:
+            print "Must have exactly 2 replicats for paired-end pipeline"
+            exit(1)
+
+        trim_input = {
+            'pair1_reads': replicates[0],
+            'pair2_reads': replicates[1]
+        }
+        stage_id = wf.add_stage(find_applet_by_name('trim-pe', applets_project_id), stage_input=trim_input, folder=experiment)
+        trim1_output = dxpy.dxlink({
+            'stage': stage_id,
+            'outputField': 'trimmed_reads1'
+        })
+        trim2_output = dxpy.dxlink({
+            'stage': stage_id,
+            'outputField': 'trimmed_reads2'
+        })
+
+        ### MAP
+        map_input = {
+            'genome': genome,
+            'pair_1': trim1_output,
+            'pair_2': trim2_output,
+            'meIndex': index_output
+        }
+        stage_id = wf.add_stage(find_applet_by_name('map-pe', applets_project_id), stage_input=map_input, folder=experiment)
+        map_output = dxpy.dxlink({
+            'stage': stage_id,
+            'outputField': 'mapped_files'
+        })
 
     ### EXTRACT
     extract_input = {
