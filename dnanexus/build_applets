@@ -1,0 +1,15 @@
+#!/bin/bash
+
+applet_dest='dna-me-pipeline'
+applets='index trim-se trim-pe map-se map-pe extract'
+
+project=$(dx find projects --name "$applet_dest")
+if [ -z "$project" ]
+  then
+    dx new project "$applet_dest" --brief
+fi
+
+for applet in $applets; do
+    echo "Building $applet at $applet_dest..."
+    dx build "${applet}" --archive --destination "${applet_dest}:/"
+done

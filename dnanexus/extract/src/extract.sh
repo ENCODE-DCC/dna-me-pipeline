@@ -68,7 +68,8 @@ main() {
     CHH=$(dx upload "$mapped_fn"_CHH_bismark.bed --brief)
 
     mapped_reads=$(dx upload /home/dnanexus/output/"$outfile" --brief)
-    SE_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark_SE_report.txt --brief)
+    cat output/*E_report.txt > output/$mapped_fn.fq_bismark_map_report.txt
+    map_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark_map_report.txt --brief)
     M_bias_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark.M-bias.txt --brief)
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
@@ -81,6 +82,6 @@ main() {
     dx-jobutil-add-output CHG "$CHG" --class=file
     dx-jobutil-add-output CHH "$CHH" --class=file
     dx-jobutil-add-output mapped_reads "$mapped_reads" --class=file
-    dx-jobutil-add-output SE_report "$SE_report" --class=file
+    dx-jobutil-add-output map_report "$map_report" --class=file
     dx-jobutil-add-output M_bias_report "$M_bias_report" --class=file
 }

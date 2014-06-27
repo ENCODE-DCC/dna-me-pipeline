@@ -3,7 +3,7 @@
   "title": "WGBS-extract-report",
   "summary": "WGBS ENCODE Pipeline step: Extract methylation and report Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -45,13 +45,13 @@
       "class": "file"
     },
     {
-      "name": "SE_report",
-      "label": "QC report 1 (SE)",
+      "name": "map_report",
+      "label": "Mapping QC report",
       "class": "file"
     },
     {
       "name": "M_bias_report",
-      "label": "QC report 2 (M-Bias)",
+      "label": "M-Biast QC report",
       "class": "file"
     }
   ],
@@ -60,10 +60,10 @@
     "file": "src/extract.sh",
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x4"
+        "instanceType": "mem3_hdd2_x8"
       },
       "myEntryPoint": {
-        "instanceType": "mem3_hdd2_x4"
+        "instanceType": "mem3_hdd2_x8"
       }
     }
   },
