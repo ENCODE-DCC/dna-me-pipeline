@@ -16,6 +16,9 @@ ENCODE_REFERENCES_PROJECT = 'ENCODE Reference Files'
 ENCODE_SNAPSHOT_PROJECT = 'ENCODE-SDSC-snapshot-20140505'
 ''' This DNA Nexus project holds ENCFF files; should be replaced by a more permanent store '''
 
+ENCODE_PUBLIC_PROJECT = 'ENCODE Universal Processing Pipelines'
+PUBLIC_FOLDER = '/WG Bisulfite (Methylation)'
+
 GENOME_REFERENCES = {
 # Note this should be referred to by: biosample.donor.organism.name for any dataset
     'mouse':  'mm10.fa.gz',
@@ -67,6 +70,11 @@ def get_args():
                     action='store_true',
                     required=False)
 
+    ap.add_argument('-x', '--export',
+                    help='Export generic Workflow (no inputs) to DNA Nexus project',
+                    action='store_true',
+                    required=False)
+
     return ap.parse_args()
 
 def find_reference_file_by_name(reference_name, project_name):
@@ -112,15 +120,20 @@ def get_project(project_name):
 
     return project
 
-def populate_workflow(wf, replicates, experiment, paired, gender, organism, applets_project_id):
+def populate_workflow(wf, replicates, experiment, paired, gender, organism, applets_project_id, export):
     '''This function will populate the workflow for the methyl-seq Pipeline.'''
 
-    genome = find_reference_file_by_name(GENOME_REFERENCES[organism], ENCODE_REFERENCES_PROJECT)
-    # TODO somethink like loop over analysis_steps in pipeline objects
-    ### INDEX
-    index_input = {
-        'genome': genome
-    }
+    if not export:
+        genome = find_reference_file_by_name(GENOME_REFERENCES[organism], ENCODE_REFERENCES_PROJECT)
+        index_input = {
+            'genome': genome
+        }
+    else:
+        genome = None
+        index_input = None
+        # TODO somethink like loop over analysis_steps in pipeline objects
+        ### INDEX
+
     stage_id = wf.add_stage(find_applet_by_name('index', applets_project_id), stage_input=index_input, folder=experiment)
     index_output = dxpy.dxlink({
         'stage': stage_id,
@@ -128,9 +141,12 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
     })
     ### TRIM
     if not paired:
-        trim_input = {
-            'reads': replicates
-        }
+        if not export:
+            trim_input = {
+                'reads': replicates
+            }
+        else:
+            trim_input = {}
 
         stage_id = wf.add_stage(find_applet_by_name('trim-se', applets_project_id), stage_input=trim_input, folder=experiment)
         trim_output = dxpy.dxlink({
@@ -140,10 +156,11 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
 
         ### MAP
         map_input = {
-            'genome': genome,
             'trimmed_reads': trim_output,
             'meIndex': index_output
         }
+        if genome:
+            map_input['genome'] = genome
         stage_id = wf.add_stage(find_applet_by_name('map-se', applets_project_id), stage_input=map_input, folder=experiment)
         map_output = dxpy.dxlink({
             'stage': stage_id,
@@ -154,10 +171,14 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
             print "Must have exactly 2 replicats for paired-end pipeline"
             exit(1)
 
-        trim_input = {
-            'pair1_reads': replicates[0],
-            'pair2_reads': replicates[1]
-        }
+        if not export:
+            trim_input = {
+                'pair1_reads': replicates[0],
+                'pair2_reads': replicates[1]
+            }
+        else:
+            trim_input = {}
+
         stage_id = wf.add_stage(find_applet_by_name('trim-pe', applets_project_id), stage_input=trim_input, folder=experiment)
         trim1_output = dxpy.dxlink({
             'stage': stage_id,
@@ -170,11 +191,12 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
 
         ### MAP
         map_input = {
-            'genome': genome,
             'pair_1': trim1_output,
             'pair_2': trim2_output,
             'meIndex': index_output
         }
+        if genome:
+            map_input['genome'] = genome
         stage_id = wf.add_stage(find_applet_by_name('map-pe', applets_project_id), stage_input=map_input, folder=experiment)
         map_output = dxpy.dxlink({
             'stage': stage_id,
@@ -183,9 +205,10 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
 
     ### EXTRACT
     extract_input = {
-        'genome': genome,
         'mapped_files': map_output
     }
+    if genome:
+        extract_input['genome'] = genome
     stage_id = wf.add_stage(find_applet_by_name('extract', applets_project_id), stage_input=extract_input, folder=experiment)
 
 
@@ -267,13 +290,33 @@ def main():
     #TODO determine paired or gender from ENCSR metadata
     # Now create a new workflow ()
     spec_name = args.experiment+'-'+'-'.join([ r.split('.')[0] for r in args.replicates])
-    wf = dxpy.new_dxworkflow(title='dx_dna_me_'+spec_name,
+    title_root = 'dx_dna_me_'
+    name_root = 'ENCODE Bismark DNA-ME pipeline: '
+    desc = 'The ENCODE Bismark pipeline for WGBS shotgun methylation analysis for experiment'
+    if paired:
+        title_root = title_root + '_paired_end'
+        name_root = name_root + '(paired-end)'
+    else:
+        title_root = title_root + '_single_end'
+        name_root = name_root + '(single-end)'
+
+
+    if args.export:
+        project_id = dxpy.find_one_project(name=ENCODE_PUBLIC_PROJECT, name_mode='exact', return_handler=False)['id']
+        wf = dxpy.new_dxworkflow(title=title_root,
+                                 name=name_root,
+                                 description=desc,
+                                 folder=PUBLIC_FOLDER,
+                                 project=project_id)
+    else:
+        project_id = project.get_id()
+        wf = dxpy.new_dxworkflow(title='dx_dna_me_'+spec_name,
                              name='ENCODE Bismark DNA-ME pipeline: '+spec_name,
                              description='The ENCODE Bismark pipeline for WGBS shotgun methylation analysis for experiment' + args.experiment,
                              folder='/'+args.experiment,
                              project=project.get_id())
 
-    populate_workflow(wf, replicates, args.experiment, paired, gender, organism, project.id)
+    populate_workflow(wf, replicates, args.experiment, paired, gender, organism, project.id, args.export)
     #TODO - run the workflow automatically
     #TODO - export template workflows
 
