@@ -26,14 +26,10 @@ main() {
     # "$variable" --name".
 
     filename1=`dx describe "$pair1_reads" --name | cut -d'.' -f1`
-    dx download "$pair1_reads" -o "$filename1".fq.gz
-    echo "uncompressing read file 1 ($filename1)"
-    gunzip $filename1.fq.gz
+    dx download "$pair1_reads" -o - | gunzip > "$filename1".fq
 
     filename2=`dx describe "$pair2_reads" --name | cut -d'.' -f1`
-    dx download "$pair2_reads" -o "$filename2".fq.gz
-    echo "uncompressing read file 2 ($filename2)"
-    gunzip $filename2.fq.gz
+    dx download "$pair2_reads" -o - | gunzip > "$filename2".fq
     echo "Reads  downloaded"
 
     mkdir input
