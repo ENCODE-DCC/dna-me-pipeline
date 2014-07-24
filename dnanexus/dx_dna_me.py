@@ -22,7 +22,7 @@ PUBLIC_FOLDER = '/WG Bisulfite (Methylation)'
 GENOME_REFERENCES = {
 # Note this should be referred to by: biosample.donor.organism.name for any dataset
     'mouse':  'mm10.fa.gz',
-    'human':  'hg19.fa.gz',
+    'human':  'junko-hg19.fa.gz',
     'test':   'chr21.fa.gz'
 }
 
@@ -130,7 +130,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
     if not paired:
         if not export:
             trim_input = {
-                'reads': replicates
+                'reads': [ dxpy.dxlink(r) for r in replicates ]
             }
         else:
             trim_input = {}
@@ -160,8 +160,8 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
 
         if not export:
             trim_input = {
-                'pair1_reads': replicates[0],
-                'pair2_reads': replicates[1]
+                'pair1_reads': dxpy.dxlink(replicates[0]),
+                'pair2_reads': dxpy.dxlink(replicates[1])
             }
         else:
             trim_input = {}
