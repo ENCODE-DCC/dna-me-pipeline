@@ -26,9 +26,7 @@ main() {
 
     genome_name=`dx describe --name "$genome" | cut -d'.' -f1`
 
-    dx download "$genome" -o genome.fa.gz
-    echo "uncompressing $genome_name"
-    gunzip genome.fa.gz
+    dx download "$genome" -o - | gunzip > genome.fa
 
     mkdir input
     mv genome.fa input
