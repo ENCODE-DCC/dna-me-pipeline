@@ -18,24 +18,18 @@
 main() {
 
     echo "getting files"
-    dx download "$genome" -o genome.fa.gz
-    dx download "$meIndex" -o Bisulfite_Genome.tgz
+    dx download "$genome" -o - | gunzip > genome.fa
+    dx download "$meIndex" -o - | tar zxvf -
     read_fn1=`dx describe "$pair_1" --name | cut -d'.' -f1`
     read_fn2=`dx describe "$pair_2" --name | cut -d'.' -f1`
-    dx download "$pair_1" -o "$read_fn1".gz
-    dx download "$pair_2" -o "$read_fn2".gz
-
-    echo "uncompressing files"
-    gunzip genome.fa.gz
-    tar zxvf Bisulfite_Genome.tgz
-    gunzip -c "$read_fn1" > "$read_fn1".fq
-    gunzip -c "$read_fn2" > "$read_fn2".fq
+    dx download "$pair_1" -o - | gunzip > "$read_fn1".fq
+    dx download "$pair_2" -o - | gunzip > "$read_fn2".fq
 
     mv genome.fa input
 
     echo `ls input`
     mkdir output
-    bismark -n 1 -l 28 -output_dir output --temp_dir output input -I $min_insert -X $max_insert -1 $read_fn1.gz -2 $read_fn2.gz
+    bismark -n 1 -l 28 -output_dir output --temp_dir output input -I $min_insert -X $max_insert -1 $read_fn1.fq -2 $read_fn2.fq
 
     # Fill in your application code here.
     #
@@ -58,7 +52,7 @@ main() {
     # to see more options to set metadata.
 
     echo `ls /home/dnanexus/output`
-    mv output/$read_fn1.gz_bismark_pe.sam output/$read_fn1.fq_bismark.sam
+    mv output/$read_fn1.fq_bismark_pe.sam output/$read_fn1.fq_bismark.sam
     # rename necessary to conserve extraction step
     # creates PE report file which is not used.
     outfile="$read_fn1".mapped_methylseq.tgz

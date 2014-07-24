@@ -23,11 +23,9 @@ main() {
     # "$variable" --name".
 
     echo "getting files"
-    dx download "$genome" -o genome.fa.gz
+    dx download "$genome" -o - | gunzip > genome.fa
     mapped_fn=`dx describe "$mapped_files" --name | cut -d'.' -f1`
-    dx download "$mapped_files" -o mapped_files.tgz
-    tar zxvf mapped_files.tgz
-    gunzip genome.fa.gz
+    dx download "$mapped_files" -o - | tar zxvf -
 
 
     mkdir input
