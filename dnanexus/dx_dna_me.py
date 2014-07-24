@@ -7,14 +7,13 @@ import subprocess
 import dxpy
 
 
-ENCODE_DNA_ME_PROJECT_NAME = 'dna-me-pipeline2'
+ENCODE_DNA_ME_PROJECT_NAME = 'dna-me-pipeline'
 ''' This DNA Nexus project holds all the created applets and folders'''
 
 ENCODE_REFERENCES_PROJECT = 'ENCODE Reference Files'
 ''' This DNA Nexus project holds Reference files (unaccessioned) used across several pipelines'''
 
-#ENCODE_SNAPSHOT_PROJECT = 'ENCODE-SDSC-snapshot-20140505'
-ENCODE_SNAPSHOT_PROJECT = 'dna-me-pipeline'
+ENCODE_SNAPSHOT_PROJECT = 'ENCODE-SDSC-snapshot-20140505'
 ''' This DNA Nexus project holds ENCFF files; should be replaced by a more permanent store '''
 
 ENCODE_PUBLIC_PROJECT = 'ENCODE Universal Processing Pipelines'

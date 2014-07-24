@@ -1,6 +1,6 @@
 #!/bin/bash
 
-applet_dest='dna-me-pipeline2'
+applet_dest='dna-me-pipeline'
 applets='index trim-se trim-pe map-se map-pe extract'
 
 project=$(dx find projects --name "$applet_dest")
