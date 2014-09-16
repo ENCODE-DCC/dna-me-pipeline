@@ -1,0 +1,75 @@
+{
+  "name": "comp-tophat",
+  "title": "Compares bismark methlythation pipeline results",
+  "summary": "comp-bismark",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "categories": [],
+  "inputSpec": [
+    {
+      "name": "data_dir",
+      "label": "Directory of outputs to compare dx results to",
+      "class": "string",
+      "optional": false
+    },
+    {
+      "name": "test_dir",
+      "label": "Directory of dx results",
+      "class": "string",
+      "optional": false
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "bam_diff",
+      "label": "Bam diff file",
+      "class": "file"
+    },
+    {
+      "name": "M_bias_diff",
+      "label": "M-Bias file Diff",
+      "class": "file"
+    },
+    {
+      "name": "map_report_diff",
+      "label": "Mapping Report diff",
+      "class": "file"
+    },
+    {
+      "name": "CG_bed_diff",
+      "label": "CG BED Diff files",
+      "class": "file"
+    },
+    {
+      "name": "CHG_bed_diff",
+      "label": "BED Diff files",
+      "class": "file"
+    },
+    {
+      "name": "CHH_bed_diff",
+      "label": "BED Diff files",
+      "class": "file"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/comp-tophat.sh",
+    "execDepends": [
+      {"name":"gawk"}
+    ],
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x4"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x4"
+      }
+    }
+  },
+  "access": {
+    "network": [
+      "*"
+    ]
+  },
+  "authorizedUsers": []
+}
