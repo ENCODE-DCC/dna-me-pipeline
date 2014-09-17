@@ -24,31 +24,6 @@
       "name": "bam_diff",
       "label": "Bam diff file",
       "class": "file"
-    },
-    {
-      "name": "M_bias_diff",
-      "label": "M-Bias file Diff",
-      "class": "file"
-    },
-    {
-      "name": "map_report_diff",
-      "label": "Mapping Report diff",
-      "class": "file"
-    },
-    {
-      "name": "CG_bed_diff",
-      "label": "CG BED Diff files",
-      "class": "file"
-    },
-    {
-      "name": "CHG_bed_diff",
-      "label": "BED Diff files",
-      "class": "file"
-    },
-    {
-      "name": "CHH_bed_diff",
-      "label": "BED Diff files",
-      "class": "file"
     }
   ],
   "runSpec": {

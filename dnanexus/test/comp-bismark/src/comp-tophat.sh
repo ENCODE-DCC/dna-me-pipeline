@@ -27,9 +27,14 @@ main() {
     # recover the original filenames, you can use the output of "dx describe"
     # "$variable" --name".
 
-    dx download project-BKjyBz00ZZ0PZF5V7Gv00zqG:/"$test_dir"/*
-    dx download project-BKjyBz00ZZ0PZF5V7Gv00zqG:/test/"$data_dir"/*
-    #dx download project-BKjyBz00ZZ0PZF5V7Gv00zqG:test/"$data_dir"/Log.final.out
+    mkdir test_files
+    mkdir data_files
+    dx download project-BKjyBz00ZZ0PZF5V7Gv00zqG:/"$test_dir"/* -o test_files
+    bunzip2 test_files/output/*sam*.bz2
+    cat test_files/output/*.sam > test_files/test.bam
+
+
+    dx download project-BKjyBz00ZZ0PZF5V7Gv00zqG:/"$data_dir"/* -o data_files
     # Fill in your application code here.
     #
     # To report any recognized errors in the correct format in
@@ -45,11 +50,10 @@ main() {
     # will be AppInternalError with a generic error message.
     find
 
-    #echo Log.final.out
-    #diff <(awk 'NR>4{print}' Log.final.out) <(awk 'NR>4{print}' *_STAR_Log.final.out) > log_diff
 
-    echo Aligned.sortedByCoord.out.bam
-    diff  <(/usr/bin/samtools view merged.bam) <(/usr/bin/samtools view *_tophat_genome.bam)  > tophat_bam_diff
+    echo "Diff BAM"
+    diff  <(/usr/bin/samtools view test_files/test.bam) <(/usr/bin/samtools view data_files/*.bam)  > bam_diff
+
 
 
     # don't worry about bigwigs for now
@@ -65,7 +69,7 @@ main() {
     # but you can change that behavior to suit your needs.  Run "dx upload -h"
     # to see more options to set metadata.
     #log_diff=$(dx upload log_diff --brief)
-    bam_diff=$(dx upload tophat_bam_diff --brief)
+    bam_diff=$(dx upload bam_diff --brief)
     #isoform_quant_diff=$(dx upload isoform_quant_diff --brief)
     #gene_quant_diff=$(dx upload gene_quant_diff --brief)
 
@@ -78,5 +82,5 @@ main() {
     dx-jobutil-add-output bam_diff "$bam_diff" --class=file
     #dx-jobutil-add-output isoform_quant_diff "$isoform_quant_diff" --class=file
     #dx-jobutil-add-output gene_quant_diff "$gene_quant_diff" --class=file
-    dx-jobutil-add-output bigwig_diff "true" --class=boolean
+    #dx-jobutil-add-output bigwig_diff "true" --class=boolean
 }
