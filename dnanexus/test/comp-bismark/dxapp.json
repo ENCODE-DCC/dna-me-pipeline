@@ -1,5 +1,5 @@
 {
-  "name": "comp-tophat",
+  "name": "comp-bismark",
   "title": "Compares bismark methlythation pipeline results",
   "summary": "comp-bismark",
   "dxapi": "1.0.0",
@@ -28,7 +28,7 @@
   ],
   "runSpec": {
     "interpreter": "bash",
-    "file": "src/comp-tophat.sh",
+    "file": "src/comp-bismark.sh",
     "execDepends": [
       {"name":"gawk"}
     ],
