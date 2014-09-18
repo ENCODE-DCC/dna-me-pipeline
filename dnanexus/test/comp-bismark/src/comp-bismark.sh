@@ -58,7 +58,7 @@ main() {
 
     echo "Diff SAM"
     #diff  <(/usr/bin/samtools view test_files/test.sam) <(/usr/bin/samtools view data_files/*.sam)  > bam_diff
-    diff  test_files/test.sam view data_files/*_bismark.sam > bam_diff
+    diff  test_files/test.sam data_files/*_bismark.sam > bam_diff
 
 
     # don't worry about bigwigs for now
