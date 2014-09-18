@@ -38,7 +38,7 @@ main() {
         dx select project-BKf7zV80z53QbqKQz18005vZ; \
         dx download /"$test_dir"/* -r -o test_files)
     bunzip2 test_files/*sam*.bz2
-    cat test_files/*.sam > test_files/test.bam
+    cat test_files/"$test_dir"/output/*.sam > test_files/test.sam
 
     # Fill in your application code here.
     #
@@ -56,9 +56,9 @@ main() {
     find
 
 
-    echo "Diff BAM"
-    diff  <(/usr/bin/samtools view test_files/test.bam) <(/usr/bin/samtools view data_files/*.bam)  > bam_diff
-
+    echo "Diff SAM"
+    #diff  <(/usr/bin/samtools view test_files/test.sam) <(/usr/bin/samtools view data_files/*.sam)  > bam_diff
+    diff  test_files/test.sam view data_files/*_bismark.sam > bam_diff
 
 
     # don't worry about bigwigs for now
