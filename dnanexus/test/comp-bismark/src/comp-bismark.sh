@@ -30,9 +30,13 @@ main() {
     mkdir test_files
     mkdir data_files
 
-    dx download project-BKf7zV80z53QbqKQz18005vZ:/"$data_dir"/* -o data_files
+    (unset DX_WORKSPACE_ID DX_PROJECT_CONTEXT_ID; \
+        dx select project-BKf7zV80z53QbqKQz18005vZ; \
+        dx download /"$data_dir"/* -r -o data_files)
 
-    dx download project-BKf7zV80z53QbqKQz18005vZ:/"$test_dir"/* -o test_files
+    (unset DX_WORKSPACE_ID DX_PROJECT_CONTEXT_ID; \
+        dx select project-BKf7zV80z53QbqKQz18005vZ; \
+        dx download /"$test_dir"/* -r -o test_files)
     bunzip2 test_files/*sam*.bz2
     cat test_files/*.sam > test_files/test.bam
 
