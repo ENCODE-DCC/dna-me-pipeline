@@ -54,11 +54,12 @@ main() {
     # reported in the job_error.json file, then the failure reason
     # will be AppInternalError with a generic error message.
     find
-
+    echo "convert SAM->BAM"
+    /usr/bin/samtools view -Sb test_files/test.sam > test.bam
+    /usr/bin/samtools view -Sb data_files/*.sam > data.bam
 
     echo "Diff SAM"
-    #diff  <(/usr/bin/samtools view test_files/test.sam) <(/usr/bin/samtools view data_files/*.sam)  > bam_diff
-    diff  test_files/test.sam data_files/*_bismark.sam > bam_diff
+    diff  <(/usr/bin/samtools view test.bam) <(/usr/bin/samtools view data.bam)  > bam_diff
 
 
     # don't worry about bigwigs for now
