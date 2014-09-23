@@ -32,13 +32,13 @@ main() {
 
     (unset DX_WORKSPACE_ID DX_PROJECT_CONTEXT_ID; \
         dx select project-BKf7zV80z53QbqKQz18005vZ; \
-        dx download /"$data_dir"/* -r -o data_files)
+        dx download /"$data_dir"/* -f -r -o data_files)
 
     (unset DX_WORKSPACE_ID DX_PROJECT_CONTEXT_ID; \
         dx select project-BKf7zV80z53QbqKQz18005vZ; \
-        dx download /"$test_dir"/* -r -o test_files)
-    bunzip2 test_files/*sam*.bz2
-    cat test_files/"$test_dir"/output/*.sam > test_files/test.sam
+        dx download /"$test_dir"/* -f -r -o test_files)
+    bunzip2 test_files/"$test_dir"/output/*sam*.bz2
+    cat test_files/"$test_dir"/output/*.sam* > test_files/test.sam
 
     # Fill in your application code here.
     #
@@ -55,11 +55,11 @@ main() {
     # will be AppInternalError with a generic error message.
     find
     echo "convert SAM->BAM"
-    /usr/bin/samtools view -Sb test_files/test.sam > test.bam
-    /usr/bin/samtools view -Sb data_files/*.sam > data.bam
+    /usr/bin/samtools view -Sb test_files/test.sam -o - | /usr/bin/samtools sort - -o - > test.bam
+    /usr/bin/samtools view -Sb data_files/*.sam | /usr/bin/samtools sort - -o - > data.bam
 
-    echo "Diff SAM"
-    diff  <(/usr/bin/samtools view test.bam) <(/usr/bin/samtools view data.bam)  > bam_diff
+    echo "Bamutils Diff"
+    /usr/bin/bam diff --recPoolSize 10000000 --in1 test.bam --in2 data.bam > bam_diff
 
 
     # don't worry about bigwigs for now
