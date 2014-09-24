@@ -55,11 +55,21 @@ main() {
     # will be AppInternalError with a generic error message.
     find
     echo "convert SAM->BAM"
-    /usr/bin/samtools view -Sb test_files/test.sam -o - | /usr/bin/samtools sort - -o - > test.bam
-    /usr/bin/samtools view -Sb data_files/*.sam | /usr/bin/samtools sort - -o - > data.bam
+    echo "test"
+    /usr/bin/samtools view -Sb test_files/test.sam > test.bam
+    echo "data"
+    /usr/bin/samtools view -Sb data_files/*.sam
 
+    echo "sort BAMs"
+    echo "test"
+    /usr/bin/samtools sort test.bam testSorted
+    echo "data"
+    /usr/bin/samtools sort data.bam dataSorted
+
+
+    `ls -l1 *.bam`
     echo "Bamutils Diff"
-    /usr/bin/bam diff --recPoolSize 10000000 --in1 test.bam --in2 data.bam > bam_diff
+    /usr/bin/bam diff --recPoolSize 10000000 --in1 testSorted.bam --in2 dataSorted.bam > bam_diff
 
 
     # don't worry about bigwigs for now
