@@ -58,13 +58,13 @@ main() {
     echo "test"
     /usr/bin/samtools view -Sb test_files/test.sam > test.bam
     echo "data"
-    /usr/bin/samtools view -Sb data_files/*.sam
+    /usr/bin/samtools view -Sb data_files/*.sam > data.bam
 
     echo "sort BAMs"
     echo "test"
-    /usr/bin/samtools sort test.bam testSorted
+    /usr/bin/samtools sort -@ 4 test.bam testSorted
     echo "data"
-    /usr/bin/samtools sort data.bam dataSorted
+    /usr/bin/samtools sort -@ 4 data.bam dataSorted
 
 
     `ls -l1 *.bam`
