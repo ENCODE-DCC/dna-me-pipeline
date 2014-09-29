@@ -37,8 +37,8 @@ main() {
     (unset DX_WORKSPACE_ID DX_PROJECT_CONTEXT_ID; \
         dx select project-BKf7zV80z53QbqKQz18005vZ; \
         dx download /"$test_dir"/* -f -r -o test_files)
-    bunzip2 test_files/"$test_dir"/output/*sam*.bz2
-    cat test_files/"$test_dir"/output/*.sam* > test_files/test.sam
+    bunzip2 test_files/output/*sam*.bz2
+    cat test_files/output/*.sam* > test_files/test.sam
 
     # Fill in your application code here.
     #
