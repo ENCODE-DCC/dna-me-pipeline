@@ -54,6 +54,8 @@ main() {
     # reported in the job_error.json file, then the failure reason
     # will be AppInternalError with a generic error message.
     find
+
+    diff test_files/output/*.report data_files/*.report.txt > report.diff
     echo "convert SAM->BAM"
     echo "test"
     /usr/bin/samtools view -Sb test_files/test.sam > test.bam
@@ -67,9 +69,24 @@ main() {
     /usr/bin/samtools sort -@ 4 data.bam dataSorted
 
 
-    `ls -l1 *.bam`
+    echo `ls -l1 *.bam`
     echo "Bamutils Diff"
     /usr/bin/bam diff --recPoolSize 10000000 --in1 testSorted.bam --in2 dataSorted.bam > bam_diff
+
+    echo "diff BEDs"
+    bunzip2 test_files/output/*bed*.bz2
+
+    echo "CG"
+    cat test_files/output/CG_*.bed* > test_files/CG-combined.bed
+    diff test_files/CG-combined.bed data_files/CG*.bed > CG_bed.diff
+
+    echo "CHH"
+    cat test_files/output/CHH_*.bed* | sort > test_files/CHH-combined.bed
+    diff test_files/CHH-combined.bed data_files/CHH*.bed > CHH_bed.diff
+
+    echo "CHG"
+    cat test_files/output/CHG_*.bed* | sort > test_files/CHG-combined.bed
+    diff test_files/output/CHG_*.bed data_files/CHG*.bed > CHG_bed.diff
 
 
     # don't worry about bigwigs for now
@@ -85,18 +102,21 @@ main() {
     # but you can change that behavior to suit your needs.  Run "dx upload -h"
     # to see more options to set metadata.
     #log_diff=$(dx upload log_diff --brief)
+    report_diff=$(dx upload report.diff --brief)
     bam_diff=$(dx upload bam_diff --brief)
-    #isoform_quant_diff=$(dx upload isoform_quant_diff --brief)
-    #gene_quant_diff=$(dx upload gene_quant_diff --brief)
+    cg_diff=$(dx upload CG_bed.diff --brief)
+    chh_diff=$(dx upload CHH_bed.diff --brief)
+    chg_diff=$(dx upload CHG_bed.diff --brief)
+
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output
     # class.  Run "dx-jobutil-add-output -h" for more information on what it
     # does.
 
-    #dx-jobutil-add-output log_diff "$log_diff" --class=file
+    dx-jobutil-add-output report_diff "$report_diff" --class=file
     dx-jobutil-add-output bam_diff "$bam_diff" --class=file
-    #dx-jobutil-add-output isoform_quant_diff "$isoform_quant_diff" --class=file
-    #dx-jobutil-add-output gene_quant_diff "$gene_quant_diff" --class=file
-    #dx-jobutil-add-output bigwig_diff "true" --class=boolean
+    dx-jobutil-add-output cg_diff "$cg_diff" --class=file
+    dx-jobutil-add-output chh_diff "$ch_diff" --class=file
+    dx-jobutil-add-output chg_diff "$chg_diff" --class=file
 }
