@@ -24,6 +24,16 @@
       "name": "bam_diff",
       "label": "Bam diff file",
       "class": "file"
+    },
+    {
+      "name": "report_diff",
+      "label": "Report diff file",
+      "class": "file"
+    },
+    {
+      "name": "cg_bed_diff",
+      "label": "CG BED is same",
+      "class": "boolean"
     }
   ],
   "runSpec": {

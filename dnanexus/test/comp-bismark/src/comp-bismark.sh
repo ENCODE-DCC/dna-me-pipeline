@@ -55,7 +55,8 @@ main() {
     # will be AppInternalError with a generic error message.
     find
 
-    diff test_files/output/*.report data_files/*map_report.txt > report.diff
+    regex=':\s+[0-9%]+\s'
+    diff <(egrep $regex test_files/output/*.report) <(egrep $regex data_files/*map_report.txt) > report.diff
     echo "convert SAM->BAM"
     echo "test"
     /usr/bin/samtools view -Sb test_files/test.sam > test.bam
@@ -78,15 +79,23 @@ main() {
 
     echo "CG"
     cat test_files/output/CG_*.bed* > test_files/CG-combined.bed
-    diff test_files/CG-combined.bed data_files/*CG*.bed > CG_bed.diff
+    CG_testmd5=`md5sum test_files/CG-combined.bed | cut -d ' ' -f 1`
+    CG_datamd5=`md5sum data_files/*CG*.bed  | cut -d ' ' -f 1`
 
-    echo "CHH"
-    cat test_files/output/CHH_*.bed* | sort > test_files/CHH-combined.bed
-    diff test_files/CHH-combined.bed data_files/*CHH*.bed > CHH_bed.diff
+    if [ $CG_testmd5 == $CG_datamd5 ]
+    then
+        cg_bed_diff=0
+    else
+        cg_bed_diff=1
+    fi
 
-    echo "CHG"
-    cat test_files/output/CHG_*.bed* | sort > test_files/CHG-combined.bed
-    diff test_files/output/CHG_*.bed data_files/*CHG*.bed > CHG_bed.diff
+    #echo "CHH"
+    #cat test_files/output/CHH_*.bed* | sort > test_files/CHH-combined.bed
+    #diff test_files/CHH-combined.bed data_files/*CHH*.bed > CHH_bed.diff
+
+    #echo "CHG"
+    #cat test_files/output/CHG_*.bed* | sort > test_files/CHG-combined.bed
+    #diff test_files/output/CHG_*.bed data_files/*CHG*.bed > CHG_bed.diff
 
 
     # don't worry about bigwigs for now
@@ -104,9 +113,9 @@ main() {
     #log_diff=$(dx upload log_diff --brief)
     report_diff=$(dx upload report.diff --brief)
     bam_diff=$(dx upload bam_diff --brief)
-    cg_diff=$(dx upload CG_bed.diff --brief)
-    chh_diff=$(dx upload CHH_bed.diff --brief)
-    chg_diff=$(dx upload CHG_bed.diff --brief)
+    #cg_diff=$(dx upload CG_bed.diff --brief)
+    #chh_diff=$(dx upload CHH_bed.diff --brief)
+    #chg_diff=$(dx upload CHG_bed.diff --brief)
 
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
@@ -116,7 +125,7 @@ main() {
 
     dx-jobutil-add-output report_diff "$report_diff" --class=file
     dx-jobutil-add-output bam_diff "$bam_diff" --class=file
-    dx-jobutil-add-output cg_diff "$cg_diff" --class=file
-    dx-jobutil-add-output chh_diff "$chh_diff" --class=file
-    dx-jobutil-add-output chg_diff "$chg_diff" --class=file
+    dx-jobutil-add-output cg_diff "$cg_bed_diff" --class=boolean
+    #dx-jobutil-add-output chh_diff "$chh_diff" --class=file
+    #dx-jobutil-add-output chg_diff "$chg_diff" --class=file
 }
