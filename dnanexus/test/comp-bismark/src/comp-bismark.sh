@@ -84,18 +84,34 @@ main() {
 
     if [ $CG_testmd5 == $CG_datamd5 ]
     then
-        cg_bed_diff=0
-    else
         cg_bed_diff=1
+    else
+        cg_bed_diff=0
     fi
 
-    #echo "CHH"
-    #cat test_files/output/CHH_*.bed* | sort > test_files/CHH-combined.bed
-    #diff test_files/CHH-combined.bed data_files/*CHH*.bed > CHH_bed.diff
+    echo "CHH"
+    cat test_files/output/CHH_*.bed* > test_files/CHH-combined.bed
+    CHH_testmd5=`md5sum test_files/CHH-combined.bed | cut -d ' ' -f 1`
+    CHH_datamd5=`md5sum data_files/*CHH*.bed  | cut -d ' ' -f 1`
 
-    #echo "CHG"
-    #cat test_files/output/CHG_*.bed* | sort > test_files/CHG-combined.bed
-    #diff test_files/output/CHG_*.bed data_files/*CHG*.bed > CHG_bed.diff
+    if [ $CHH_testmd5 == $CHH_datamd5 ]
+    then
+        chh_bed_diff=1
+    else
+        chh_bed_diff=0
+    fi
+
+    echo "CHG"
+    cat test_files/output/CHG_*.bed* > test_files/CHG-combined.bed
+    CHG_testmd5=`md5sum test_files/CHG-combined.bed | cut -d ' ' -f 1`
+    CHG_datamd5=`md5sum data_files/*CHG*.bed  | cut -d ' ' -f 1`
+
+    if [ $CHG_testmd5 == $CHG_datamd5 ]
+    then
+        chg_bed_diff=1
+    else
+        chg_bed_diff=0
+    fi
 
 
     # don't worry about bigwigs for now
@@ -113,10 +129,6 @@ main() {
     #log_diff=$(dx upload log_diff --brief)
     report_diff=$(dx upload report.diff --brief)
     bam_diff=$(dx upload bam_diff --brief)
-    #cg_diff=$(dx upload CG_bed.diff --brief)
-    #chh_diff=$(dx upload CHH_bed.diff --brief)
-    #chg_diff=$(dx upload CHG_bed.diff --brief)
-
 
     # The following line(s) use the utility dx-jobutil-add-output to format and
     # add output variables to your job's output as appropriate for the output
@@ -125,7 +137,7 @@ main() {
 
     dx-jobutil-add-output report_diff "$report_diff" --class=file
     dx-jobutil-add-output bam_diff "$bam_diff" --class=file
-    dx-jobutil-add-output cg_diff "$cg_bed_diff" --class=boolean
-    #dx-jobutil-add-output chh_diff "$chh_diff" --class=file
-    #dx-jobutil-add-output chg_diff "$chg_diff" --class=file
+    dx-jobutil-add-output cg_bed_diff "$cg_bed_diff" --class=boolean
+    dx-jobutil-add-output chh_diff "$chh_bed_diff" --class=boolean
+    dx-jobutil-add-output chg_diff "$chg_bed_diff" --class=boolean
 }

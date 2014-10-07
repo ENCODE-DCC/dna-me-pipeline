@@ -34,6 +34,16 @@
       "name": "cg_bed_diff",
       "label": "CG BED is same",
       "class": "boolean"
+    },
+    {
+      "name": "chh_bed_diff",
+      "label": "CHH BED is same",
+      "class": "boolean"
+    },
+    {
+      "name": "chg_bed_diff",
+      "label": "CHG BED is same",
+      "class": "boolean"
     }
   ],
   "runSpec": {
