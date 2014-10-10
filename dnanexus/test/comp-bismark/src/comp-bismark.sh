@@ -138,6 +138,6 @@ main() {
     dx-jobutil-add-output report_diff "$report_diff" --class=file
     dx-jobutil-add-output bam_diff "$bam_diff" --class=file
     dx-jobutil-add-output cg_bed_diff "$cg_bed_diff" --class=boolean
-    dx-jobutil-add-output chh_diff "$chh_bed_diff" --class=boolean
-    dx-jobutil-add-output chg_diff "$chg_bed_diff" --class=boolean
+    dx-jobutil-add-output chh_bed_diff "$chh_bed_diff" --class=boolean
+    dx-jobutil-add-output chg_bed_diff "$chg_bed_diff" --class=boolean
 }
