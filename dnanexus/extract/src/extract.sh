@@ -31,9 +31,11 @@ main() {
     mkdir input
     mv genome.fa input
     echo "Analyse methylation"
-    outfile="$mapped_fn".fq_bismark.sam
+    outfile="$mapped_fn".fq_bismark
     bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context --ample_mem\
-      --output /home/dnanexus/output/ --zero_based --genome_folder input output/"$outfile"
+      --output /home/dnanexus/output/ --zero_based --genome_folder input output/"$outfile".sam
+
+    samtools view -Sb output/"$outfile".sam > "$outfile".bam
     echo "Creat QC reports"
     cxrepo-bed.py -o /home/dnanexus/output /home/dnanexus/output/"$mapped_fn".fq_bismark.CX_report.txt
 
