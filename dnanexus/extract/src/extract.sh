@@ -15,6 +15,9 @@
 # See https://wiki.dnanexus.com/Developer-Portal for tutorials on how
 # to modify this file.
 
+set -x
+set +e
+
 main() {
 
     # The following line(s) use the dx command-line tool to download your file
@@ -35,7 +38,7 @@ main() {
     bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context --ample_mem\
       --output /home/dnanexus/output/ --zero_based --genome_folder input output/"$outfile".sam
 
-    samtools view -Sb output/"$outfile".sam > "$outfile".bam
+    samtools view -Sb output/"$outfile".sam > output/"$outfile".bam
     echo "Creat QC reports"
     cxrepo-bed.py -o /home/dnanexus/output /home/dnanexus/output/"$mapped_fn".fq_bismark.CX_report.txt
 
@@ -63,11 +66,14 @@ main() {
     mv /home/dnanexus/output/CG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CG_bismark.bed
     mv /home/dnanexus/output/CHG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHG_bismark.bed
     mv /home/dnanexus/output/CHH_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
-    CG=$(dx upload "$mapped_fn"_CG_bismark.bed --brief)
-    CHG=$(dx upload "$mapped_fn"_CHG_bismark.bed --brief)
-    CHH=$(dx upload "$mapped_fn"_CHH_bismark.bed --brief)
+    gzip *.bed
+    echo "Uploading files"
+    find
+    CG=$(dx upload "$mapped_fn"_CG_bismark.bed.gz --brief)
+    CHG=$(dx upload "$mapped_fn"_CHG_bismark.bed.gz --brief)
+    CHH=$(dx upload "$mapped_fn"_CHH_bismark.bed.gz --brief)
 
-    mapped_reads=$(dx upload /home/dnanexus/output/"$outfile" --brief)
+    mapped_reads=$(dx upload /home/dnanexus/output/"$outfile".bam --brief)
     cat output/*E_report.txt > output/$mapped_fn.fq_bismark_map_report.txt
     map_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark_map_report.txt --brief)
     M_bias_report=$(dx upload /home/dnanexus/output/"$mapped_fn".fq_bismark.M-bias.txt --brief)
