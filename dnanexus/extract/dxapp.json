@@ -26,22 +26,22 @@
   "outputSpec": [
     {
       "name": "CG",
-      "label": "CG methyation BED file",
+      "label": "CG methyation BED file (gzipped)",
       "class": "file"
     },
     {
       "name": "CHG",
-      "label": "CHG methyation BED file",
+      "label": "CHG methyation BED file (gzipped)",
       "class": "file"
     },
     {
       "name": "CHH",
-      "label": "CHH methyation BED file",
+      "label": "CHH methyation BED file (gzipped)",
       "class": "file"
     },
     {
       "name": "mapped_reads",
-      "label": "the sam file",
+      "label": "the BAM file",
       "class": "file"
     },
     {
