@@ -17,25 +17,39 @@
 
 main() {
 
-    echo "Value of  pair 1 reads: '$pair1_reads'"
-    echo "Value of  pair 2 reads: '$pair2_reads'"
+    echo "Value of  pair 1 reads: '${pair1_reads[@]}"
+    echo "Value of  pair 2 reads: '${pair2_reads[@]}"
 
     # The following line(s) use the dx command-line tool to download your file
     # inputs to the local file system using variable names for the filenames. To
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    filename1=`dx describe "$pair1_reads" --name | cut -d'.' -f1`
-    dx download "$pair1_reads" -o - | gunzip > "$filename1".fq
+    mkdir r1
+    mkdir r2
+    allreads1=""
+    allreads2=""
+    for i in ${!pair1_reads[@]}
+    do
+        filename=`dx describe "${pair1_reads[$i]}" --name | cut -d'.' -f1`
+        dx download "${pair1_reads[$i]}" -o - | gunzip > r1/"$filename".fq
+        allreads1="$allreads1"-"$filename"
+    done
 
-    filename2=`dx describe "$pair2_reads" --name | cut -d'.' -f1`
-    dx download "$pair2_reads" -o - | gunzip > "$filename2".fq
+    for i in ${!pair2_reads[@]}
+    do
+        filename=`dx describe "${pair2_reads[$i]}" --name | cut -d'.' -f1`
+        dx download "${pair2_reads[$i]}" -o - | gunzip > r2/"$filename".fq
+        allreads2=$"allreads2"-"$filename"
+    done
     echo "Reads  downloaded"
+    cat r1/*.fq > "$allreads1".fq
+    cat r2/*.fq > "$allreads2".fq
 
     mkdir input
-    outfile1="$filename1.trimmed-reads.1.fq"
-    outfile2="$filename2.trimmed-reads.2.fq"
-    mott-trim.py -q 3 -m 30 -t sanger $outfile1,$outfile2 $filename1.fq,$filename2.fq
+    outfile1="$allreads1".trimmed-reads.1.fq
+    outfile2="$allreads2".trimmed-reads.2.fq
+    mott-trim.py -q 3 -m 30 -t sanger $outfile1,$outfile2 "$allreads1".fq,"$allreads2".fq
     gzip *trimmed-reads*.fq
 
 

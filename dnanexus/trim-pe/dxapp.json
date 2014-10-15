@@ -12,14 +12,14 @@
     {
       "name": "pair1_reads",
       "label": "The reads (pair one) that ought to be methylated",
-      "class": "file",
+      "class": "array:file",
       "optional": false,
       "patterns": ["*.gz"]
     },
     {
       "name": "pair2_reads",
       "label": "The reads (pair two) that ought to be methylated",
-      "class": "file",
+      "class": "array:file",
       "optional": false,
       "patterns": ["*.gz"]
     }
