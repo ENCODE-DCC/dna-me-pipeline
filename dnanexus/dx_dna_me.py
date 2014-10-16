@@ -46,6 +46,16 @@ def get_args():
                     nargs='+',
                     required=False)
 
+    ap.add_argument('-r1', '--pair1',
+                    help='Replicate fastq files, first pair',
+                    nargs='+',
+                    required=False)
+
+    ap.add_argument('-r2', '--pair2',
+                    help='Replicate fastq files, second pair',
+                    nargs='+',
+                    required=False)
+
     ap.add_argument('-e', '--experiment',
                     help='ENCODED experiment accession',
                     required=True)
@@ -129,9 +139,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
     ### TRIM
     if not paired:
         if not export:
-            trim_input = {
-                'reads': [ dxpy.dxlink(r) for r in replicates ]
-            }
+            trim_input = replicates
         else:
             trim_input = {}
 
@@ -154,15 +162,8 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
             'outputField': 'mapped_files'
         })
     else:
-        if len(replicates) != 2:
-            print "Must have exactly 2 replicates for paired-end pipeline"
-            exit(1)
-
         if not export:
-            trim_input = {
-                'pair1_reads': dxpy.dxlink(replicates[0]),
-                'pair2_reads': dxpy.dxlink(replicates[1])
-            }
+            trim_input = replicates
         else:
             trim_input = {}
 
@@ -228,11 +229,23 @@ def resolve_project(project_name, level=None):
 
     return dxpy.DXProject(project['id'])
 
+def find_replicates(reps, source_id, project, experiment, test=False):
+    replicates = []
+    for rep in reps:
+        dx_rep = dxpy.find_data_objects(classname='file', name=rep,
+                                        name_mode='glob', project=source_id,
+                                        return_handler=False)
+        replicates.extend(dx_rep)
+
+    if not test:
+        replicates = copy_files(replicates, project.get_id(), "/"+experiment)
+
+    return replicates
+
 def main():
     args = get_args()
-    if len(args.replicates) < 1:
-        sys.exit('Need to have at least 1 replicate file.')
 
+    ## resolve projects
     project = resolve_project(ENCODE_DNA_ME_PROJECT_NAME)
     print 'Project: ' + project.describe()['name']
     print 'Experiment to analyze: ' + args.experiment
@@ -246,28 +259,50 @@ def main():
     else:
         source_id = resolve_project(ENCODE_SNAPSHOT_PROJECT, level='VIEW').get_id()
 
-    replicates = []
-    for rep in args.replicates:
-        dx_rep = dxpy.find_data_objects(classname='file', name=rep,
-                                        name_mode='glob', project=source_id,
-                                        return_handler=False)
-        replicates.extend(dx_rep)
-
-    if not args.test:
-        replicates = copy_files(replicates, project.get_id(), "/"+args.experiment)
-
-    if not replicates:
-        print "No replicates found in project: " + project.name
-        print "Looking for " + ", ".join(args.replicates)
-        sys.exit(1)
-
-
+    ## resolve replicates/fastq inputs
     paired = args.paired
+    if not paired:
+        if len(args.replicates) < 1:
+            sys.exit('Need to have at least 1 replicate file (unpaired) use -r or --replicates')
+
+        replicates = find_replicates(args.replicates, source_id, project, args.experiment, args.test)
+        if not replicates:
+            print "No replicates found in project: " + project.name
+            print "Looking for " + ", ".join(args.replicates)
+            sys.exit(1)
+
+        dx_reps = {
+            'reads': [ dxpy.dxlink(r) for r in replicates ]
+        }
+        rnames = '-'.join([ r.split('.')[0] for r in args.replicates])
+    else:
+        if len(args.pair1) < 1 or len(args.pair2) < 1:
+            sys.exit("Need to have at least 1 replicate in pair1 (--r1/--pair1) and pair2 (--r2/--pair2")
+
+        pair1reps = find_replicates(args.pair1, source_id, project, args.experiment, args.test)
+        if not pair1reps:
+            print "No replicates for pair1 found in project: " + project.name
+            print "Looking for " + ", ".join(args.pair1)
+            sys.exit(1)
+
+        pair2reps = find_replicates(args.pair2, source_id, project, args.experiment, args.test)
+        if not pair2reps:
+            print "No replicates for pair2 found in project: " + project.name
+            print "Looking for " + ", ".join(args.pair2)
+            sys.exit(1)
+
+        dx_reps = {
+            'pair1_reads': [ dxpy.dxlink(r) for r in pair1reps ],
+            'pair2_reads': [ dxpy.dxlink(r) for r in pair2reps ]
+        }
+        rnames = '-'.join([ r.split('.')[0] for r in args.pair1+args.pair2])
+
+
     gender = args.gender
     organism = args.organism
     #TODO determine paired or gender from ENCSR metadata
     # Now create a new workflow ()
-    spec_name = args.experiment+'-'+'-'.join([ r.split('.')[0] for r in args.replicates])
+    spec_name = args.experiment+'-'+rnames
     title_root = 'dx_dna_me_'
     name_root = 'ENCODE Bismark DNA-ME pipeline: '
     desc = 'The ENCODE Bismark pipeline for WGBS shotgun methylation analysis for experiment'
@@ -294,7 +329,7 @@ def main():
                              folder='/'+args.experiment,
                              project=project.get_id())
 
-    populate_workflow(wf, replicates, args.experiment, paired, gender, organism, project.id, args.export)
+    populate_workflow(wf, dx_reps, args.experiment, paired, gender, organism, project.id, args.export)
     #TODO - run the workflow automatically
     #TODO - export template workflows
 
