@@ -33,14 +33,14 @@ main() {
     do
         filename=`dx describe "${pair1_reads[$i]}" --name | cut -d'.' -f1`
         dx download "${pair1_reads[$i]}" -o - | gunzip > r1/"$filename".fq
-        allreads1="$allreads1"-"$filename"
+        allreads1="$allreads1""$filename"
     done
 
     for i in ${!pair2_reads[@]}
     do
         filename=`dx describe "${pair2_reads[$i]}" --name | cut -d'.' -f1`
         dx download "${pair2_reads[$i]}" -o - | gunzip > r2/"$filename".fq
-        allreads2=$"allreads2"-"$filename"
+        allreads2="$allreads2""$filename"
     done
     echo "Reads  downloaded"
     cat r1/*.fq > "$allreads1".fq
