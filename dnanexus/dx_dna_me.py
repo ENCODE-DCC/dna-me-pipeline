@@ -21,10 +21,33 @@ PUBLIC_FOLDER = '/WG Bisulfite (Methylation)'
 
 GENOME_REFERENCES = {
 # Note this should be referred to by: biosample.donor.organism.name for any dataset
-    'mouse':  'mm10.fa.gz',
-    'human':  'junko-hg19.fa.gz',
+    'mouse':  {
+        'm': {
+            'genome': 'male.mm9.fa.gz',
+            'gene_annotation': '',
+            'trna_annotation': ''
+        },
+        'f': {
+            'genome': 'female.mm9.fa.gz',
+            'gene_annotation': '',
+            'trna_annotation': ''
+        }
+    },
+    'human':  {
+        'm': {
+            'genome': 'male.hg19.fa.gz',
+            'gene_annotation': 'gencode.v19.annotation.gtf.gz',
+            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz'
+        },
+        'f': {
+            'genome': 'female.hg19.fa.gz',
+            'gene_annotation': 'gencode.v19.annotation.gtf.gz',
+            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz'
+        }
+    },
     'test':   'chr21.fa.gz'
 }
+
 
 REFERENCE_FILES = {}
 APPLETS = {}
@@ -121,7 +144,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
     '''This function will populate the workflow for the methyl-seq Pipeline.'''
 
     if not export:
-        genome = find_reference_file_by_name(GENOME_REFERENCES[organism], ENCODE_REFERENCES_PROJECT)
+        genome = find_reference_file_by_name(GENOME_REFERENCES[organism][gender]['genome'], ENCODE_REFERENCES_PROJECT)
         index_input = {
             'genome': genome
         }
