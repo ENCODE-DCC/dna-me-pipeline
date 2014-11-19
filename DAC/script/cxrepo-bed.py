@@ -10,29 +10,57 @@
 from optparse import OptionParser
 import sys, os.path, string
 
-def write(w, line):
-    chrom  = line[0]
-    beg    = line[1]
-    end    = str( int(line[1])+1 )
+# RGB strings and integer values
+rgbDict = { (0 , 5) :   "0,255,0", # 65280,
+            (6 , 15):  "55,255,0", # 3669760,
+            (16, 25): "105,255,0", # 6946560,
+            (26, 35): "155,255,0", # 10223360,
+            (36, 45): "205,255,0", # 13500160,
+            (46, 55): "255,255,0", # 16776960
+            (56, 65): "255,205,0", # 16764160,
+            (66, 75): "255,155,0", # 16751360,
+            (76, 85): "255,105,0", # 16738560,
+            (86, 95):  "255,55,0", # 16725760,
+            (96,100):   "255,0,0"  # 16711680
+           }
+
+def write(w, line, name):
+    chrom      = line[0]
+    chromStart = line[1]
+    chromEnd   = str( int(line[1])+1 )
     strand = line[2]
-    meth   = line[3]
-    nometh = line[4]
-    sum    = float(line[3])+float(line[4])
-    genome = line[6]
-    if sum > 0:
-        mc = "{0:.4f}".format(float(line[3])/sum*100)
+    meth   = float(line[3])
+    nometh = int(line[4])
+    readCount = int(meth) + nometh
+    itemRgb = rgbDict[(0,5)]
+    if (meth + nometh) > 0:
+        percentMeth = int(round(meth/(meth+nometh)*100))
+        for L in rgbDict:
+            if L[0] <= percentMeth and percentMeth <= L[1]:
+                itemRgb = rgbDict[L]
+                break
     else:
-        mc = "0.0000"
-    w.write("\t".join([ chrom, beg, end, genome, mc, strand, meth, nometh ])+"\n")
+        percentMeth = 0
+    w.write("\t".join([ chrom,
+                        chromStart,
+                        chromEnd,
+                        name,
+                        str(min(readCount, 1000)),
+                        strand,
+                        chromStart,
+                        chromEnd,
+                        itemRgb,
+                        str(readCount),
+                        str(percentMeth) ])+"\n")
 
 
-def outAll(files, f):
+def outAll(files, f, name):
     for line in open(f):
         line = line.rstrip("\n").split("\t")
-        write(files[line[5]], line)
+        write(files[line[5]], line, name)
 
 
-def outExact(files, f):
+def outExact(files, f, name):
     for line in open(f):
         line = line.rstrip("\n").split("\t")
         if   line[6][1] == "N":
@@ -40,7 +68,7 @@ def outExact(files, f):
         elif line[5] != "CG":
             if line[6][2] == "N":
                 continue
-        write(files[line[5]], line)
+        write(files[line[5]], line, name)
 
 
 def cxrepoBed(opts, args):
@@ -49,15 +77,16 @@ def cxrepoBed(opts, args):
              'CHG':open(opts.output+"/CHG_"+f, "w"),
              'CHH':open(opts.output+"/CHH_"+f, "w")}
     if opts.ns == True:
-        outAll(files, args[0])
+        outAll(files, args[0], opts.name)
     else:
-        outExact(files, args[0])
+        outExact(files, args[0], opts.name)
     for of in files:
         files[of].close()
 
 
 if __name__ == "__main__":
     prog = os.path.basename(sys.argv[0])
+    fPrefix = os.path.basename(sys.argv[-1]).split(".CX_report")[0]
     usage = "%prog [option] cxReport"
     description = "Convert a 'CX_report' file to bed files"
 
@@ -68,6 +97,14 @@ if __name__ == "__main__":
                   action="store_true",
                   default=False,
                   help="Output cytosine contexts in which include 'N' (default=%default)")
+
+    op.add_option("-N","--bedmethyl-name",
+                  dest="name",
+                  type="string",
+                  action="store",
+                  default=fPrefix,
+                  help="Insert name into the 3rd column of the bedMethyl format (default=[cxReport filename])",
+                  metavar="NAME")
 
     op.add_option("-o","--output-place",
                   dest="output",
