@@ -17,6 +17,12 @@
       "patterns": ["*.gz"]
       },
     {
+      "name": "chrom_sizes",
+      "label": "Chromosome Sizes",
+      "class": "file",
+      "optional": false
+      },
+    {
       "name": "mapped_files",
       "label": "tgz file of mapped bismark outputs",
       "class": "file",
@@ -37,6 +43,21 @@
     {
       "name": "CHH",
       "label": "CHH methyation BED file (gzipped)",
+      "class": "file"
+    },
+    {
+      "name": "CGbb",
+      "label": "CG methyation bigBed file",
+      "class": "file"
+    },
+    {
+      "name": "CHGbb",
+      "label": "CHG methyation bigBed file",
+      "class": "file"
+    },
+    {
+      "name": "CHHbb",
+      "label": "CHH methyation bigBed file",
       "class": "file"
     },
     {

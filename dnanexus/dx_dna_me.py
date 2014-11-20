@@ -23,26 +23,32 @@ GENOME_REFERENCES = {
 # Note this should be referred to by: biosample.donor.organism.name for any dataset
     'mouse':  {
         'm': {
-            'genome': 'male.mm9.fa.gz',
+            'genome': 'male.mm10.fa.gz',
             'gene_annotation': '',
-            'trna_annotation': ''
+            'trna_annotation': '',
+            'chrom_sizes': 'male.mm10.chrom.sizes'
+
         },
         'f': {
-            'genome': 'female.mm9.fa.gz',
+            'genome': 'female.mm10.fa.gz',
             'gene_annotation': '',
-            'trna_annotation': ''
+            'trna_annotation': '',
+            'chrom_sizes': 'female.mm10.chrom.sizes'
+
         }
     },
     'human':  {
         'm': {
             'genome': 'male.hg19.fa.gz',
             'gene_annotation': 'gencode.v19.annotation.gtf.gz',
-            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz'
+            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz',
+            'chrom_sizes': 'male.hg19.chrom.sizes'
         },
         'f': {
             'genome': 'female.hg19.fa.gz',
             'gene_annotation': 'gencode.v19.annotation.gtf.gz',
-            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz'
+            'trna_annotation': 'gencode.v19.tRNAs.gtf.gz',
+            'chrom_sizes': 'female.hg19.chrom.sizes'
         }
     },
     'test':   'chr21.fa.gz'
@@ -148,6 +154,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
         index_input = {
             'genome': genome
         }
+        chrom_sizes = find_reference_file_by_name(GENOME_REFERENCES[organism][gender]['chrom_sizes'], ENCODE_REFERENCES_PROJECT)
     else:
         genome = None
         index_input = None
@@ -220,6 +227,7 @@ def populate_workflow(wf, replicates, experiment, paired, gender, organism, appl
     }
     if genome:
         extract_input['genome'] = genome
+        extract_input['chrom_sizes'] = chrom_sizes
     stage_id = wf.add_stage(find_applet_by_name('extract', applets_project_id), stage_input=extract_input, folder=experiment)
 
 def copy_files(fids, project_id, folder):

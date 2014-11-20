@@ -15,6 +15,9 @@
 # See https://wiki.dnanexus.com/Developer-Portal for tutorials on how
 # to modify this file.
 
+set -x
+set +e
+
 main() {
 
     echo "getting files"

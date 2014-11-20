@@ -30,6 +30,7 @@ main() {
     mapped_fn=`dx describe "$mapped_files" --name | cut -d'.' -f1`
     dx download "$mapped_files" -o - | tar zxvf -
 
+    dx download "$chrom_sizes" -o chrom.sizes
 
     mkdir input
     mv genome.fa input
@@ -66,12 +67,22 @@ main() {
     mv /home/dnanexus/output/CG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CG_bismark.bed
     mv /home/dnanexus/output/CHG_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHG_bismark.bed
     mv /home/dnanexus/output/CHH_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
+
+    echo "Convert to BigBed"
+    bedToBigBed "$mapped_fn"_CG_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CG_bismark.bb
+    bedToBigBed "$mapped_fn"_CHG_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CHG_bismark.bb
+    bedToBigBed "$mapped_fn"_CHH_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CHH_bismark.bb
+
     gzip *.bed
     echo "Uploading files"
     find
     CG=$(dx upload "$mapped_fn"_CG_bismark.bed.gz --brief)
     CHG=$(dx upload "$mapped_fn"_CHG_bismark.bed.gz --brief)
     CHH=$(dx upload "$mapped_fn"_CHH_bismark.bed.gz --brief)
+
+    CGbb=$(dx upload "$mapped_fn"_CG_bismark.bb --brief)
+    CHGbb=$(dx upload "$mapped_fn"_CHG_bismark.bb --brief)
+    CHHbb=$(dx upload "$mapped_fn"_CHH_bismark.bb --brief)
 
     mapped_reads=$(dx upload /home/dnanexus/output/"$outfile".bam --brief)
     cat output/*E_report.txt > output/$mapped_fn.fq_bismark_map_report.txt
@@ -87,6 +98,9 @@ main() {
     dx-jobutil-add-output CG "$CG" --class=file
     dx-jobutil-add-output CHG "$CHG" --class=file
     dx-jobutil-add-output CHH "$CHH" --class=file
+    dx-jobutil-add-output CGbb "$CGbb" --class=file
+    dx-jobutil-add-output CHGbb "$CHGbb" --class=file
+    dx-jobutil-add-output CHHbb "$CHHbb" --class=file
     dx-jobutil-add-output mapped_reads "$mapped_reads" --class=file
     dx-jobutil-add-output map_report "$map_report" --class=file
     dx-jobutil-add-output M_bias_report "$M_bias_report" --class=file
