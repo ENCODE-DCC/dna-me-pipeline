@@ -24,7 +24,9 @@ main() {
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    genome_name=`dx describe --name "$genome" | cut -d'.' -f1`
+    genome_fn=`dx describe "$genome" --name`
+    genome_fn=${genome_fn%.fasta.gz}
+    genome_fn=${genome_fn%.fa.gz}
 
     dx download "$genome" -o - | gunzip > genome.fa
 
