@@ -255,7 +255,7 @@ def resolve_project(project_name, level=None):
         project = dxpy.find_one_project(name=project_name, name_mode='exact',
                                         level=level, return_handler=False)
     except:
-        print 'Could not find 1 and only 1 project named {0}.'.format(project_name)
+        print 'Could not find 1 and only 1 project named %s; ' % format(project_name)
         sys.exit(1)
 
     return dxpy.DXProject(project['id'])
