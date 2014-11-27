@@ -7,7 +7,7 @@ import subprocess
 import dxpy
 import requests
 
-SERVER = 'https://www.encodeproject.org/'
+SERVER = 'https://www.encodeproject.org'
 ASSAY_TYPE = 'whole genome bisulfite sequencing'
 HEADERS = {'content-type': 'application/json'}
 PROJECT_NAME = 'dna-me-pipeline'
@@ -40,6 +40,10 @@ def get_args():
                     help='encodeD User id key (AUTHPW)',
                     required=True)
 
+    ap.add_argument('-n', '--number',
+                    help='stop after this number of jobs',
+                    required=False)
+
     return ap.parse_args()
 
 def resolve_project(project_name, level=None):
@@ -53,7 +57,7 @@ def resolve_project(project_name, level=None):
     return dxpy.DXProject(project['id'])
 
 def main():
-    args = get_args()
+    cmnd = get_args()
 
     ## resolve projects
     project = resolve_project(PROJECT_NAME)
@@ -62,14 +66,24 @@ def main():
 
     applet = find_applet_by_name('fastqc-exp', pid )
 
+    print cmnd.authid
+    print cmnd.authpw
     query = '/search/?type=experiment&assay_term_name=%s&award.rfa=ENCODE3&limit=all&frame=embedded' % ASSAY_TYPE
-    res = requests.get(SERVER+query, headers=HEADERS, auth=(args.authid, args.authpw),allow_redirects=True, stream=True)
+    res = requests.get(SERVER+query, headers=HEADERS, auth=(cmnd.authid, cmnd.authpw),allow_redirects=True, stream=True)
 
     exps = res.json()['@graph']
 
-    #for exp in exps:
-    acc = exps[0]['accession']
-    applet.run({ "accession": acc}, project=pid)
+    n = 0
+    for exp in exps:
+        acc = exp['accession']
+        if len(exp['replicates']) > 0:
+            run = applet.run({ "accession": acc}, project=pid)
+            print "Running: %s for %s" % (run, acc)
+            n = n + 1
+            if n > cmnd.number:
+                break
+        else:
+            print "Skipping %s (0 replicates)" % acc
 
 if __name__ == '__main__':
     main()
