@@ -33,7 +33,7 @@ REF_FOLDER_DEFAULT = '/ref'
 ''' This the default folder that reference files are found in.'''
 
 #RESULT_FOLDER_DEFAULT = '/runs'  Not sure which is better.
-RESULT_FOLDER_DEFAULT = '/'
+RESULT_FOLDER_DEFAULT = ''
 
 ''' This the default location to place results folders for each experiment.'''
 
@@ -417,7 +417,7 @@ def main():
     elif organism == 'human':
         genome = 'hg19'
 
-    extras = pipelineSpecificExtras(genome,gender, args.experiment, replicate, library, pairedEnd)
+    extras = pipelineSpecificExtras(genome, gender, args.experiment, replicate, library, pairedEnd)
     project = dxencode.get_project(args.project)
     projectId = project.get_id()
 
@@ -426,6 +426,14 @@ def main():
     if not args.test:
         if not dxencode.project_has_folder(project, resultsFolder):
             project.new_folder(resultsFolder,parents=True)
+
+    if pairedEnd:
+        steps = STEP_ORDER['pe']
+        print "Generating workflow steps (paired-end)..."
+   else:
+        steps = STEP_ORDER['se']
+    for step in steps:
+        STEPS[step] = calculate_steps(step)
 
     print "Checking for prior results..."
     # Check if there are previous results
