@@ -85,12 +85,12 @@ def get_args():
                     help='ENCODED experiment accession',
                     required=True)
 
-    ap.add_argument('-br', '--biological-replicate',
+    ap.add_argument('--br', '--biological-replicate',
                     help="Biological Replicate number (default: 1)",
                     default='1',
                     required=True)
 
-    ap.add_argument('-tr', '--technical-replicate',
+    ap.add_argument('--tr', '--technical-replicate',
                     help="Biological Replicate number (default: 1)",
                     default='1',
                     required=True)
@@ -412,6 +412,23 @@ def main():
     except KeyError:
         print "Error, experiment %s replicate %s missing info\n%s" % (args.experiment, replicate, rep)
 
+    fastqs = [ f for f in exp['files'] if f['file_format'] == 'fastq']
+    print "Error, no fastqs in experiment %s" % args.experiment
+    reads1 = []
+    reads2 = []
+    for fq in fastqs:
+        try:
+            if fq['replicate']['biological_replicate_number'] == args.br and fq['replicate']['technical_replicate_number'] == args.tr:
+                if pairedEnd and fq.get('paired_with') == '2':
+                    reads2.append(fq['accession']+'.fastq.gz')
+                else:
+                    reads1.append(fq['accession']+'.fastq.gz')
+
+        except KeyError:
+            print "Error, file %s missing info\n%s" % (fq['accession'], fq)
+
+
+
     if organism == 'mouse':
         genome = 'mm10'
     elif organism == 'human':
@@ -430,8 +447,9 @@ def main():
     if pairedEnd:
         steps = STEP_ORDER['pe']
         print "Generating workflow steps (paired-end)..."
-   else:
+    else:
         steps = STEP_ORDER['se']
+        print "Generating workflow steps (single-end)..."
     for step in steps:
         STEPS[step] = calculate_steps(step)
 
@@ -447,7 +465,8 @@ def main():
     # TODO: files could be in: dx (usual), remote (url e.g.https://www.encodeproject.org/...
     #       or possibly local, Currently only DX locations are supported.
     reads1 = dxencode.find_and_copy_read_files(priors, args.reads1, args.test, 'reads1', resultsFolder, projectId)
-    reads2 = dxencode.find_and_copy_read_files(priors, args.reads2, args.test, 'reads2', resultsFolder, projectId)
+    if pairedEnd:
+        reads2 = dxencode.find_and_copy_read_files(priors, args.reads2, args.test, 'reads2', resultsFolder, projectId)
 
     print "Looking for reference files..."
     findReferenceFiles(priors,args.refLoc,extras)
