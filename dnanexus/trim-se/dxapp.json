@@ -21,7 +21,8 @@
     {
       "name": "trimmed_reads",
       "label": "Mott Trimmed Reads for input into Bismark",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*.trimmed-reads.fq.gz"]
     }
   ],
   "runSpec": {

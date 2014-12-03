@@ -33,48 +33,57 @@
     {
       "name": "CG",
       "label": "CG methyation BED file (gzipped)",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CG_bismark.bed.gz"]
     },
     {
       "name": "CHG",
       "label": "CHG methyation BED file (gzipped)",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CHG_bismark.bed.gz"]
     },
     {
       "name": "CHH",
       "label": "CHH methyation BED file (gzipped)",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CHH_bismark.bed.gz"]
     },
     {
       "name": "CGbb",
       "label": "CG methyation bigBed file",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CG_bismark.bb"]
     },
     {
       "name": "CHGbb",
       "label": "CHG methyation bigBed file",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CHG_bismark.bb"]
     },
     {
       "name": "CHHbb",
       "label": "CHH methyation bigBed file",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_CHH_bismark.bb"]
     },
     {
       "name": "mapped_reads",
       "label": "the BAM file",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_bismark.bam"]
     },
     {
       "name": "map_report",
       "label": "Mapping QC report",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*_bismark_map_report.txt"]
     },
     {
       "name": "M_bias_report",
       "label": "M-Biast QC report",
       "class": "file"
-    }
+      "patterns": ["*_bismark.M-bias.txt"]
+   }
   ],
   "runSpec": {
     "interpreter": "bash",

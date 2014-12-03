@@ -28,12 +28,14 @@
     {
       "name": "trimmed_reads1",
       "label": "Mott Trimmed Reads for input into Bismark (1st pair)",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*.trimmed-reads.fq.gz"]
     },
     {
       "name": "trimmed_reads2",
       "label": "Mott Trimmed Reads for input into Bismark (2nd pair)",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*.trimmed-reads.fq.gz"]
     }
   ],
   "runSpec": {

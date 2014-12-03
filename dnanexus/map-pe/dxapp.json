@@ -55,7 +55,8 @@
     {
       "name": "mapped_files",
       "label": "tgz file of mapped bismark outputs",
-      "class": "file"
+      "class": "file",
+      "patterns": ["*.mapped_methylseq.tgz"]
     }
   ],
   "runSpec": {
