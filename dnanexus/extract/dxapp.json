@@ -81,7 +81,7 @@
     {
       "name": "M_bias_report",
       "label": "M-Biast QC report",
-      "class": "file"
+      "class": "file",
       "patterns": ["*_bismark.M-bias.txt"]
    }
   ],

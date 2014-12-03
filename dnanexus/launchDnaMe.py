@@ -23,7 +23,7 @@ import json
 GENOME_DEFAULT = 'hg19'
 ''' This the default Genome that human experiments are mapped to.'''
 
-PROJECT_DEFAULT = 'dna-me-pipline'
+PROJECT_DEFAULT = 'dna-me-pipeline'
 ''' This the default DNA Nexus project to use for the long RNA-seq pipeline.'''
 
 REF_PROJECT_DEFAULT = 'dna-me-pipeline'
@@ -57,7 +57,8 @@ GENOME_REFERENCES = {
                     'mm10': {
                             'female': "female.mm10.chrom.fa.gz.bisulfite.tgz",
                             'male': "male.mm10.chrom.fa.gz.bisulfite.tgz"
-                    },
+                    }
+    },
     'chromSizes':   {
                     'hg19': {
                             'female':   'female_hg19.chrom.sizes',
@@ -67,7 +68,6 @@ GENOME_REFERENCES = {
                             'female':   'female.mm10.chrom.sizes',
                             'male':     'male.mm10.chrom.sizes'
                             }
-                    }
     }
 }
 
@@ -87,12 +87,14 @@ def get_args():
 
     ap.add_argument('--br', '--biological-replicate',
                     help="Biological Replicate number (default: 1)",
-                    default='1',
+                    default=1,
+                    type=int,
                     required=True)
 
     ap.add_argument('--tr', '--technical-replicate',
                     help="Biological Replicate number (default: 1)",
-                    default='1',
+                    default=1,
+                    type=int,
                     required=True)
 
     ap.add_argument('--project',
@@ -129,7 +131,7 @@ STEPS = {}  ## back backwards compatibility
 def calculate_steps(applet):
     ''' create input object for a step '''
     try:
-        dxapp = json.load(open(applet+'dxapp.json'))
+        dxapp = json.load(open(applet+'/dxapp.json'))
     except IOError:
         print "Cannot open applet json for %s" % applet
         sys.exit(0)
@@ -139,14 +141,14 @@ def calculate_steps(applet):
     results = {}
     inps = dxapp.get('inputSpec') or []
     for inp in inps:
-        if inp['class'] == 'file':
+        if inp['class'] == 'file' or inp['class'] == 'array:file':
             inputs[inp['name']] = inp['name']
         else:
             params[inp['name']] = inp['name']
 
     outs = dxapp.get('outputSpec') or []
     for out in outs:
-        if inp['class'] == 'file':
+        if inp['class'] == 'file' or inp['class'] == 'array:file':
             results[out['name']] = '/'+out['patterns'][0]
         else:
             pass
@@ -390,18 +392,20 @@ def main():
     response = dxencode.encoded_get(url, AUTHID, AUTHPW)
     exp = response.json()
 
-    if not exp.get('replicates') or len(exp['replicates'] < 1):
+    if not exp.get('replicates') or len(exp['replicates']) < 1:
         print "No replicates found in %s\n%s" % ( args.experiment, exp )
         sys.exit(1)
 
-    rep = [ r for r in exp['replicates'] if r['biological_replicate_number'] == args.br and
+    reps = [ r for r in exp['replicates'] if r['biological_replicate_number'] == args.br and
                                             r['technical_replicate_number'] == args.tr ]
 
     replicate = "%s_%s" % (args.br, args.tr)
-    if not rep or len(rep):
-        print "No matching replicate found for %s" % replicate
+    if len(reps) != 1:
+        print "No unique replicate found for %s (%s)" % (replicate, len(reps))
+        print exp['replicates']
         sys.exit(1)
 
+    rep = reps[0]
     pairedEnd = rep.get('paired')
     try:
         library = rep['library']['accession']
@@ -413,16 +417,19 @@ def main():
         print "Error, experiment %s replicate %s missing info\n%s" % (args.experiment, replicate, rep)
 
     fastqs = [ f for f in exp['files'] if f['file_format'] == 'fastq']
-    print "Error, no fastqs in experiment %s" % args.experiment
-    reads1 = []
-    reads2 = []
+    if not fastqs:
+        print "Error, no fastqs in experiment %s" % args.experiment
+        sys.exit(1)
+
+    read1_fqs = []
+    read2_fqs= []
     for fq in fastqs:
         try:
             if fq['replicate']['biological_replicate_number'] == args.br and fq['replicate']['technical_replicate_number'] == args.tr:
                 if pairedEnd and fq.get('paired_with') == '2':
-                    reads2.append(fq['accession']+'.fastq.gz')
+                    read2_fqs.append(fq['accession']+'.fastq.gz')
                 else:
-                    reads1.append(fq['accession']+'.fastq.gz')
+                    read1_fqs.append(fq['accession']+'.fastq.gz')
 
         except KeyError:
             print "Error, file %s missing info\n%s" % (fq['accession'], fq)
@@ -464,9 +471,9 @@ def main():
     # Find all reads files and move into place
     # TODO: files could be in: dx (usual), remote (url e.g.https://www.encodeproject.org/...
     #       or possibly local, Currently only DX locations are supported.
-    reads1 = dxencode.find_and_copy_read_files(priors, args.reads1, args.test, 'reads1', resultsFolder, projectId)
+    reads1 = dxencode.find_and_copy_read_files(priors, read1_fqs, args.test, 'pair1_reads', resultsFolder, projectId)
     if pairedEnd:
-        reads2 = dxencode.find_and_copy_read_files(priors, args.reads2, args.test, 'reads2', resultsFolder, projectId)
+        reads2 = dxencode.find_and_copy_read_files(priors, read2_fqs, args.test, 'pair2_reads', resultsFolder, projectId)
 
     print "Looking for reference files..."
     findReferenceFiles(priors,args.refLoc,extras)
