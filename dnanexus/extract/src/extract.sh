@@ -69,9 +69,9 @@ main() {
     mv /home/dnanexus/output/CHH_"$mapped_fn".fq_bismark.CX_report.txt "$mapped_fn"_CHH_bismark.bed
 
     echo "Convert to BigBed"
-    bedToBigBed "$mapped_fn"_CG_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CG_bismark.bb
-    bedToBigBed "$mapped_fn"_CHG_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CHG_bismark.bb
-    bedToBigBed "$mapped_fn"_CHH_bismark.bed -type=bed9+2 chrom.sizes "$mapped_fn"_CHH_bismark.bb
+    bedToBigBed "$mapped_fn"_CG_bismark.bed -as=bedMethyl -type=bed9+2 chrom.sizes "$mapped_fn"_CG_bismark.bb
+    bedToBigBed "$mapped_fn"_CHG_bismark.bed -as=bedMethyl -type=bed9+2 chrom.sizes "$mapped_fn"_CHG_bismark.bb
+    bedToBigBed "$mapped_fn"_CHH_bismark.bed -as=bedMethyl -type=bed9+2 chrom.sizes "$mapped_fn"_CHH_bismark.bb
 
     gzip *.bed
     echo "Uploading files"
