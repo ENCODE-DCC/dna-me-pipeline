@@ -65,14 +65,14 @@ GENOME_REFERENCES = {
                             'male': "male.hg19.fa.gz"
                             },
                     'mm10': {
-                            'female': "female.mm10.chrom.fa.gz.bisulfite.tgz",
-                            'male': "male.mm10.chrom.fa.gz.bisulfite.tgz"
+                            'female': "female.mm10.chrom.fa.gz",
+                            'male': "male.mm10.chrom.fa.gz"
                     }
     },
     'chrom_sizes':   {
                     'hg19': {
-                            'female':   'female_hg19.chrom.sizes',
-                            'male':     'male_hg19.chrom.sizes'
+                            'female':   'female.hg19.chrom.sizes',
+                            'male':     'male.hg19.chrom.sizes'
                             },
                     'mm10': {
                             'female':   'female.mm10.chrom.sizes',
@@ -401,56 +401,41 @@ def main():
         print "No replicates found in %s\n%s" % ( args.experiment, exp )
         sys.exit(1)
 
-    reps = [ r for r in exp['replicates'] if r['biological_replicate_number'] == args.br and
-                                            r['technical_replicate_number'] == args.tr ]
-
     replicate = "%s_%s" % (args.br, args.tr)
-    if len(reps) != 1:
-        print "No unique replicate found for %s (%s)" % (replicate, len(reps))
+
+    reps_mapping = dxencode.choose_mapping_for_experiment(exp)
+    # could try to do all replicates here
+    try:
+        mapping = reps_mapping[args.br][args.tr]
+    except KeyError:
+        print "Specified replicate: %s could not be found in mapping."
         print exp['replicates']
         sys.exit(1)
 
-    rep = reps[0]
-    pairedEnd = rep.get('paired') ### THIS IS GOING AWAY
-    try:
-        library = rep['library']['accession']
-        gender = 'male'
-        if rep['library']['biosample']['sex'] == 'female':
-            gender = 'female'
-        organism = rep['library']['biosample']['donor']['organism']['name']
-    except KeyError:
-        print "Error, experiment %s replicate %s missing info\n%s" % (args.experiment, replicate, rep)
 
-    fastqs = [ f for f in exp['files'] if f['file_format'] == 'fastq']
-    if not fastqs:
-        print "Error, no fastqs in experiment %s" % args.experiment
+    if mapping['organism'] == 'mouse':
+        genome = 'mm10'
+    elif mapping['organism'] == 'human':
+        genome = 'hg19'
+    else:
+        print "Organism %s not currently supported" % mapping['organism']
         sys.exit(1)
 
-    read1_fqs = []
-    read2_fqs= []
-    for fq in fastqs:
-        try:
-            if fq['replicate']['biological_replicate_number'] == args.br and fq['replicate']['technical_replicate_number'] == args.tr:
-                if pairedEnd and fq.get('paired_with') == '2':
-                    read2_fqs.append(fq['accession']+'.fastq.gz')
-                else:
-                    read1_fqs.append(fq['accession']+'.fastq.gz')
+    pairedEnd = True
+    if not mapping['paired']:
+        pairedEnd = False
+    elif not mapping['unpaired']:
+        print "Replicate has no reads either paired or unpaired"
+        sys.exit(1)
+    else:
+        print "Replicate has both paired(%s) and unpaired(%s) reads, quitting." % (len(mapping['paired'], len(mapping['unpaired'])))
+        sys.exit(1)
 
-        except KeyError:
-            print "Error, file %s missing info\n%s" % (fq['accession'], fq)
-
-
-
-    if organism == 'mouse':
-        genome = 'mm10'
-    elif organism == 'human':
-        genome = 'hg19'
-
-    extras = pipelineSpecificExtras(genome, gender, args.experiment, replicate, library, pairedEnd)
+    extras = pipelineSpecificExtras(genome, mapping['sex'], args.experiment, replicate, mapping['library'], pairedEnd)
     project = dxencode.get_project(args.project)
     projectId = project.get_id()
 
-#    args.resultsLoc = RESULT_FOLDER_DEFAULT + '/' + genome
+    #    args.resultsLoc = RESULT_FOLDER_DEFAULT + '/' + genome
     args.resultsLoc = RESULT_FOLDER_DEFAULT  # not sure we need genome
     resultsFolder = args.resultsLoc + '/' + args.experiment + '/' + replicate
     if not args.test:
@@ -458,9 +443,12 @@ def main():
             project.new_folder(resultsFolder,parents=True)
 
     if pairedEnd:
+        read1_fqs = [ f[0]['accession']+".fastq.gz" for f in mapping['paired'] ]
+        read2_fqs = [ f[1]['accession']+".fastq.gz" for f in mapping['paired'] ]
         steps = STEP_ORDER['pe']
         print "Generating workflow steps (paired-end)..."
     else:
+        read1_fqs = [ f['accession']+".fastq.gz" for f in mapping['unpaired'] ]
         steps = STEP_ORDER['se']
         print "Generating workflow steps (single-end)..."
     for step in steps:
