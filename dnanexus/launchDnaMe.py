@@ -414,9 +414,9 @@ def main():
     pairedEnd = rep.get('paired') ### THIS IS GOING AWAY
     try:
         library = rep['library']['accession']
-        gender = 'female'
-        if rep['library']['biosample']['sex'] == 'male':
-            gender = 'male'
+        gender = 'male'
+        if rep['library']['biosample']['sex'] == 'female':
+            gender = 'female'
         organism = rep['library']['biosample']['donor']['organism']['name']
     except KeyError:
         print "Error, experiment %s replicate %s missing info\n%s" % (args.experiment, replicate, rep)
