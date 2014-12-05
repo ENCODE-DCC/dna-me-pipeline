@@ -9,6 +9,7 @@ import requests
 
 SERVER = 'https://www.encodeproject.org'
 ASSAY_TYPE = 'whole genome bisulfite sequencing'
+ASSAY_TERM_ID = 'OBI:0001863'
 HEADERS = {'content-type': 'application/json'}
 PROJECT_NAME = 'dna-me-pipeline'
 APPLETS = {}
@@ -68,7 +69,7 @@ def main():
 
     print cmnd.authid
     print cmnd.authpw
-    query = '/search/?type=experiment&assay_term_name=%s&award.rfa=ENCODE3&limit=all&frame=embedded' % ASSAY_TYPE
+    query = '/search/?type=experiment&assay_term_id=%s&award.rfa=ENCODE3&limit=all&frame=embedded' % ASSAY_TERM_ID
     res = requests.get(SERVER+query, headers=HEADERS, auth=(cmnd.authid, cmnd.authpw),allow_redirects=True, stream=True)
 
     exps = res.json()['@graph']

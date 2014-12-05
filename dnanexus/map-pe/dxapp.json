@@ -41,14 +41,14 @@
       "label": "Minimum insert size",
       "class": "int",
       "optional": true,
-      "default": 275
+      "default": 0
     },
     {
       "name": "max_insert",
       "label": "Maximum insert size",
       "class": "int",
       "optional": true,
-      "default": 525
+      "default": 500
     }
   ],
   "outputSpec": [
