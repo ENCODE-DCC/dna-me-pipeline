@@ -3,4 +3,5 @@ venv
 .DS_Store
 *.pyc
 keypairs.json
+dxencode/
 
