@@ -406,10 +406,10 @@ def main():
     reps_mapping = dxencode.choose_mapping_for_experiment(exp)
     # could try to do all replicates here
     try:
-        mapping = reps_mapping[args.br][args.tr]
+        mapping = reps_mapping[(args.br,args.tr)]
     except KeyError:
-        print "Specified replicate: %s could not be found in mapping."
-        print exp['replicates']
+        print "Specified replicate: %s could not be found in mapping." % replicate
+        print reps_mapping
         sys.exit(1)
 
 
@@ -421,14 +421,17 @@ def main():
         print "Organism %s not currently supported" % mapping['organism']
         sys.exit(1)
 
-    pairedEnd = True
-    if not mapping['paired']:
+    if mapping['unpaired'] and not mapping['paired']:
         pairedEnd = False
-    elif not mapping['unpaired']:
+    elif mapping['paired'] and not mapping['unpaired']:
+        pairedEnd = True
+    elif not mapping['unpaired'] and not mapping['paired']:
         print "Replicate has no reads either paired or unpaired"
+        print mapping
         sys.exit(1)
     else:
         print "Replicate has both paired(%s) and unpaired(%s) reads, quitting." % (len(mapping['paired'], len(mapping['unpaired'])))
+        print mapping
         sys.exit(1)
 
     extras = pipelineSpecificExtras(genome, mapping['sex'], args.experiment, replicate, mapping['library'], pairedEnd)
