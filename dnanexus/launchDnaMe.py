@@ -181,6 +181,10 @@ def pipelineSpecificExtras(genome, gender, experiment, replicate, library, paire
     extras['replicate']  = replicate
     extras['library']    = library
     extras['pairedEnd']  = pairedEnd
+    if pairedEnd:
+        extras['max_insert'] = 500
+        extras['min_insert'] = 0
+        # these might have other production values
     # workflow labeling
     genderToken = "XY"
     if gender == 'female':

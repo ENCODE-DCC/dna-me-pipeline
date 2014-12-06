@@ -16,14 +16,14 @@
       "patterns": ["*.tgz"]
       },
     {
-      "name": "pair_1",
+      "name": "trimmed_reads1",
       "label": "Prepared Reads for Pair 1",
       "class": "file",
       "optional": false,
       "patterns": ["*.gz"]
     },
     {
-      "name": "pair_2",
+      "name": "trimmed_reads2",
       "label": "Prepared Reads for Pair 2",
       "class": "file",
       "optional": false,
