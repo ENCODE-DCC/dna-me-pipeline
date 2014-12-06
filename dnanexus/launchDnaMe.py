@@ -158,7 +158,7 @@ def calculate_steps(applet):
 
     outs = dxapp.get('outputSpec') or []
     for out in outs:
-        if inp['class'] == 'file' or inp['class'] == 'array:file':
+        if out['class'] == 'file' or out['class'] == 'array:file':
             results[out['name']] = '/'+out['patterns'][0]
         else:
             pass
@@ -208,7 +208,7 @@ def findPriorResults(pairedEnd,resultsFolder,projectId):
         steps = STEP_ORDER['se']
     for step in steps:
         for fileToken in STEPS[step]['results'].keys():
-            fid = dxencode.find_file(resultsFolder + STEPS[step]['results'][fileToken],projectId, recurse=False)
+            fid = dxencode.find_file(resultsFolder + STEPS[step]['results'][fileToken],project=projectId, recurse=False)
             if fid != None:
                 priors[fileToken] = fid
     return priors
