@@ -446,12 +446,17 @@ def main():
             project.new_folder(resultsFolder,parents=True)
 
     if pairedEnd:
-        read1_fqs = [ f[0]['accession']+".fastq.gz" for f in mapping['paired'] ]
-        read2_fqs = [ f[1]['accession']+".fastq.gz" for f in mapping['paired'] ]
+        paired_fqs = {
+            '1': [],
+            '2': []
+        }
+        for (p1, p2) in mapping['paired']:
+            paired_fqs[p1['paired_end']].append(p1['accession']+".fastq.gz")
+            paired_fqs[p2['paired_end']].append(p2['accession']+".fastq.gz")
         steps = STEP_ORDER['pe']
         print "Generating workflow steps (paired-end)..."
     else:
-        read1_fqs = [ f['accession']+".fastq.gz" for f in mapping['unpaired'] ]
+        unpaired_fqs = [ f['accession']+".fastq.gz" for f in mapping['unpaired'] ]
         steps = STEP_ORDER['se']
         print "Generating workflow steps (single-end)..."
     for step in steps:
@@ -469,11 +474,11 @@ def main():
     # TODO: files could be in: dx (usual), remote (url e.g.https://www.encodeproject.org/...
     #       or possibly local, Currently only DX locations are supported.
     if pairedEnd:
-        reads1 = dxencode.find_and_copy_read_files(priors, read1_fqs, args.test, 'pair1_reads', resultsFolder, arrayInput=True, projectId=projectId)
-        reads2 = dxencode.find_and_copy_read_files(priors, read2_fqs, args.test, 'pair2_reads', resultsFolder, arrayInput=True, projectId=projectId)
+        reads1 = dxencode.find_and_copy_read_files(priors, paired_fqs['1'], args.test, 'pair1_reads', resultsFolder, arrayInput=True, projectId=projectId)
+        reads2 = dxencode.find_and_copy_read_files(priors, paired_fqs['2'], args.test, 'pair2_reads', resultsFolder, arrayInput=True, projectId=projectId)
     else:
         # trim-se and trim-pe use different input tokens.
-        reads1 = dxencode.find_and_copy_read_files(priors, read1_fqs, args.test, 'reads', resultsFolder, arrayInput=True, projectId=projectId)
+        reads1 = dxencode.find_and_copy_read_files(priors, unpaired_fqs, args.test, 'reads', resultsFolder, arrayInput=True, projectId=projectId)
 
     print "Looking for reference files..."
     findReferenceFiles(GENOME_REFERENCES.keys(), priors,args.refLoc,extras)
