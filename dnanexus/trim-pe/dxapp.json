@@ -43,10 +43,10 @@
     "file": "src/trim.sh",
     "systemRequirements": {
       "main": {
-        "instanceType": "mem2_hdd2_x2"
+        "instanceType": "mem2_hdd2_x4"
       },
       "myEntryPoint": {
-        "instanceType": "mem2_hdd2_x2"
+        "instanceType": "mem2_hdd2_x4"
       }
     }
   },
