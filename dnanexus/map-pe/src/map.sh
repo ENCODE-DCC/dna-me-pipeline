@@ -24,10 +24,10 @@ main() {
     echo "getting files"
     dx download "$genome" -o - | gunzip > genome.fa
     dx download "$meIndex" -o - | tar zxvf -
-    read_fn1=`dx describe "$pair_1" --name | cut -d'.' -f1`
-    read_fn2=`dx describe "$pair_2" --name | cut -d'.' -f1`
-    dx download "$pair_1" -o - | gunzip > "$read_fn1".fq
-    dx download "$pair_2" -o - | gunzip > "$read_fn2".fq
+    read_fn1=`dx describe "trimmed_reads1" --name | cut -d'.' -f1`
+    read_fn2=`dx describe "trimmed_reads2" --name | cut -d'.' -f1`
+    dx download "trimmed_reads1" -o - | gunzip > "$read_fn1".fq
+    dx download "trimmed_reads2" -o - | gunzip > "$read_fn2".fq
 
     mv genome.fa input
 
