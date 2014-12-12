@@ -17,18 +17,22 @@
 
 main() {
 
-    echo "Value of genome: '$genome'"
+    echo "Value of genomes: '$genomes'"
 
     # The following line(s) use the dx command-line tool to download your file
     # inputs to the local file system using variable names for the filenames. To
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
 
-    genome_fn=`dx describe "$genome" --name`
-    genome_fn=${genome_fn%.fasta.gz}
-    genome_fn=${genome_fn%.fa.gz}
-
-    dx download "$genome" -o - | gunzip > genome.fa
+    genome_name=""
+    for i in ${!genomes[@]}
+    do
+        filename=`dx describe "${genomes[$i]}" --name`
+        dx download "${genomes[$i]}" -o - | gunzip > "$filename".fa
+        genome_name="${genome_name}${filename}"
+    done
+    echo "genomes  downloaded"
+    cat *.fa > genome.fa
 
     mkdir input
     mv genome.fa input

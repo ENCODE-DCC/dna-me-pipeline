@@ -10,9 +10,9 @@
   ],
   "inputSpec": [
     {
-      "name": "genome",
-      "label": "A genome",
-      "class": "file",
+      "name": "genomes",
+      "label": "A  set of genomes",
+      "class": "array:file",
       "optional": false,
       "patterns": ["*.gz"]
       }
