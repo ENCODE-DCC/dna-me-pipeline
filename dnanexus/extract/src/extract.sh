@@ -24,6 +24,7 @@ main() {
     # inputs to the local file system using variable names for the filenames. To
     # recover the original filenames, you can use the output of "dx describe
     # "$variable" --name".
+    echo " Value of gzip: '$gzip'"
 
     echo "getting files"
     dx download "$genome" -o - | gunzip > genome.fa
@@ -36,7 +37,17 @@ main() {
     mv genome.fa input
     echo "Analyse methylation"
     outfile="$mapped_fn".fq_bismark
-    bismark_methylation_extractor -s --comprehensive --cytosine_report --CX_context --ample_mem\
+
+    gzipFlag=""
+    if [ "$gzip" == "true" ]; then
+        echo '* Adding gzip flag'
+        gzipFlag="--gzip"
+    else
+        echo '* No gzip flaf'
+    fi
+
+
+    bismark_methylation_extractor "$gzipFlag" -s --comprehensive --cytosine_report --CX_context --ample_mem\
       --output /home/dnanexus/output/ --zero_based --genome_folder input output/"$outfile".sam
 
     samtools view -Sb output/"$outfile".sam > output/"$outfile".bam

@@ -23,6 +23,12 @@
       "optional": false
       },
     {
+      "name": "gzip",
+      "label": "Add --gzip to bismark_extractoin",
+      "class": "boolean",
+      "optional": true
+      },
+    {
       "name": "mapped_files",
       "label": "tgz file of mapped bismark outputs",
       "class": "file",
