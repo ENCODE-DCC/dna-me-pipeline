@@ -129,6 +129,11 @@ def get_args():
                     action='store_true',
                     required=False)
 
+    ap.add_argument('-z', '--gzip',
+                    help='Gzip option passed to methylation extraction',
+                    action='store_true',
+                    required=False)
+
     ap.add_argument('--force',
                     help='Force rerunning all steps.',
                     action='store_true',
@@ -172,7 +177,7 @@ def calculate_steps(applet):
     }
 
 
-def pipelineSpecificExtras(genome, gender, experiment, replicate, library, pairedEnd):
+def pipelineSpecificExtras(genome, gender, experiment, replicate, library, pairedEnd, gzip=False):
     '''Adds pipeline specific variables to a dict, for use building the workflow.'''
     extras = {}
     extras['genome']   = genome
@@ -181,6 +186,7 @@ def pipelineSpecificExtras(genome, gender, experiment, replicate, library, paire
     extras['replicate']  = replicate
     extras['library']    = library
     extras['pairedEnd']  = pairedEnd
+    extras['gzip'] = gzip
     if pairedEnd:
         extras['max_insert'] = 500
         extras['min_insert'] = 0
@@ -438,7 +444,7 @@ def main():
         print mapping
         sys.exit(1)
 
-    extras = pipelineSpecificExtras(genome, mapping['sex'], args.experiment, replicate, mapping['library'], pairedEnd)
+    extras = pipelineSpecificExtras(genome, mapping['sex'], args.experiment, replicate, mapping['library'], pairedEnd, args.gzip)
     project = dxencode.get_project(args.project)
     projectId = project.get_id()
 
