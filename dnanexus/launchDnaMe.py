@@ -57,6 +57,10 @@ GENOME_REFERENCES = {
                     'mm10': {
                             'female': "female.mm10.chrom.fa.gz.bisulfite.tgz",
                             'male': "male.mm10.chrom.fa.gz.bisulfite.tgz"
+                    },
+                    'lambda': {
+                            'female': "chrL.fa.gz.bisulfite.tgz",
+                            'male': "chrL.fa.gz.bisulfite.tgz"
                     }
     },
     'genome':  {
@@ -67,7 +71,12 @@ GENOME_REFERENCES = {
                     'mm10': {
                             'female': "female.mm10.chrom.fa.gz",
                             'male': "male.mm10.chrom.fa.gz"
+                    },
+                    'lambda': {
+                            'female': "chrL.fa.gz",
+                            'male': "chrL.fa.gz"
                     }
+
     },
     'chrom_sizes':   {
                     'hg19': {
@@ -77,7 +86,11 @@ GENOME_REFERENCES = {
                     'mm10': {
                             'female':   'female.mm10.chrom.sizes',
                             'male':     'male.mm10.chrom.sizes'
-                            }
+                            },
+                    'lambda': {
+                            'female': "chrL.chrom.sizes",
+                            'male': "chrL.chrom.sizes"
+                    }
     }
 }
 
@@ -131,6 +144,11 @@ def get_args():
 
     ap.add_argument('-z', '--gzip',
                     help='Gzip option passed to methylation extraction',
+                    action='store_true',
+                    required=False)
+
+    ap.add_argument('-l', '--lambda', '--map-lambda,
+                    help='Map against lambda genome for QC',
                     action='store_true',
                     required=False)
 
@@ -422,14 +440,16 @@ def main():
         print reps_mapping
         sys.exit(1)
 
-
-    if mapping['organism'] == 'mouse':
-        genome = 'mm10'
-    elif mapping['organism'] == 'human':
-        genome = 'hg19'
+    if args.map_lambda:
+        genome = 'lambda'
     else:
-        print "Organism %s not currently supported" % mapping['organism']
-        sys.exit(1)
+        if mapping['organism'] == 'mouse':
+            genome = 'mm10'
+        elif mapping['organism'] == 'human':
+            genome = 'hg19'
+        else:
+            print "Organism %s not currently supported" % mapping['organism']
+            sys.exit(1)
 
     if mapping['unpaired'] and not mapping['paired']:
         pairedEnd = False
@@ -451,6 +471,8 @@ def main():
     #    args.resultsLoc = RESULT_FOLDER_DEFAULT + '/' + genome
     args.resultsLoc = RESULT_FOLDER_DEFAULT  # not sure we need genome
     resultsFolder = args.resultsLoc + '/' + args.experiment + '/' + replicate
+    if args.map_lambda:
+        resultsFolder = resultsFolder + '/lambda'
     if not args.test:
         if not dxencode.project_has_folder(project, resultsFolder):
             project.new_folder(resultsFolder,parents=True)
