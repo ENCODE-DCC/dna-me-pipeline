@@ -226,7 +226,7 @@ def pipelineSpecificExtras(genome, gender, experiment, replicate, library, paire
     return extras
 
 
-def findPriorResults(pairedEnd,resultsFolder,projectId):
+def findPriorResults(pairedEnd,resultsFolder,projectId, maplambda=False):
     '''Looks for all result files in the results folder.'''
     priors = {}
     steps = []
@@ -234,11 +234,18 @@ def findPriorResults(pairedEnd,resultsFolder,projectId):
         steps = STEP_ORDER['pe']
     else:
         steps = STEP_ORDER['se']
+
     for step in steps:
         for fileToken in STEPS[step]['results'].keys():
             fid = dxencode.find_file(resultsFolder + STEPS[step]['results'][fileToken],project=projectId, recurse=False)
             if fid != None:
                 priors[fileToken] = fid
+            elif maplambda and step.find('trim') > -1:
+                ## giant kludge
+                folder = resultsFolder.rstrip('/lambda')
+                fid = dxencode.find_file(folder + STEPS[step]['results'][fileToken],project=projectId, recurse=False)
+                if fid != None:
+                    priors[fileToken] = fid
     return priors
 
 def findReferenceFiles(refs, priors,refLoc,extras):
@@ -499,7 +506,7 @@ def main():
     # Perhaps reads files are already there?
     # NOTE: priors is a dictionary of fileIds that will be used to determine stepsToDo
     #       and fill in inputs to workflow steps
-    priors = findPriorResults(pairedEnd,resultsFolder,projectId)
+    priors = findPriorResults(pairedEnd,resultsFolder,projectId, maplambda=True)
 
     print "Checking for read files..."
     # Find all reads files and move into place
