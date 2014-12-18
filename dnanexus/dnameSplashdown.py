@@ -104,33 +104,33 @@ POST_TEMPLATES = {
         "derived_from": ["all_reads"]
     },
     "CG": {
-        "file_format": "bed",
-        "output_type": "bed_bedMethyl",
+        "file_format": "bed_bedMethyl",
+        "output_type": "methyl CG",
         "derived_from": ["mapped_reads"]
     },
     "CHG": {
-        "file_format": "bed",
-        "output_type": "bed_bedMethyl",
+        "file_format": "bed_bedMethyl",
+        "output_type": "methyl CHG",
         "derived_from": ["mapped_reads"]
     },
     "CHH": {
-        "file_format": "bed",
-        "output_type": "bed_bedMethyl",
+        "file_format": "bed_bedMethyl",
+        "output_type": "methyl CHH",
         "derived_from": ["mapped_reads"]
     },
     "CGbb": {
-        "file_format": "bigBed",
-        "output_type": "bedMethyl",
+        "file_format": "bedMethyl",
+        "output_type": "methyl CG",
         "derived_from": ["CG"]
     },
     "CHGbb": {
-        "file_format": "bigBed",
-        "output_type": "bedMethyl",
-        "derived_from": ["CHG"]
+        "file_format": "bedMethyl",
+        "output_type": "methyl CHG",
+       "derived_from": ["CHG"]
     },
     "CHHbb": {
-        "file_format": "bigBed",
-        "output_type": "bedMethyl",
+        "file_format": "bedMethyl",
+        "output_type": "methyl CHH",
         "derived_from": ["CHH"]
     }
 }
@@ -360,7 +360,7 @@ def main():
         priors['reads'] = dxencode.find_file_set(unpaired_fqs, projectId)
         priors['all_reads'] = priors['reads']
         submitted = {
-            'all_reads': mapping['unpaired'],
+            'all_reads': [ f['accession'] for f in mapping['unpaired']],
         }
 
 
@@ -413,13 +413,13 @@ def main():
                 submitted[token] = [ fake_acc ]
             else:
                 applet = dxencode.find_applet_by_name('validate-post', projectId )
-                print "Submitting..."
                 job = applet.run({
                     "pipe_file": dxpy.dxlink(dxFile),
                     "file_meta": f_ob,
                     "key": "test",
                     "debug": True
                     })
+                print "Submitting %s" % job.id
                 job.wait_on_done(interval=1)
                 accession = job.get_output_ref('accession')
                 error = job.get_output_ref('error')
