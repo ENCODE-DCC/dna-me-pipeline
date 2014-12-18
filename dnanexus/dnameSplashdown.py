@@ -254,7 +254,16 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
 
     return extras
 
+def get_software():
 
+    return {
+        "software_versions": [
+            {"bismark": "v0.10.0"},
+            {"samtools": "0.1.19-44428cd"},
+            {"cxrepo-bed.py": "0.2"}
+        ]
+
+    }
 #######################
 def main():
     args = get_args()
@@ -396,7 +405,7 @@ def main():
             f_ob['lab'] = exp['lab']['@id']
             f_ob['award'] = exp['award']['@id']
             f_ob['assembly'] = mapping['genome']
-            f_ob['notes'] = json.dumps(dxencode.create_notes(dxFile, dxencode.get_sw_from_log(dxFile, '\* (\S+)\s+version:\s+(\S+)')))
+            f_ob['notes'] = json.dumps(dxencode.create_notes(dxFile, get_software()))
             print json.dumps(f_ob, sort_keys=True, indent=4, separators=(',',': '))
             if args.test:
                 fake_acc = 'ENCFF%03dAAA' % n
