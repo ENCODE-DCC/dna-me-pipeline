@@ -147,7 +147,7 @@ def get_args():
                     action='store_true',
                     required=False)
 
-    ap.add_argument('-l', '--lambda', '--map-lambda,
+    ap.add_argument('-l', '--maplambda',
                     help='Map against lambda genome for QC',
                     action='store_true',
                     required=False)
@@ -249,7 +249,7 @@ def findReferenceFiles(refs, priors,refLoc,extras):
         dxfile = refLoc+'/'+GENOME_REFERENCES[ref][extras['genome']][extras['gender']]
         fid = dxencode.find_file(dxfile,REF_PROJECT_DEFAULT)
         if fid == None:
-            sys.exit("ERROR: Unable to locate DNA Methylation ref file: '" + ref + "'")
+            sys.exit("ERROR: Unable to locate DNA Methylation ref file: '" + dxfile + "'")
         else:
             priors[ref] = fid
 
@@ -440,7 +440,7 @@ def main():
         print reps_mapping
         sys.exit(1)
 
-    if args.map_lambda:
+    if args.maplambda:
         genome = 'lambda'
     else:
         if mapping['organism'] == 'mouse':
@@ -471,7 +471,7 @@ def main():
     #    args.resultsLoc = RESULT_FOLDER_DEFAULT + '/' + genome
     args.resultsLoc = RESULT_FOLDER_DEFAULT  # not sure we need genome
     resultsFolder = args.resultsLoc + '/' + args.experiment + '/' + replicate
-    if args.map_lambda:
+    if args.maplambda:
         resultsFolder = resultsFolder + '/lambda'
     if not args.test:
         if not dxencode.project_has_folder(project, resultsFolder):
