@@ -248,10 +248,15 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
     extras['name']  += args.experiment+"_rep"+extras['replicate']
     extras['subTitle'] = extras['genome']+", "+extras['gender']+"'."
 
+    args.resultsLoc = RESULT_FOLDER_DEFAULT  # not sure we need genome
+    extras['resultsFolder'] = args.resultsLoc + '/' + args.experiment + '/' + mapping['replicate']
+
+
     return extras
 
 
 #######################
+def main():
     args = get_args()
 
     (AUTHID,AUTHPW,SERVER) = dxencode.processkey('default')
@@ -263,7 +268,8 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
         print "No replicates found in %s\n%s" % ( args.experiment, exp )
         sys.exit(1)
 
-    replicate = "rep%s_%s" % (args.br, args.tr)
+    #replicate = "rep%s_%s" % (args.br, args.tr)
+    replicate = "%s_%s" % (args.br, args.tr)
 
     reps_mapping = dxencode.choose_mapping_for_experiment(exp)
     # could try to do all replicates here
@@ -326,21 +332,24 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
     pipeSteps = STEPS
     ## warning ugly kludge here
     file_globs = {}
-    for step in STEPS.keys():
-        for token in step['results'].keys():
-            file_globs[token] = step['results'][token]
+    for app in STEPS.keys():
+        for token in STEPS[app]['results'].keys():
+            file_globs[token] = STEPS[app]['results'][token]
 
     print "Checking for prior results..."
 
     priors = dxencode.find_prior_results(pipePath,pipeSteps,psv['resultsFolder'],file_globs, projectId)
 
     if pairedEnd:
-        priors['all_reads'] = dxencode.find_file_set(paired_fqs["1"], projectId) + dxencode.find_file_set(paired_fqs["2"], projectId)
+        priors['pair1_reads'] = dxencode.find_file_set(paired_fqs["1"], projectId)
+        priors['pair2_reads'] = dxencode.find_file_set(paired_fqs["2"], projectId)
+        priors['all_reads'] = priors['pair1_reads'] + priors['pair2_reads']
         submitted = {
             'all_reads': read1s + read2s
         }
     else:
-        priors['all_reads'] = dxencode.find_file_set(unpaired_fqs, projectId)
+        priors['reads'] = dxencode.find_file_set(unpaired_fqs, projectId)
+        priors['all_reads'] = priors['reads']
         submitted = {
             'all_reads': mapping['unpaired'],
         }
@@ -360,7 +369,8 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
         print "Pipeline incomplete, please resubmit jobs: %s" % stepsToDo
         sys.exit(0)
 
-    to_submit = [ k for k in priors.keys() if k.find('read') < 0 and POST_TEMPLATES.get(k) ]
+    print priors
+    to_submit = [ k for k in priors.keys() if POST_TEMPLATES.get(k) ]
     n = 0 # skip reads
     print "Attempting to submit %s files to args.experiment" % len(to_submit)
     while(to_submit):
@@ -368,8 +378,9 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
             print "Too many itereations: %s" % priors
             break
         token = to_submit.pop(0)
-        print "%s %s" % (token, priors[token])
+        print "%s %s - %s" % (token, priors[token], n)
         f_ob = POST_TEMPLATES.get(token, None)
+        n += 1
         if f_ob:
             derive_check = f_ob.get('derived_from', [])
             if derive_check:
@@ -405,7 +416,6 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
                 error = job.get_output_ref('error')
                 print "Posted (%s): %s" % (error, accession)
                 submitted[token] = [ accession ]
-            n += 1
 
     # Exit if test only
     if args.test:
