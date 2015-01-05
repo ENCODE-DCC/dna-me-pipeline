@@ -26,6 +26,7 @@ def get_args():
     ap.add_argument('-n', '--numberjobs',
                     help='Maximum Number of jobs to run',
                     type=int,
+                    default=9999,
                     required=False)
 
 
@@ -44,6 +45,7 @@ def main():
     exps = res.json()['@graph']
 
     n=0
+    pid = os.getpid()
     for exp in exps:
         acc = exp['accession']
         if n >= cmnd.numberjobs:
@@ -51,7 +53,7 @@ def main():
             break
         for rep in exp.get('replicates', []):
             try:
-                runcmd = "./launchDnaMe.py --gzip -e %s --br %s --tr %s > runs/launch%s-%s-%s.out" % (acc, rep['biological_replicate_number'], rep['technical_replicate_number'],acc, rep['biological_replicate_number'], rep['technical_replicate_number'])
+                runcmd = "./launchDnaMe.py --gzip -e %s --br %s --tr %s > runs/launch%s-%s-%s.%s.out" % (acc, rep['biological_replicate_number'], rep['technical_replicate_number'],acc, rep['biological_replicate_number'], rep['technical_replicate_number'],pid)
                 print runcmd
                 if not cmnd.test:
                     os.system(runcmd)
