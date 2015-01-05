@@ -23,6 +23,12 @@ def get_args():
                     action='store_true',
                     required=False)
 
+    ap.add_argument('-l', '--maplambda',
+                    help='Run against lambda genome (QC)',
+                    action='store_true',
+                    default=False,
+                    required=False)
+
     ap.add_argument('-n', '--numberjobs',
                     help='Maximum Number of jobs to run',
                     type=int,
@@ -46,6 +52,11 @@ def main():
 
     n=0
     pid = os.getpid()
+    if cmnd.maplambda:
+        lambdaqc = '--maplambda'
+    else:
+        lambdaqc = ''
+
     for exp in exps:
         acc = exp['accession']
         if n >= cmnd.numberjobs:
@@ -53,7 +64,7 @@ def main():
             break
         for rep in exp.get('replicates', []):
             try:
-                runcmd = "./launchDnaMe.py --gzip -e %s --br %s --tr %s > runs/launch%s-%s-%s.%s.out" % (acc, rep['biological_replicate_number'], rep['technical_replicate_number'],acc, rep['biological_replicate_number'], rep['technical_replicate_number'],pid)
+                runcmd = "./launchDnaMe.py %s --gzip -e %s --br %s --tr %s > runs/launch%s-%s-%s.%s%s.out" % (lambdaqc, acc, rep['biological_replicate_number'], rep['technical_replicate_number'],acc, rep['biological_replicate_number'], rep['technical_replicate_number'],pid,lambdaqc)
                 print runcmd
                 if not cmnd.test:
                     os.system(runcmd)
