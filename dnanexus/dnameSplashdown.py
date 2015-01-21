@@ -182,6 +182,11 @@ def get_args():
                     action='store_true',
                     required=False)
 
+    ap.add_argument('--skipvalidate',
+                    help='Skip running Validate Files',
+                    action='store_true',
+                    required=False)
+
     return ap.parse_args()
 
 STEPS = {}  ## back backwards compatibility
@@ -419,7 +424,8 @@ def main():
                     "pipe_file": dxpy.dxlink(dxFile),
                     "file_meta": f_ob,
                     "key": "www",
-                    "debug": True
+                    "debug": True,
+                    "skipvalidate": args.skipvalidate or False
                     })
                 print "Submitting %s" % job.id
                 job.wait_on_done(interval=1)
