@@ -177,6 +177,11 @@ def get_args():
                     default=RESULT_FOLDER_DEFAULT,
                     required=False)
 
+    ap.add_argument('--testserver',
+                    help="Use the test server designated in keypairs.json",
+                    action='store_true',
+                    required=False)
+
     ap.add_argument('--test',
                     help='Test run only, do not launch anything.',
                     action='store_true',
@@ -414,6 +419,11 @@ def main():
             f_ob['replicate'] = mapping['replicate_id']
             f_ob['notes'] = json.dumps(dxencode.create_notes(dxFile, get_software()))
             print json.dumps(f_ob, sort_keys=True, indent=4, separators=(',',': '))
+            if args.testserver:
+                server = 'test'
+            else:
+                server = 'www'
+
             if args.test:
                 fake_acc = 'ENCFF%03dAAA' % n
                 print "Fake submission: %s" % fake_acc
@@ -423,7 +433,7 @@ def main():
                 job = applet.run({
                     "pipe_file": dxpy.dxlink(dxFile),
                     "file_meta": f_ob,
-                    "key": "www",
+                    "key": server,
                     "debug": True,
                     "skipvalidate": args.skipvalidate or False
                     })
