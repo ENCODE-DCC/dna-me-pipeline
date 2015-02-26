@@ -266,6 +266,8 @@ def pipeline_specific_vars(args, mapping, pairedEnd, gzip=False):
 
 def get_software():
 
+    ## NOTE bedToBigBed 2.6 version must be added!!!
+    ## This data structure is wrong as well, should be "software_versions":[ { version: v, software: sw } ]
     return {
         "software_versions": [
             {"bismark": "v0.10.0"},
