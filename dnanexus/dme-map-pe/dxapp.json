@@ -1,7 +1,7 @@
 {
   "name": "dme-map-pe",
   "title": "map pe reads with bismark (v2.0.0)",
-  "summary": "WGBS ENCODE Pipeline step: Mapping paired ended reads using Bismark",
+  "summary": "WGBS ENCODE Pipeline step: Trim and map paired end reads for technical replicate using Bismark",
   "dxapi": "1.0.0",
   "version": "2.0.0",
   "categories": [
@@ -9,18 +9,18 @@
   ],
   "inputSpec": [
     {
-      "name": "trimmed_reads1",
-      "label": "Prepared Reads for Pair 1",
-      "class": "file",
+      "name": "reads1",
+      "label": "Read1 of paired-end fastq file(s) (gzipped)",
+      "class": "array:file",
       "optional": false,
-      "patterns": ["*_reads1_trimmed.fq.gz"]
+      "patterns": ["*.fq.gz","*.fastq.gz"]
     },
     {
-      "name": "trimmed_reads2",
-      "label": "Prepared Reads for Pair 2",
-      "class": "file",
+      "name": "reads2",
+      "label": "Read2 of paired-end fastq files (gzipped)",
+      "class": "array:file",
       "optional": false,
-      "patterns": ["*_reads2_trimmed.fq.gz"]
+      "patterns": ["*.fq.gz","*.fastq.gz"]
     },
     {
       "name": "dme_ix",
@@ -53,10 +53,27 @@
   ],
   "outputSpec": [
     {
-      "name": "bismark_bam",
+      "name": "bam_techrep",
       "label": "mapped bismark outputs",
       "class": "file",
-      "patterns": ["*bismark.bam"]
+      "patterns": ["*_bismark_techrep.bam"]
+    },
+    {
+      "name": "bam_techrep_qc",
+      "label": "Text file with samtools flagstat/stats results",
+      "class": "file",
+      "patterns": ["*_bismark_techrep_qc.txt"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the techrep bam",
+      "optional": true,
+      "class": "string"
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
     }
   ],
   "runSpec": {

@@ -1,0 +1,69 @@
+{
+  "name": "dme-merge-bams-alt",
+  "title": "Merge bams (virtual-2.0.0)",
+  "summary": "WGBS ENCODE Pipeline step: Merge two or more technical replicate bams for the ENCODE DNase-seq pipeline",
+  "dxapi": "1.0.0",
+  "version": "2.0.0",
+  "authorizedUsers": [],
+  "inputSpec": [
+    {
+      "name": "bam_set",
+      "label": "Two or more tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_bismark_techrep.bam","*_bismark.bam"]
+    },
+    {
+      "name": "nthreads",
+      "label": "Number of threads to use",
+      "class": "int",
+      "optional": true,
+      "default": 8
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "bam_biorep",
+      "label": " Bam file of merged technical replicates",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bam"]
+    },
+    {
+      "name": "bam_biorep_qc",
+      "label": "Text file with samtools flagstat/stats results",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_qc.txt"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the merged biorep bam",
+      "optional": true,
+      "class": "string"
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-merge-bams.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "access": {
+    "network": [
+      "*"
+    ]
+  },
+  "categories": [
+    "ENCODE"
+  ]
+}

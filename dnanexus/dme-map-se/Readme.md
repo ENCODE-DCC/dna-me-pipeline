@@ -1,7 +1,7 @@
 <!-- dx-header -->
 # Whole Genome Bisulphite Analysis (DNAnexus Platform App)
 
-WGBS ENCODE Pipeline step: Mapping single ended reads using Bismark
+WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark
 
 This is the source code for an app that runs on the DNAnexus Platform.
 For more information about how to run or modify it, see
