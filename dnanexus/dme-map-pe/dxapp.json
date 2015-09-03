@@ -1,0 +1,75 @@
+{
+  "name": "dme-map-pe",
+  "title": "map pe reads with bismark (v2.0.0)",
+  "summary": "WGBS ENCODE Pipeline step: Mapping paired ended reads using Bismark",
+  "dxapi": "1.0.0",
+  "version": "2.0.0",
+  "categories": [
+    "DNA Methylation"
+  ],
+  "inputSpec": [
+    {
+      "name": "trimmed_reads1",
+      "label": "Prepared Reads for Pair 1",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_reads1_trimmed.fq.gz"]
+    },
+    {
+      "name": "trimmed_reads2",
+      "label": "Prepared Reads for Pair 2",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_reads2_trimmed.fq.gz"]
+    },
+    {
+      "name": "dme_ix",
+      "label": "A directory of converted genome files (C->T, G->A)",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.tgz"]
+    },
+    {
+      "name": "min_insert",
+      "label": "Minimum insert size",
+      "class": "int",
+      "optional": true,
+      "default": 0
+    },
+    {
+      "name": "max_insert",
+      "label": "Maximum insert size",
+      "class": "int",
+      "optional": true,
+      "default": 500
+    },
+    {
+      "name": "nthreads",
+      "label": "Number of threads to use",
+      "class": "int",
+      "optional": true,
+      "default": 8
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "bismark_bam",
+      "label": "mapped bismark outputs",
+      "class": "file",
+      "patterns": ["*bismark.bam"]
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-map-pe.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "authorizedUsers": []
+}
