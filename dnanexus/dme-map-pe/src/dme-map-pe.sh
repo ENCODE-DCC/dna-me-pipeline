@@ -87,7 +87,7 @@ main() {
     echo "* Reads2 fastq${concat} file: '${reads2_root}.fq'"
     ls -l ${reads2_root}.fq
 
-    echo "* Download and untar index file..."
+    echo "* Download and uncompress index archive..."
     dx download "$dme_ix" -o - | tar zxvf -
     #ls -l input
 
@@ -105,7 +105,7 @@ main() {
     set +x
     #gzip *_trimmed.fq
 
-    echo "* Mapping with bismark/bowtie..."
+    echo "* Mapping to reference with bismark/bowtie..."
     #ls -l input
     set -x
     mkdir output
@@ -116,7 +116,19 @@ main() {
 
     echo "* Compressing with samtools..."
     set -x
-    samtools -Sb -@ ${nthreads} output/${reads1_root}_trimmed.fq_bismark_pe.sam ${bam_root}.bam
+    samtools view -Sb -@ ${nthreads} output/${reads1_root}_trimmed.fq_bismark_pe.sam > ${bam_root}.bam
+    cat output/*PE_report.txt > ${bam_root}_ref_report.txt
+    set +x
+
+    echo "* Mapping to lambda with bismark/bowtie..."
+    #ls -l input
+    set -x
+    mkdir output
+    bismark -n 1 -l 28 -output_dir output/lambda --temp_dir output/lambda input/lambda \
+            -I $min_insert -X $max_insert \
+            -1 ${reads1_root}_trimmed.fq -2 ${reads2_root}_trimmed.fq
+    samtools view -Sb -@ ${nthreads} output/lambda/${reads1_root}_trimmed.fq_bismark_pe.sam > ${bam_root}_lambda.bam
+    cat output/lambda/*PE_report.txt > ${bam_root}_lambda_report.txt
     set +x
 
     echo "* Collect bam stats..."
@@ -127,12 +139,21 @@ main() {
     grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
     set +x
 
+    # TODO: WTF lambda and mixing qc metrics???
     echo "* Prepare metadata..."
+    echo "===== bismark reference =====" > ${bam_root}_map_report.txt
+    cat ${bam_root}_ref_report.txt      >> ${bam_root}_map_report.txt
+    echo " "                            >> ${bam_root}_map_report.txt
+    echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
+    cat ${bam_root}_lambda_report.txt   >> ${bam_root}_map_report.txt
+    
     qc_stats=''
     reads=0
     read_len=0
     if [ -f /usr/bin/qc_metrics.py ]; then
-        qc_stats=`qc_metrics.py -n samtools_flagstats -f ${bam_root}_flagstat.txt`
+        qc_stats=`qc_metrics.py -n bismark_map -f ${bam_root}_map_report.txt`
+        meta=`qc_metrics.py -n samtools_flagstats -f ${bam_root}_flagstat.txt`
+        qc_stats=`echo $qc_stats, $meta`
         reads=`qc_metrics.py -n samtools_flagstats -f ${bam_root}_flagstat.txt -k total`
         meta=`qc_metrics.py -n samtools_stats -d ':' -f ${bam_root}_samstats_summary.txt`
         read_len=`qc_metrics.py -n samtools_stats -d ':' -f ${bam_root}_samstats_summary.txt -k "average length"`
@@ -155,9 +176,11 @@ main() {
     bam_techrep=$(dx upload /home/dnanexus/${bam_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
                                                --property reads="$reads" --property read_length="$read_len" --brief)
     bam_techrep_qc=$(dx upload ${bam_root}_qc.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
+    map_techrep=$(dx upload ${bam_root}_map_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 
     dx-jobutil-add-output bam_techrep "$bam_techrep" --class=file
     dx-jobutil-add-output bam_techrep_qc "$bam_techrep_qc" --class=file
+    dx-jobutil-add-output map_techrep "$map_techrep" --class=file
 
     dx-jobutil-add-output reads "$reads" --class=string
     dx-jobutil-add-output metadata "{ $qc_stats }" --class=string

@@ -10,7 +10,8 @@ APP_TOOLS = {
     "dme-map-pe":           [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
     "dme-map-se":           [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
     "dme-merge-bams":       [ "bismark", "bowtie2", "samtools" ],
-    "dme-extract":          [ "bismark_methylation_extractor", "samtools" ],
+    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools" ],
+    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools" ],
 
     # utility:    
     "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie2" ],
@@ -19,7 +20,6 @@ APP_TOOLS = {
 VIRTUAL_APPS = {
     # lrna virtuals:    
     "dme-merge-bams-alt":   "dme-merge-bams",
-    "dme-extract-alt":      "dme-extract",
     }
 
 

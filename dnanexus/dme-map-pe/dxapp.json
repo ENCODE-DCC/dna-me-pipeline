@@ -65,6 +65,12 @@
       "patterns": ["*_bismark_techrep_qc.txt"]
     },
     {
+      "name": "map_techrep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_techrep_map_report.txt"]
+    },
+    {
       "name": "reads",
       "label": "Count of reads in the techrep bam",
       "optional": true,

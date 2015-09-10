@@ -1,0 +1,114 @@
+{
+  "name": "dme-extract-pe",
+  "title": "extract methylation pe (v2.0.0)",
+  "summary": "WGBS ENCODE Pipeline step: Extract paired-end methylation and report Whole Genome Bisulphite Analysis",
+  "dxapi": "1.0.0",
+  "version": "2.0.0",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "bismark_bam",
+      "label": "A single bam file aligned with bismark/bowtie.",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_biorep.bam","*_bismark.bam"]
+    },
+    {
+      "name": "dme_ix",
+      "label": "A directory of converted genome files (C->T, G->A)",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.tgz"]
+    },
+    {
+      "name": "chrom_sizes",
+      "label": "Chromosome Sizes",
+      "class": "file",
+      "optional": false
+    },
+    {
+      "name": "gzip",
+      "label": "Add --gzip to bismark_extractoin",
+      "class": "boolean",
+      "optional": true
+    },
+    {
+      "name": "nthreads",
+      "label": "Number of threads to use",
+      "class": "int",
+      "optional": true,
+      "default": 8
+   }
+   ],
+  "outputSpec": [
+    {
+      "name": "CG_bed",
+      "label": "CG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CG.bed.gz"]
+    },
+    {
+      "name": "CHG_bed",
+      "label": "CHG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bed.gz"]
+    },
+    {
+      "name": "CHH_bed",
+      "label": "CHH methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bed.gz"]
+    },
+    {
+      "name": "CG_bb",
+      "label": "CG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CG.bb"]
+    },
+    {
+      "name": "CHG_bb",
+      "label": "CHG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bb"]
+    },
+    {
+      "name": "CHH_bb",
+      "label": "CHH methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bb"]
+    },
+    {
+      "name": "map_report",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_map_report.txt"]
+    },
+    {
+      "name": "mbias_report",
+      "label": "M-Bias QC report",
+      "class": "file",
+      "patterns": ["*_bismark_mbias_report.txt"]
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-extract-pe.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

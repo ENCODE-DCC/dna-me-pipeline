@@ -13,11 +13,10 @@ EXPECTED_PARSING = {
     "edwBamStats":            {"type": "vertical",   "lines": "", "columns": "", "delimit": None},
     "edwComparePeaks":        {"type": "edwComparePeaks"},
     "fastqStatsAndSubsample": {"type": "fastqstats"},
-    "hotspot":                {"type": "hotspot"},
     "samtools_flagstats":     {"type": "flagstats"},
     "samtools_stats":         {"type": "samstats"},
-    "phantompeaktools_spp":   {"type": "spp"},
-    "pbc":                    {"type": "pbc"}
+#    "bismark_map":            {"type": "bismark_map"},
+#    "bismark_lambda":         {"type": "bismark_lambda"},
 }
 
 def strip_comments(line,ws_too=False):
@@ -267,6 +266,121 @@ def read_singleton(filePath,key,delimit=None,verbose=False):
     return pairs
 
 ### Now special case routines                
+def read_bismark_map(filePath,verbose=False):
+    '''
+    SPECIAL CASE for bismark map reports. 
+    '''
+    pairs = {}
+
+    fh = open(filePath, 'r')
+    now_lambda = False
+    while True:
+        line = readline_may_continue( fh )
+        if line == None:
+            break
+        if verbose:
+            print "["+line+"]"
+        line = strip_comments(line,True)
+        if line == '':
+            continue
+       
+        if line == "===== bismark lambda =====":
+            now_lambda = True
+            continue
+            
+        parts = line.replace('\t',' ').split(':')
+        if len(parts) != 2:
+            continue
+        # Sequences analysed in total:	556192132
+        # Number of alignments with a unique best hit from the different alignments:	442897911
+        # Mapping efficiency:	79.6%
+        # Sequences with no alignments under any condition:	49874999
+        # Sequences did not map uniquely:	63419222
+        # Sequences which were discarded because genomic sequence could not be extracted:	71
+        # Number of alignments to (merely theoretical) complementary strands being rejected in total:	0
+        # Total number of C's analysed:	8120095875
+        # Total methylated C's in CpG context:	242388214
+        # Total methylated C's in CHG context:	8128428
+        # Total methylated C's in CHH context:	28485904
+        # Total unmethylated C's in CpG context:	77451246
+        # Total unmethylated C's in CHG context:	1698056505
+        # Total unmethylated C's in CHH context:	6065585578
+        # C methylated in CpG context:	75.8%
+        # C methylated in CHG context:	0.5%
+        # C methylated in CHH context:	0.5%
+        if parts[0].startswith("Total ") \
+        or parts[0].startswith("Sequences ") \
+        or parts[0].startswith("Mapping ") \
+        or parts[0].startswith("Number of alignments ") \
+        or parts[0].startswith("C methylated in C"):
+            var = parts[0]
+            if now_lambda:
+                var = "lambda " + var
+            pairs[var] = string_or_number(parts[1].replace(' ',''))
+
+        # CT/CT:	222976469	((converted) top strand)
+        # CT/GA:	219921442	((converted) bottom strand)
+        # GA/CT:	0	(complementary to (converted) top strand)
+        # GA/GA:	0	(complementary to (converted) bottom strand)
+        if parts[0] in ["CT/CT","CT/GA","GA/CT","GA/GA"]:
+            subparts = parts[1].split()
+            var = parts[0] + ' ' + ' '.join(subparts[1:])
+            if now_lambda:
+                var = "lambda " + var
+            pairs[var] = string_or_number(subparts[0].replace(' ','')) 
+
+    fh.close()
+    return pairs
+    
+def read_bismark_combine(filePaths,verbose=False):
+    '''
+    SPECIAL CASE for combining multiple bismark map reports. 
+    '''
+    metrics = {}
+    files = filePaths.split(',')
+    for oneFile in files:
+        cur_metrics = read_bismark_map(oneFile,verbose)
+        if not metrics:
+            metrics = cur_metrics
+            continue
+            
+        # most things are just summed:
+        for key in cur_metrics.keys():
+            if key.startswith('lambda '):
+                var = key[7:]
+            else:
+                var = key
+            if not var.startswith("C methylated in ") and var != "Mapping efficiency":
+                metrics[key] += cur_metrics[key]
+        
+    # Only need to calc percents after all files have been summed and there was more than one file.
+    if len(files) > 1:          
+        # For 3 C contexts the percentages are calculated from the summed numbers
+        for context in ["CpG","CHG","CHH"]:
+            key_me = "Total methylated C's in "+context+" context"
+            key_un = "Total unmethylated C's in "+context+" context"
+            pcnt = (metrics[key_me] * 100.0) / (metrics[key_me] + metrics[key_un])
+            metrics["C methylated in "+context+" context"] = str(round(pcnt,1)) + '%'
+            key_me = "lambda " + key_me
+            key_un = "lambda " + key_un
+            if key_me in metrics.keys() and key_un in metrics.keys():
+                pcnt = (metrics[key_me] * 100.0) / (metrics[key_me] + metrics[key_un])
+                metrics["lambda C methylated in "+context+" context"] = str(round(pcnt,1)) + '%'
+          
+        # Mapping efficiency is one off      
+        key_tot = "Sequences analysed in total"
+        key_map = "Number of alignments with a unique best hit from the different alignments"
+        pcnt = (metrics[key_map] * 100.0) / (metrics[key_tot])
+        metrics["Mapping efficiency"] = str(round(pcnt,1)) + '%'
+        key_tot = "lambda " + key_tot
+        key_map = "lambda " + key_map
+        if key_tot in metrics.keys() and key_map in metrics.keys():
+            pcnt = (metrics[key_map] * 100.0) / (metrics[key_tot])
+            metrics["lambda Mapping efficiency"] = str(round(pcnt,1)) + '%'
+        
+    return metrics
+
+
 def read_edwComparePeaks(filePath,verbose=False):
     '''
     SPECIAL CASE for edwComparePeaks. 
@@ -372,48 +486,6 @@ def read_flagstats(filePath,verbose=False):
     fh.close()
     return pairs
     
-def read_hotspot(filePath,verbose=False):
-    '''
-    SPECIAL CASE of read_horizontal that is customized for 'hotspot' output. 
-    '''
-    pairs = {}
-    keys = None
-    values = None
-
-    fh = open(filePath, 'r')
-    while True:
-        line = readline_may_continue( fh )
-        if line == None:
-            break
-        if verbose:
-            print "["+line+"]"
-        line = strip_comments(line,True)
-        if line == '':
-            continue
-        #  total tags  hotspot tags    SPOT
-        #    2255195       1083552   0.4804
-        if keys == None:
-            keys = parse_line(line,columns="1:2,3:4,5",delimit=None,verbose=verbose)
-            if verbose:
-                print keys
-            continue
-            
-        if values == None:
-            values = parse_line(line,columns='',delimit=None,verbose=verbose)
-            if verbose:
-                print values
-            break
-    fh.close()
-    
-    for ix, key in enumerate(keys):
-        if len(values) > ix:
-            pairs[key] = string_or_number(values[ix])
-        else:
-            pairs[key] = ''
-
-    return pairs
-    
-    
 def read_samstats(filePath,verbose=False):
     '''
     SPECIAL CASE of samtools stats 
@@ -425,119 +497,7 @@ def read_samstats(filePath,verbose=False):
         pairs['reads MQ0'] = string_or_number(val[0])
     return pairs
 
-def read_spp(filePath,verbose=False):
-    '''
-    SPECIAL CASE for phantompeakqualtools spp. 
-    '''
-    pairs = {}
 
-    fh = open(filePath, 'r')
-    while True:
-        line = readline_may_continue( fh )
-        if line == None:
-            break
-        if verbose:
-            print "["+line+"]"
-        line = strip_comments(line,True)
-        if line == '':
-            continue
-        
-        # strandshift(min): -500 
-        # strandshift(step): 5 
-        # strandshift(max) 1500 
-        # exclusion(min): -500 
-        # exclusion(max): -1 
-        # FDR threshold: 0.01 
-        key, val = parse_pair(line,delimit=':',verbose=verbose)
-        if key in ["strandshift(min)","strandshift(step)","exclusion(min)","exclusion(max)","FDR threshold"]:
-            pairs[key] = string_or_number(val)
-        # strandshift(max) 1500 
-        elif line.find("strandshift(max)") == 0: # no colon?
-            key, val = parse_pair(line,verbose=verbose)
-            pairs[key] = string_or_number(val)
-        # done. read 2286836 fragments
-        elif line.find("done. read") > 0:
-            parts = line.split()
-            pairs["read fragments"] = string_or_number(parts[2]) 
-        # ChIP data read length 36 
-        elif line.find("ChIP data read length") > -1:
-            key, val = parse_pair(line,columns='1:4,5',delimit=None,verbose=verbose)
-            pairs[key] = string_or_number(val)
-       # Minimum cross-correlation value 0.03001068 
-        # Minimum cross-correlation shift 1500 
-        # Window half size 265 
-        # Phantom peak location 40 
-        # Phantom peak Correlation 0.08697874 
-        elif line.find("Minimum cross-correlation") == 0 \
-          or line.find("Window half size") == 0 \
-          or line.find("Phantom peak") == 0:
-            key, val = parse_pair(line,columns='1:3,4',delimit=None,verbose=verbose)
-            pairs[key] = string_or_number(val)
-        # Top 3 cross-correlation values 0.086978740217396,0.0864436517524779 
-        elif line.find("Top 3 cross-correlation values") == 0:
-            key, val = parse_pair(line,columns='1:4,5',delimit=None,verbose=verbose)
-            numbers = []
-            for num in val.split(','):
-                numbers.append(string_or_number(num))
-            pairs[key] = numbers 
-        # Top 3 estimates for fragment length 40,55 
-        elif line.find("Top 3 estimates for fragment length") == 0:
-            key, val = parse_pair(line,columns='1:6,7',delimit=None,verbose=verbose)
-            numbers = []
-            for num in val.split(','):
-                numbers.append(string_or_number(num))
-            pairs[key] = numbers 
-        # Normalized Strand cross-correlation coefficient (NSC) 2.898259 
-        # Relative Strand cross-correlation Coefficient (RSC) 1 
-        elif line.find("Strand cross-correlation") > 0:
-            key, val = parse_pair(line,columns='1:5,6',delimit=None,verbose=verbose)
-            pairs[key] = string_or_number(val)
-        # Phantom Peak Quality Tag 1 
-        elif line.find("Phantom Peak Quality Tag") == 0:
-            key, val = parse_pair(line,columns='1:4,5',delimit=None,verbose=verbose)
-            pairs[key] = string_or_number(val)
-
-    fh.close()
-    return pairs
-
-def read_pbc(filePath,verbose=False):
-    '''
-    SPECIAL CASE for pbc. 
-    '''
-    pairs = {}
-
-    fh = open(filePath, 'r')
-    while True:
-        line = readline_may_continue( fh )
-        if line == None:
-            break
-        if verbose:
-            print "["+line+"]"
-        line = strip_comments(line,True)
-        if line == '':
-            continue
-        
-        # 2286836	2219898	2176268	37175	0.970729	0.980346	58.541170
-        parts = line.split()
-        if len(parts) > 0:
-            pairs["reads"] = string_or_number(parts[0])
-        if len(parts) > 1:
-            pairs["locations"] = string_or_number(parts[1])
-        if len(parts) > 2:
-            pairs["mapped by 1 read"] = string_or_number(parts[2])
-        if len(parts) > 3:
-            pairs["mapped by 2 reads"] = string_or_number(parts[3])
-        if len(parts) > 4:
-            pairs["locations per read"] = string_or_number(parts[4])
-        if len(parts) > 5:
-            pairs["proportion of 1 read locations"] = string_or_number(parts[5])
-        if len(parts) > 6:
-            pairs["ratio: 1 read over 2 read locations"] = string_or_number(parts[6])
-        break
-    fh.close()
-    return pairs
- 
-            
 def main():
     parser = argparse.ArgumentParser(description =  "Creates a json string of qc_metrics for a given applet. " + \
                                                     "Returns string to stdout and formatted json to stderr.")
@@ -585,7 +545,8 @@ def main():
     if args.name in EXPECTED_PARSING:
         parsing = EXPECTED_PARSING[args.name]
     else: 
-        parsing = EXPECTED_PARSING["vertical"]
+        #parsing = EXPECTED_PARSING["vertical"]
+        parsing = {"type": args.name }
         
     if args.lines != '':
         parsing["lines"] = args.lines
@@ -605,18 +566,18 @@ def main():
     # Now special case routines                
     elif parsing["type"] == "edwComparePeaks":
         metrics = read_edwComparePeaks(args.file,args.verbose)
+    elif parsing["type"] == "bismark_map" or parsing["type"] == "bismark_ref" or parsing["type"] == "bismark_lambda":
+        metrics = read_bismark_combine(args.file,args.verbose)
     elif parsing["type"] == "fastqstats":
         metrics = read_fastqstats(args.file,args.verbose)
     elif parsing["type"] == 'flagstats':
         metrics = read_flagstats(args.file,args.verbose)
-    elif parsing["type"] == 'hotspot':
-        metrics = read_hotspot(args.file,args.verbose)
     elif parsing["type"] == 'samstats':
         metrics = read_samstats(args.file,args.verbose)
-    elif parsing["type"] == 'spp':
-        metrics = read_spp(args.file,args.verbose)
-    elif parsing["type"] == 'pbc':
-        metrics = read_pbc(args.file,args.verbose)
+    else:
+        sys.stderr.write('Unknown metric request\n')
+        parser.print_usage()
+        return
 
     # Print out the metrics
     if args.key != None and parsing["type"] != 'singleton':
@@ -634,8 +595,8 @@ def main():
             print '"' + args.keypair + '": '
             sys.stderr.write('"' + args.keypair + '": \n')
     else: 
-        print '"' + args.name + '": ' + json.dumps(metrics)
-        sys.stderr.write('"' + args.name + '": ' + json.dumps(metrics,indent=4) + '\n')
+        print '"' + args.name + '": ' + json.dumps(metrics,sort_keys=True)
+        sys.stderr.write('"' + args.name + '": ' + json.dumps(metrics,indent=4,sort_keys=True) + '\n')
     
 if __name__ == '__main__':
     main()

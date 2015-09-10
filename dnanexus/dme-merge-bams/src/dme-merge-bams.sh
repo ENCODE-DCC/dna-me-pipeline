@@ -10,13 +10,13 @@ main() {
         versions=`tool_versions.py --dxjson dnanexus-executable.json`
     fi
 
-    echo "* Value of bam_set: '$bam_set'"
-    echo "* Value of nthreads: '$nthreads'"
+    echo "* Value of bam_set:        '$bam_set'"
+    echo "* Value of map_report_set: '$bam_set'"
+    echo "* Value of nthreads:       '$nthreads'"
     
     outfile_name=""
     merged=""
     tech_reps=""
-    rm -f concat.fq
     for ix in ${!bam_set[@]}
     do
         file_root=`dx describe "${bam_set[$ix]}" --name`
@@ -51,6 +51,7 @@ main() {
             mv ${file_root}_bismark_techrep.bam sofar.bam
         else
             echo "* Merging..."
+            # NOTE: keeps the first header
             set -x
             samtools cat sofar.bam ${file_root}_bismark_techrep.bam > merging.bam
             mv merging.bam sofar.bam
@@ -61,11 +62,39 @@ main() {
         outfile_name="${exp_id}_${tech_reps}_bismark_biorep"
     fi
     echo "* Merged alignments file will be: '${outfile_name}.bam'"
+
+    # Working on map_reports now
+    all_reports=""
+    echo "### Combined Bismark map report for several technical replicates ###" > ${outfile_name}_map_report.txt
+    echo " " >> ${outfile_name}_map_report.txt
+    for ix in ${!map_report_set[@]}
+    do
+        file_root=`dx describe "${map_report_set[$ix]}" --name`
+        file_root=${file_root%_bismark_techrep_map_report.txt}
+        file_root=${file_root%_map_report.txt}
+        echo "###################################" >> ${outfile_name}_map_report.txt
+        echo "### Map report for ${file_root} ###" >> ${outfile_name}_map_report.txt
+        echo "* Downloading ${file_root}_bismark_techrep_map_report.txt file..."
+        dx download "${bam_set[$ix]}" -o ${file_root}_map_report.txt
+        cat ${file_root}_map_report.txt >> ${outfile_name}_map_report.txt
+        if [ "${all_reports}" == "" ]; then
+            all_reports="${file_root}_map_report.txt"
+        else
+            all_reports="${all_reports},${file_root}_map_report.txt"
+        fi
+    done
+    if [ "${all_reports}" == "${file_root}_map_report.txt" ]; then # only one
+        cp ${file_root}_map_report.txt ${outfile_name}_map_report.txt
+    fi
+    qc_stats=''
+    if [ -f /usr/bin/qc_metrics.py ]; then
+        qc_stats=`qc_metrics.py -n bismark_map -f ${all_reports}`
+    fi
     
     # TODO: sorting needed?
     echo "* Sorting merged bam..."
     set -x
-    samtools sort -@ $nthreads -m 6G -f sofar.bam sorted.bam
+    samtools sort -@ $nthreads -m 6G -f sofar.bam sorted
     samtools view -hb sorted.bam > sofar.bam 
     set +x
     
@@ -89,11 +118,11 @@ main() {
 
 
     echo "* Prepare metadata..."
-    qc_stats=''
     reads=0
     read_len=0
     if [ -f /usr/bin/qc_metrics.py ]; then
-        qc_stats=`qc_metrics.py -n samtools_flagstats -f ${outfile_name}_flagstat.txt`
+        meta=`qc_metrics.py -n samtools_flagstats -f ${outfile_name}_flagstat.txt`
+        qc_stats=`echo $qc_stats, $meta`
         reads=`qc_metrics.py -n samtools_flagstats -f ${outfile_name}_flagstat.txt -k total`
         meta=`qc_metrics.py -n samtools_stats -d ':' -f ${outfile_name}_samstats_summary.txt`
         read_len=`qc_metrics.py -n samtools_stats -d ':' -f ${outfile_name}_samstats_summary.txt -k "average length"`
@@ -110,9 +139,11 @@ main() {
     bam_biorep=$(dx upload ${outfile_name}.bam --details "{ $qc_stats }" --property SW="$versions" \
                                                --property reads="$reads" --property read_length="$read_len" --brief)
     bam_biorep_qc=$(dx upload ${outfile_name}_qc.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
+    map_biorep=$(dx upload ${outfile_name}_map_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 
     dx-jobutil-add-output bam_biorep "$bam_biorep" --class=file
     dx-jobutil-add-output bam_biorep_qc "$bam_biorep_qc" --class=file
+    dx-jobutil-add-output map_biorep "$map_biorep" --class=file
 
     dx-jobutil-add-output reads "$reads" --class=string
     dx-jobutil-add-output metadata "{ $qc_stats }" --class=string

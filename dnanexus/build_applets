@@ -5,10 +5,10 @@
 #       but all other applet contents are temporary symlinks to the true applets's contents.  This script handles the symlinks.
 
 applet_dest=`cat ~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME`
-applets="dme-index-bismark dme-map-pe dme-map-se dme-merge-bams dme-extract"
+applets="dme-index-bismark dme-map-pe dme-map-se dme-merge-bams dme-extract-pe dme-extract-se"
 
 tools="tool_versions.py qc_metrics.py parse_property.py"
-virtual_pairs="dme-merge-bams:dme-merge-bams-alt dme-extract:dme-extract-alt"
+virtual_pairs="dme-merge-bams:dme-merge-bams-alt"
 #virtual_links="src resources Readme.developer.md Readme.md"
 virtual_links="src resources"
 
