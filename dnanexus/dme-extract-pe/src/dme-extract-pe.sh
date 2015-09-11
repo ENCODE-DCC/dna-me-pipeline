@@ -12,7 +12,6 @@ main() {
     fi
 
     echo "* Value of bismark_bam: '$bismark_bam'"
-    #echo "* Value of genome:      '$genome'"
     echo "* Value of dme_ix:      '$dme_ix'"
     echo "* Value of chrom_sizes: '$chrom_sizes'"
     echo "* Value of gzip:        '$gzip'"
@@ -22,29 +21,13 @@ main() {
     bam_root=`dx describe "$bismark_bam" --name | cut -d'.' -f1`
     bam_root=${bam_root%_bismark_biorep}
     bam_root=${bam_root%_bismark}
-    #dx download "$bismark_bam" -o ${bam_root}.bam
     target_root="${bam_root}_bismark"
     dx download "$bismark_bam" -o - | samtools view -u - ${target_root}.sam
 
-    #mkdir input
-    #genome_fn=`dx describe "$genome" --name`
-    #genome_fn=${genome_fn%.fasta.gz}
-    #genome_fn=${genome_fn%.fa.gz}
-    #dx download "$genome" -o - | gunzip > input/"$genome_fn".fa
     dx download "$dme_ix" -o - | tar zxvf -
     dx download "$chrom_sizes" -o chrom.sizes
 
-    #echo "getting files"
-    #dx download "$genome" -o - | gunzip > genome.fa
-    #mapped_fn=`dx describe "$mapped_files" --name | cut -d'.' -f1`
-    #dx download "$mapped_files" -o - | tar zxvf -
-
-
-    #mkdir input
-    #mv genome.fa input
     echo "* Analyse methylation..."
-    #outfile="$mapped_fn".fq_bismark
-
     gzipFlag=""
     if [ "$gzip" == "true" ]; then
         echo '* Adding gzip flag'

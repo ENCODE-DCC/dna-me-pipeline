@@ -8,37 +8,37 @@ main() {
         versions=`tool_versions.py --dxjson dnanexus-executable.json`
     fi
     
-    echo "* Value of genome:     '$genome'"
-    echo "* Value of lambda:     '$lambda'"
+    echo "* Value of reference: '$reference'"
+    echo "* Value of lambda:    '$lambda'"
     
-    # Prefer to discover assembly and gender
+    # Prefer to discover genome and gender
     source_msg="Value of"
-    if [ -f /usr/bin/tool_versions.py ]; then 
-        assembly_prop=`parse_property.py -f "$genome" -p "genome" --quiet`
-        gender_prop=`parse_property.py -f "$genome" -p "gender" --quiet`
-        if [ "$assembly_prop" != "" ] &&  [ "$gender_prop" != "" ]; then
-            assembly=$assembly_prop
+    if [ -f /usr/bin/parse_property.py ]; then 
+        genome_prop=`parse_property.py -f "$reference" -p "genome" --quiet`
+        gender_prop=`parse_property.py -f "$reference" -p "gender" --quiet`
+        if [ "$genome_prop" != "" ] &&  [ "$gender_prop" != "" ]; then
+            genome=$genome_prop
             gender=$gender_prop
             source_msg="Discovered"
         fi
     fi
-    if [ "$assembly" == "" ] || [ "$gender" == "" ]; then
-        echo "Reference assembly and/or gender could not be determined and must be supplied as arguments."
+    if [ "$genome" == "" ] || [ "$gender" == "" ]; then
+        echo "Reference genome and/or gender could not be determined and must be supplied as arguments."
         exit 1
     fi
-    echo "* ${source_msg} assembly: '$assembly'"
-    echo "* ${source_msg} gender:   '$gender'"
+    echo "* ${source_msg} genome: '$genome'"
+    echo "* ${source_msg} gender: '$gender'"
     
 
     echo "* Download and unzip genome reference..."
     mkdir -p input/lambda
-    dx download "$genome" -o - | gunzip > input/genome.fa
+    dx download "$reference" -o - | gunzip > input/${genome}_${gender}.fa
     dx download "$lambda" -o - | gunzip > input/lambda/lambda.fa
 
-    index_root="${assembly}_${gender}_bismark_bowtie2_index"
+    index_root="${genome}_${gender}_bismark_bowtie2_index"
     echo "* Expect to create '${index_root}.tgz'"
     
-    echo "* Preparing/indexing ${assembly}-${gender} genome..."
+    echo "* Preparing/indexing ${genome}-${gender} genome..."
     set -x
     bismark_genome_preparation --bowtie2 --path_to_bowtie /usr/bin/ input | tee ref.log
     set +x
@@ -47,25 +47,27 @@ main() {
     set -x
     bismark_genome_preparation --bowtie2 --path_to_bowtie /usr/bin/ input/lambda | tee lambda.log
     set +x
-    
+      
     # QC anyone?
-    ref_ctot=`grep "C\-\>T\:" ref.log | awk '{print $2}'`
-    ref_gtoa=`grep "G\-\>A\:" ref.log | awk '{print $2}'`
-    lambda_ctot=`grep "C\-\>T\:" lambda.log | awk '{print $2}'`
-    lambda_gtoa=`grep "G\-\>A\:" lambda.log | awk '{print $2}'`
-    meta="{ \"reference\": { \"assembly\": \"${assembly}\", \"gender\":\"${gender}\""
-    meta="${meta}, \"C_to_T\": ${ref_ctot}, \"G_to_A\": ${ref_gtoa} }"
-    meta="${meta}, \"lambda\": { \"C_to_T\": ${lambda_ctot}, \"G_to_A\": ${lambda_gtoa} } }"
+    ref_ctot=`head -10 ref.log | grep -F "C->T" | awk '{print $2}'`
+    ref_gtoa=`head -10 ref.log | grep -F "G->A" | awk '{print $2}'`
+    lambda_ctot=`head -10 lambda.log | grep -F "C->T" | awk '{print $2}'`
+    lambda_gtoa=`head -10 lambda.log | grep -F "G->A" | awk '{print $2}'`
+    meta=`echo { \"reference\": { \"genome\": \"${genome}\", \"gender\": \"${gender}\"`
+    meta=`echo ${meta}, \"C_to_T\": ${ref_ctot}, \"G_to_A\": ${ref_gtoa} }`
+    meta=`echo ${meta}, \"lambda\": { \"C_to_T\": ${lambda_ctot}, \"G_to_A\": ${lambda_gtoa} } }`
+    echo "* JSON metadata..."
+    echo ${meta}
+    echo "* ----------------"
 
     echo "* Archiving prepped genome..."
     ls -l input/Bisulfite_Genome/
     set -x
-    tar zcvf ${index_root}.tgz input/genome.fa input/Bisulfite_Genome/
+    tar zcvf ${index_root}.tgz input/${genome}_${gender}.fa input/Bisulfite_Genome/ input/lambda/lambda.fa input/lambda/Bisulfite_Genome/
     set +x
 
     echo "* Upload results..."
-    #ls -l /home/dnanexus
-    dme_ix=$(dx upload ${index_root}.tgz --details "${meta}" --property genome="$assembly" --property gender="$gender" \
+    dme_ix=$(dx upload ${index_root}.tgz --details "${meta}" --property genome="$genome" --property gender="$gender" \
                             --property C_to_T="$ref_ctot" --property G_to_A="$ref_gtoa" --property SW="$versions" --brief)
 
     dx-jobutil-add-output dme_ix "$dme_ix" --class=file

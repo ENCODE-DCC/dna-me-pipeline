@@ -10,7 +10,7 @@
   ],
   "inputSpec": [
     {
-      "name": "genome",
+      "name": "reference",
       "class": "file",
       "optional": false,
       "label": "Reference genome (.fa.gz)",
@@ -24,7 +24,7 @@
       "patterns": ["*.fasta.gz", "*.fa.gz"]
     },
     {
-      "name": "assembly",
+      "name": "genome",
       "class": "string",
       "optional": true,
       "label": "Genome assembly",
