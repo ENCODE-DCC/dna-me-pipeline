@@ -1,10 +1,23 @@
 #!/bin/bash
 # dme-extract-se.sh - WGBS ENCODE Pipeline step: Extract single-ended methylation and report Whole Genome Bisulphite Analysis.
 
-set -x
-set +e
-
 main() {
+    # ====================== Experimental...
+    echo "* Installing macs2 and dependencies (numpy)..." 2>&1 | tee -a install.log
+    #wget http://sourceforge.net/projects/numpy/files/NumPy/1.6.2/numpy-1.6.2.tar.gz/download -O numpy.tgz 2>&1 | tee -a install.log
+    #mkdir numpy
+    #tar -xzf numpy.tgz -C numpy --strip-components=1
+    #cd numpy
+    #python2.7 setup.py build --fcompiler=gnu95 2>&1 | tee -a install.log
+    #sudo python2.7 setup.py install 2>&1 | tee -a install.log
+    #pip install scipy
+    #pip install numpy
+    #pip install cutadapt
+    #pip install --user --upgrade cutadapt
+    git clone https://yphe@bitbucket.org/schultzmattd/methylpy.git
+    export PYTHONPATH=./methylpy/:$PYTHONPATH
+    # ... Experimental =====================
+
     # If available, will print tool versions to stderr and json string to stdout
     versions=''
     if [ -f /usr/bin/tool_versions.py ]; then 
@@ -69,7 +82,7 @@ main() {
     gzip *.bed
     cat output/*E_report.txt > ${target_root}_map_report.txt
     set +x
-    # TODO: WTF lambda and mixing qc metrics???
+    # TODO: Do we need another map report here?  Was this done in merge?
     qc_stats=''
     if [ -f /usr/bin/qc_metrics.py ]; then
         qc_stats=`qc_metrics.py -n bismark_map -f ${target_root}_map_report.txt`

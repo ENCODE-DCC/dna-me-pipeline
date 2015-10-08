@@ -1,5 +1,5 @@
 #!/bin/bash
-# dme-index-bismark.sh - Creates C->T indexed genomic files with Bismark/Bowtie2 used for Whole Genome Bisulphite Analysis
+# dme-index-bismark.sh - index genome with bismark/bowtie1
 
 main() {
     # If available, will print tool versions to stderr and json string to stdout
@@ -35,17 +35,17 @@ main() {
     dx download "$reference" -o - | gunzip > input/${genome}_${gender}.fa
     dx download "$lambda" -o - | gunzip > input/lambda/lambda.fa
 
-    index_root="${genome}_${gender}_bismark_bowtie2_index"
+    index_root="${genome}_${gender}_bismark_bowtie1_index"
     echo "* Expect to create '${index_root}.tgz'"
     
     echo "* Preparing/indexing ${genome}-${gender} genome..."
     set -x
-    bismark_genome_preparation --bowtie2 --path_to_bowtie /usr/bin/ input | tee ref.log
+    bismark_genome_preparation --bowtie1 --path_to_bowtie /usr/bin/ input | tee ref.log
     set +x
     
     echo "* Preparing/indexing lambda genome..."
     set -x
-    bismark_genome_preparation --bowtie2 --path_to_bowtie /usr/bin/ input/lambda | tee lambda.log
+    bismark_genome_preparation --bowtie1 --path_to_bowtie /usr/bin/ input/lambda | tee lambda.log
     set +x
       
     # QC anyone?

@@ -1,9 +1,6 @@
 #!/bin/bash
 # dme-extract-pe.sh - WGBS ENCODE Pipeline step: Extract paired-end methylation and report Whole Genome Bisulphite Analysis.
 
-set -x
-set +e
-
 main() {
     # If available, will print tool versions to stderr and json string to stdout
     versions=''
@@ -69,7 +66,7 @@ main() {
     gzip *.bed
     cat output/*E_report.txt > ${target_root}_map_report.txt
     set +x
-    # TODO: WTF lambda and mixing qc metrics???
+    # TODO: Do we need another map report here?  Was this done in merge?
     qc_stats=''
     if [ -f /usr/bin/qc_metrics.py ]; then
         qc_stats=`qc_metrics.py -n bismark_map -f ${target_root}_map_report.txt`

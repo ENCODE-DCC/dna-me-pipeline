@@ -7,14 +7,17 @@ import sys, os, argparse, json, commands
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
     # dna-me:    
-    "dme-map-pe":           [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
-    "dme-map-se":           [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
-    "dme-merge-bams":       [ "bismark", "bowtie2", "samtools" ],
+    #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
+    #"dme-align-bowtie2-se": [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
+    "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
+    "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
+    "dme-merge-bams":       [ "samtools" ],
     "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools" ],
     "dme-extract-se":       [ "bismark_methylation_extractor", "samtools" ],
 
     # utility:    
-    "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie2" ],
+    #"dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
+    "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie" ],
     }
 # Virtual apps only differ from their parent by name/version. 
 VIRTUAL_APPS = {
@@ -33,6 +36,9 @@ ALL_TOOLS = {
             "coverage2cytosine":            "coverage2cytosine --version | grep Version | awk '{print $4}'",
             "deduplicate_bismark":          "deduplicate_bismark --help | grep modified | awk '{printf \"%s %s %s %s %s %s\n\",$4,$5,$6,$7,$8,$9}'",
             "samtools":                     "samtools 2>&1 | grep Version | awk '{print $2}'",
+            "bowtie":                       "bowtie --version 2>&1 | grep bowtie | awk '{print $3}'",
+            "bowtie-build":                 "bowtie-build --version 2>&1 | grep bowtie | awk '{print $3}'",
+            "bowtie-inspect":               "bowtie-inspect --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2":                      "bowtie2 --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2-build":                "bowtie2-build --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2-inspect":              "bowtie2-inspect --version 2>&1 | grep bowtie | awk '{print $3}'",

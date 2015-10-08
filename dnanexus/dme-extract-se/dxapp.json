@@ -105,6 +105,11 @@
       "main": {
         "instanceType": "mem3_hdd2_x8"
       },
+      "execDepends": [
+	    {"name": "python-numpy"}
+	    {"name": "python-scipy"}
+	    {"name": "python-cutadapt"}
+      ],
       "myEntryPoint": {
         "instanceType": "mem3_hdd2_x8"
       }
