@@ -121,6 +121,8 @@ main() {
     set +x
 
     echo "* Collect bam stats..."
+    # Note that bismark is adding _pe (but not _seq) to the basename.
+    bam_root="${bam_root}_pe"
     set -x
     samtools flagstat output/${bam_root}.bam > ${bam_root}_flagstat.txt
     samtools stats output/${bam_root}.bam > ${bam_root}_samstats.txt

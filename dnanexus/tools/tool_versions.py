@@ -12,8 +12,8 @@ APP_TOOLS = {
     "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
     "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
     "dme-merge-bams":       [ "samtools" ],
-    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools" ],
-    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools" ],
+    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
+    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
 
     # utility:    
     #"dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
@@ -45,6 +45,7 @@ ALL_TOOLS = {
             "mott-trim-pe.py":              "echo unversioned",
             "mott-trim-se.py":              "echo unversioned",
             "bedToBigBed":                  "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
+            "cxrepo-bed.py":                "grep -i copyright cxrepo-bed.py | awk '{print $2,$3,$4}'",
 
             #"bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
             }

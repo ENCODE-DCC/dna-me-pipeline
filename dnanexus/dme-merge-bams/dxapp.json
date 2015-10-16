@@ -42,7 +42,7 @@
       "patterns": ["*_bismark_biorep_qc.txt"]
     },
     {
-      "name": "map_report_biorep",
+      "name": "map_biorep",
       "label": "Mapping QC report",
       "class": "file",
       "patterns": ["*_bismark_techrep_map_report.txt"]

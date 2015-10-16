@@ -34,6 +34,7 @@ main() {
     mkdir -p input/lambda
     dx download "$reference" -o - | gunzip > input/${genome}_${gender}.fa
     dx download "$lambda" -o - | gunzip > input/lambda/lambda.fa
+    # TODO: add chrom.sizes!
 
     index_root="${genome}_${gender}_bismark_bowtie1_index"
     echo "* Expect to create '${index_root}.tgz'"

@@ -18,22 +18,17 @@
     },
     {
       "name": "dme_ix",
-      "label": "A directory of converted genome files (C->T, G->A)",
+      "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
       "class": "file",
       "optional": false,
-      "patterns": ["*.tgz"]
+      "patterns": ["*_bismark_bowtie1_index.tgz"]
     },
     {
       "name": "chrom_sizes",
       "label": "Chromosome Sizes",
       "class": "file",
-      "optional": false
-    },
-    {
-      "name": "gzip",
-      "label": "Add --gzip to bismark_extractoin",
-      "class": "boolean",
-      "optional": true
+      "optional": false,
+      "patterns": ["*chrom.sizes","*.txt"]
     },
     {
       "name": "nthreads",
@@ -79,12 +74,6 @@
       "label": "CHH methyation bigBed file",
       "class": "file",
       "patterns": ["*_bismark_CHH.bb"]
-    },
-    {
-      "name": "map_report",
-      "label": "Mapping QC report",
-      "class": "file",
-      "patterns": ["*_bismark_map_report.txt"]
     },
     {
       "name": "mbias_report",

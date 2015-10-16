@@ -34,9 +34,9 @@ main() {
         # Try to simplify the names
         if [ -f /usr/bin/parse_property.py ]; then
             if [ "$exp_id" == "" ]; then
-                exp_id=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --exp_id`
+                exp_id=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --exp_id -q`
             fi
-            rep_tech=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --rep_tech`
+            rep_tech=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --rep_tech -q`
             if [ "$rep_tech" != "" ]; then
                 if  [ "$tech_reps" != "" ]; then
                     tech_reps="${tech_reps}_${rep_tech}"
@@ -63,6 +63,26 @@ main() {
     fi
     echo "* Merged alignments file will be: '${outfile_name}.bam'"
 
+    # At this point there is a 'sofar.bam' with one or more input bams
+    if [ "${merged}" == "" ]; then
+        outfile_name="${file_root}_bismark_biorep"
+        set -x
+        mv sofar.bam ${outfile_name}.bam
+        set +x
+        echo "* Only one input file, no merging required."
+    else
+        # sorting needed due to samtools cat
+        echo "* Sorting merged bam..."
+        set -x
+        samtools sort -@ $nthreads -m 6G -f sofar.bam sorted.bam
+        #samtools view -hb sorted.bam > sofar.bam 
+        #set +x
+        #mv sofar.bam ${outfile_name}.bam
+        mv sorted.bam ${outfile_name}.bam
+        set +x
+        echo "* Files merged into '${outfile_name}.bam'"
+    fi 
+
     # Working on map_reports now
     all_reports=""
     echo "### Combined Bismark map report for several technical replicates ###" > ${outfile_name}_map_report.txt
@@ -75,7 +95,7 @@ main() {
         echo "###################################" >> ${outfile_name}_map_report.txt
         echo "### Map report for ${file_root} ###" >> ${outfile_name}_map_report.txt
         echo "* Downloading ${file_root}_bismark_techrep_map_report.txt file..."
-        dx download "${bam_set[$ix]}" -o ${file_root}_map_report.txt
+        dx download "${map_report_set[$ix]}" -o ${file_root}_map_report.txt
         cat ${file_root}_map_report.txt >> ${outfile_name}_map_report.txt
         if [ "${all_reports}" == "" ]; then
             all_reports="${file_root}_map_report.txt"
@@ -91,23 +111,6 @@ main() {
         qc_stats=`qc_metrics.py -n bismark_map -f ${all_reports}`
     fi
     
-    # TODO: sorting needed?
-    echo "* Sorting merged bam..."
-    set -x
-    samtools sort -@ $nthreads -m 6G -f sofar.bam sorted
-    samtools view -hb sorted.bam > sofar.bam 
-    set +x
-    
-    # At this point there is a 'sofar.bam' with one or more input bams
-    if [ "${merged}" == "" ]; then
-        outfile_name="${file_root}_bismark_biorep"
-        mv sofar.bam ${outfile_name}.bam
-        echo "* Only one input file, no merging required."
-    else
-        mv sofar.bam ${outfile_name}.bam
-        echo "* Files merged into '${outfile_name}.bam'"
-    fi 
-
     echo "* Collect bam stats..."
     set -x
     samtools flagstat ${outfile_name}.bam > ${outfile_name}_flagstat.txt

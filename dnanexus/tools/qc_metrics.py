@@ -302,9 +302,11 @@ def read_bismark_map(filePath,verbose=False):
         # Total methylated C's in CpG context:	242388214
         # Total methylated C's in CHG context:	8128428
         # Total methylated C's in CHH context:	28485904
+        ## Total methylated C's in Unknown context:
         # Total unmethylated C's in CpG context:	77451246
         # Total unmethylated C's in CHG context:	1698056505
         # Total unmethylated C's in CHH context:	6065585578
+        ## Total unmethylated C's in Unknown context
         # C methylated in CpG context:	75.8%
         # C methylated in CHG context:	0.5%
         # C methylated in CHH context:	0.5%
@@ -351,32 +353,65 @@ def read_bismark_combine(filePaths,verbose=False):
             else:
                 var = key
             if not var.startswith("C methylated in ") and var != "Mapping efficiency":
-                metrics[key] += cur_metrics[key]
+                if key in metrics.keys():
+                    metrics[key] += cur_metrics[key]
+                else:
+                    metrics[key] = cur_metrics[key]
         
     # Only need to calc percents after all files have been summed and there was more than one file.
-    if len(files) > 1:          
+    if len(files) > 1 and metrics:          
         # For 3 C contexts the percentages are calculated from the summed numbers
-        for context in ["CpG","CHG","CHH"]:
+        for context in ["CpG","CHG","CHH","Unknown"]:
             key_me = "Total methylated C's in "+context+" context"
             key_un = "Total unmethylated C's in "+context+" context"
-            pcnt = (metrics[key_me] * 100.0) / (metrics[key_me] + metrics[key_un])
-            metrics["C methylated in "+context+" context"] = str(round(pcnt,1)) + '%'
+            if key_me in metrics.keys() and key_un in metrics.keys() and metrics[key_me] + metrics[key_un] > 0:
+                pcnt = (metrics[key_me] * 100.0) / (metrics[key_me] + metrics[key_un])
+                metrics["C methylated in "+context+" context"] = str(round(pcnt,1)) + '%'
+            else: #if verbose:
+                if key_me not in metrics.keys():
+                    print >> sys.stderr, "Couldn't find '"+key_me+"' in metrics." 
+                elif key_un not in metrics.keys():
+                    print >> sys.stderr, "Couldn't find '"+key_un+"' in metrics."
+                else:
+                    print >> sys.stderr, "metrics ["+key_me+"] + metrics ["+key_un+"] is zero."
             key_me = "lambda " + key_me
             key_un = "lambda " + key_un
-            if key_me in metrics.keys() and key_un in metrics.keys():
+            if key_me in metrics.keys() and key_un in metrics.keys() and metrics[key_me] + metrics[key_un] > 0:
                 pcnt = (metrics[key_me] * 100.0) / (metrics[key_me] + metrics[key_un])
                 metrics["lambda C methylated in "+context+" context"] = str(round(pcnt,1)) + '%'
+            else: #if verbose:
+                if key_me not in metrics.keys():
+                    print >> sys.stderr, "Couldn't find '"+key_me+"' in metrics." 
+                elif key_un not in metrics.keys():
+                    print >> sys.stderr, "Couldn't find '"+key_un+"' in metrics."
+                else:
+                    print >> sys.stderr, "metrics ["+key_me+"] + metrics ["+key_un+"] is zero."
           
         # Mapping efficiency is one off      
         key_tot = "Sequences analysed in total"
         key_map = "Number of alignments with a unique best hit from the different alignments"
-        pcnt = (metrics[key_map] * 100.0) / (metrics[key_tot])
-        metrics["Mapping efficiency"] = str(round(pcnt,1)) + '%'
+        if key_tot in metrics.keys() and key_map in metrics.keys() and metrics[key_tot] > 0:
+            pcnt = (metrics[key_map] * 100.0) / (metrics[key_tot])
+            metrics["Mapping efficiency"] = str(round(pcnt,1)) + '%'
+        else: #if verbose:
+            if key_tot not in metrics.keys():
+                print >> sys.stderr, "Couldn't find '"+key_tot+"' in metrics." 
+            elif key_map not in metrics.keys():
+                print >> sys.stderr, "Couldn't find '"+key_map+"' in metrics."
+            else:
+                print >> sys.stderr, "metrics ["+key_tot+"] is zero."
         key_tot = "lambda " + key_tot
         key_map = "lambda " + key_map
-        if key_tot in metrics.keys() and key_map in metrics.keys():
+        if key_tot in metrics.keys() and key_map in metrics.keys() and metrics[key_tot] > 0:
             pcnt = (metrics[key_map] * 100.0) / (metrics[key_tot])
             metrics["lambda Mapping efficiency"] = str(round(pcnt,1)) + '%'
+        else: #if verbose:
+            if key_tot not in metrics.keys():
+                print >> sys.stderr, "Couldn't find '"+key_tot+"' in metrics." 
+            elif key_map not in metrics.keys():
+                print >> sys.stderr, "Couldn't find '"+key_map+"' in metrics."
+            else:
+                print >> sys.stderr, "metrics ["+key_tot+"] is zero."
         
     return metrics
 
