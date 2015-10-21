@@ -24,13 +24,6 @@
       "patterns": ["*_bismark_bowtie1_index.tgz"]
     },
     {
-      "name": "chrom_sizes",
-      "label": "Chromosome Sizes",
-      "class": "file",
-      "optional": false,
-      "patterns": ["*chrom.sizes","*.txt"]
-    },
-    {
       "name": "nthreads",
       "label": "Number of threads to use",
       "class": "int",
@@ -40,10 +33,10 @@
    ],
   "outputSpec": [
     {
-      "name": "CG_bed",
-      "label": "CG methyation BED file (gzipped)",
+      "name": "CpG_bed",
+      "label": "CpG methyation BED file (gzipped)",
       "class": "file",
-      "patterns": ["*_bismark_CG.bed.gz"]
+      "patterns": ["*_bismark_CpG.bed.gz"]
     },
     {
       "name": "CHG_bed",
@@ -58,10 +51,10 @@
       "patterns": ["*_bismark_CHH.bed.gz"]
     },
     {
-      "name": "CG_bb",
-      "label": "CG methyation bigBed file",
+      "name": "CpG_bb",
+      "label": "CpG methyation bigBed file",
       "class": "file",
-      "patterns": ["*_bismark_CG.bb"]
+      "patterns": ["*_bismark_CpG.bb"]
     },
     {
       "name": "CHG_bb",

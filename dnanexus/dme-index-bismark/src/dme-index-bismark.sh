@@ -8,8 +8,9 @@ main() {
         versions=`tool_versions.py --dxjson dnanexus-executable.json`
     fi
     
-    echo "* Value of reference: '$reference'"
-    echo "* Value of lambda:    '$lambda'"
+    echo "* Value of reference:   '$reference'"
+    echo "* Value of chrom_sizes: '$chrom_sizes'"
+    echo "* Value of lambda:      '$lambda'"
     
     # Prefer to discover genome and gender
     source_msg="Value of"
@@ -34,7 +35,7 @@ main() {
     mkdir -p input/lambda
     dx download "$reference" -o - | gunzip > input/${genome}_${gender}.fa
     dx download "$lambda" -o - | gunzip > input/lambda/lambda.fa
-    # TODO: add chrom.sizes!
+    dx download "$chrom_sizes" -o input/chrom.sizes
 
     index_root="${genome}_${gender}_bismark_bowtie1_index"
     echo "* Expect to create '${index_root}.tgz'"
@@ -64,7 +65,8 @@ main() {
     echo "* Archiving prepped genome..."
     ls -l input/Bisulfite_Genome/
     set -x
-    tar zcvf ${index_root}.tgz input/${genome}_${gender}.fa input/Bisulfite_Genome/ input/lambda/lambda.fa input/lambda/Bisulfite_Genome/
+    tar zcvf ${index_root}.tgz input/chrom.sizes input/${genome}_${gender}.fa input/Bisulfite_Genome/ \
+                                                 input/lambda/lambda.fa input/lambda/Bisulfite_Genome/
     set +x
 
     echo "* Upload results..."

@@ -17,6 +17,13 @@
       "patterns": ["*.fasta.gz", "*.fa.gz"]
     },
     {
+      "name": "chrom_sizes",
+      "label": "Chromosome Sizes",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*chrom.sizes","*.txt"]
+    },
+    {
       "name": "lambda",
       "class": "file",
       "optional": false,

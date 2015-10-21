@@ -10,7 +10,6 @@ main() {
 
     echo "* Value of bismark_bam: '$bismark_bam'"
     echo "* Value of dme_ix:      '$dme_ix'"
-    echo "* Value of chrom_sizes: '$chrom_sizes'"
     echo "* Value of nthreads:    '$nthreads'"
 
     echo "* Download and uncompress files..."
@@ -21,7 +20,6 @@ main() {
     dx download "$bismark_bam" -o - | samtools view - > ${target_root}.sam
 
     dx download "$dme_ix" -o - | tar zxvf -
-    dx download "$chrom_sizes" -o chrom.sizes
 
     echo "* Analyse methylation..."
     #gzipFlag=""
@@ -37,6 +35,7 @@ main() {
     # TODO missing: --no_overlap/--include_overlap --ignore_XXX  --multicore $nthreads
     # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
     set -x
+    mkdir -p /home/dnanexus/output/
     bismark_methylation_extractor --multicore $nthreads --paired-end -s --comprehensive --cytosine_report \
         --CX_context --ample_mem --output /home/dnanexus/output/ --zero_based --genome_folder input ${target_root}.sam
     set +x
@@ -49,7 +48,7 @@ main() {
     set +x
     ls -l /home/dnanexus/output/
     set -x
-    mv /home/dnanexus/output/CG_${target_root}.CX_report.txt ${target_root}_CG.bed
+    mv /home/dnanexus/output/CG_${target_root}.CX_report.txt  ${target_root}_CpG.bed
     mv /home/dnanexus/output/CHG_${target_root}.CX_report.txt ${target_root}_CHG.bed
     mv /home/dnanexus/output/CHH_${target_root}.CX_report.txt ${target_root}_CHH.bed
     mv /home/dnanexus/output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
@@ -58,9 +57,9 @@ main() {
 
     echo "* Convert to BigBed..."
     set -x
-    bedToBigBed ${target_root}_CG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CG.bb
-    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CHG.bb
-    bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CHH.bb
+    bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CpG.bb
+    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHG.bb
+    bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHH.bb
     gzip *.bed
     set +x
     ls -l 
@@ -73,20 +72,20 @@ main() {
     #fi
     
     echo "* Uploading files..."
-    CG_bed=$(dx upload ${target_root}_CG.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CpG_bed=$(dx upload ${target_root}_CpG.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
     CHG_bed=$(dx upload ${target_root}_CHG.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
     CHH_bed=$(dx upload ${target_root}_CHH.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
 
-    CG_bb=$(dx upload ${target_root}_CG.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CpG_bb=$(dx upload ${target_root}_CpG.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
     CHG_bb=$(dx upload ${target_root}_CHG.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
     CHH_bb=$(dx upload ${target_root}_CHH.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
 
-    M_bias_report=$(dx upload ${target_root}_mbias_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
+    mbias_report=$(dx upload ${target_root}_mbias_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 
-    dx-jobutil-add-output CG_bed "$CG_bed" --class=file
+    dx-jobutil-add-output CpG_bed "$CpG_bed" --class=file
     dx-jobutil-add-output CHG_bed "$CHG_bed" --class=file
     dx-jobutil-add-output CHH_bed "$CHH_bed" --class=file
-    dx-jobutil-add-output CG_bb "$CG_bb" --class=file
+    dx-jobutil-add-output CpG_bb "$CpG_bb" --class=file
     dx-jobutil-add-output CHG_bb "$CHG_bb" --class=file
     dx-jobutil-add-output CHH_bb "$CHH_bb" --class=file
     dx-jobutil-add-output mbias_report "$mbias_report" --class=file
