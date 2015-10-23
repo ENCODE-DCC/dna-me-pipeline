@@ -35,7 +35,7 @@ class DmeLaunch(Launch):
                                 "params": { }, 
                                 "results": {
                                     "bam_techrep":      "bam_techrep", 
-                                    "bam_techrep_qc":   "bam_techrep_qc",
+                                    #"bam_techrep_qc":   "bam_techrep_qc", # Don't include this: old alignments didn't make it
                                     "map_techrep":      "map_techrep",
                                 },
                             },
@@ -52,38 +52,17 @@ class DmeLaunch(Launch):
                 }
         },
         "BIO_REP":  {
-                "ORDER": { "se": [  "dme-merge-bams-alt", 
-                                    "dme-extract-se", 
-                                 ],
-                           "pe": [  "dme-merge-bams", 
-                                    "dme-extract-pe", 
-                                 ] },
+                "ORDER": { "se": [  "dme-extract-se" ],
+                           "pe": [  "dme-extract-pe" ] },
                 "STEPS": {
-                            "dme-merge-bams": {
-                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set" },
-                                "app": "dme-merge-bams", 
-                                "params": { "nthreads": "nthreads" }, 
-                                "results": {
-                                    "bam_biorep":      "bam_biorep", 
-                                    "bam_biorep_qc":   "bam_biorep_qc",
-                                    "map_biorep":      "map_biorep",
-                                },
-                            },
-                            "dme-merge-bams-alt": {
-                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set" },
-                                "app": "dme-merge-bams-alt", 
-                                "params": { "nthreads": "nthreads" }, 
-                                "results": {
-                                    "bam_biorep":      "bam_biorep", 
-                                    "bam_biorep_qc":   "bam_biorep_qc",
-                                    "map_biorep":      "map_biorep",
-                                },
-                            },
                             "dme-extract-pe": {
-                                "inputs": { "bismark_bam": "bismark_bam", "dme_ix": "dme_ix" }, 
+                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-pe", 
                                 "params": { "nthreads": "nthreads" }, 
                                 "results": {
+                                    "bam_biorep":   "bam_biorep", 
+                                    "bam_biorep_qc":"bam_biorep_qc",
+                                    "map_biorep":   "map_biorep",
                                     "CpG_bed":      "CpG_bed", 
                                     "CHG_bed":      "CHG_bed", 
                                     "CHH_bed":      "CHH_bed", 
@@ -94,10 +73,13 @@ class DmeLaunch(Launch):
                                 },
                             },
                             "dme-extract-se": {
-                                "inputs": { "bismark_bam": "bismark_bam", "dme_ix": "dme_ix" }, 
+                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-se", 
                                 "params": { "nthreads": "nthreads" }, 
                                 "results": {
+                                    "bam_biorep":   "bam_biorep", 
+                                    "bam_biorep_qc":"bam_biorep_qc",
+                                    "map_biorep":   "map_biorep",
                                     "CpG_bed":      "CpG_bed", 
                                     "CHG_bed":      "CHG_bed", 
                                     "CHH_bed":      "CHH_bed", 
@@ -111,21 +93,22 @@ class DmeLaunch(Launch):
         },
     }
 
+    # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
+    #       The reason for the name order is so thal older *_bismark.bam alignments are recognizable as techrep bams
     FILE_GLOBS = {
         #"reads":                    "/*.fq.gz",
         #"reads1":                   "/*.fq.gz",
         #"reads2":                   "/*.fq.gz",
         # dme-align-pe/se results:
-        "bam_techrep":              "/*_bismark_techrep.bam", 
+        "bam_techrep":              "/*_bismark.bam", 
+        "map_techrep":              "/*_techrep_bismark_map_report.txt",
         "bam_techrep_qc":           "/*_bismark_techrep_qc.txt",
-        "map_techrep":              "/*_bismark_techrep_map_report.txt",
-        # dnase-merge-bams/alt inp/results:
-        "bam_ABC":                  "/*_bismark_techrep.bam", 
-        "map_report_ABC":           "/*_bismark_techrep_map_report.txt", 
+        # dme-extract-pe/se inp/results:
+        "bam_ABC":                  "/*_bismark.bam", 
+        "map_report_ABC":           "/*_bismark_map_report.txt",
         "bam_biorep":               "/*_bismark_biorep.bam", 
         "bam_biorep_qc":            "/*_bismark_biorep_qc.txt", 
         "map_biorep":               "/*_bismark_techrep_map_report.txt",
-        # dme-extract-pe/se results:
         "CpG_bed":                  "/*_bismark_CpG.bed.gz", 
         "CHG_bed":                  "/*_bismark_CHG.bed.gz", 
         "CHH_bed":                  "/*_bismark_CHH.bed.gz", 
@@ -193,13 +176,6 @@ class DmeLaunch(Launch):
             sys.exit("ERROR: Unable to locate Bismark index file '" + dmeIx + "'")
         else:
             priors['dme_ix'] = dmeIxFid
-
-        chromSizes = self.psv['refLoc']+self.REFERENCE_FILES['chrom_sizes'][self.psv['genome']][self.psv['gender']]
-        chromSizesFid = dxencode.find_file(chromSizes,dxencode.REF_PROJECT_DEFAULT)
-        if chromSizesFid == None:
-            sys.exit("ERROR: Unable to locate Chrom Sizes file '" + chromSizes + "'")
-        else:
-            priors['chrom_sizes'] = chromSizesFid
         self.psv['ref_files'] = self.REFERENCE_FILES.keys()
     
 

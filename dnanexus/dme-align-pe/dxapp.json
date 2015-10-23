@@ -49,19 +49,19 @@
       "name": "bam_techrep",
       "label": "mapped bismark outputs",
       "class": "file",
-      "patterns": ["*_bismark_techrep.bam"]
+      "patterns": ["*_techrep_bismark.bam"]
     },
     {
       "name": "bam_techrep_qc",
       "label": "Text file with samtools flagstat/stats results",
       "class": "file",
-      "patterns": ["*_bismark_techrep_qc.txt"]
+      "patterns": ["*_techrep_bismark_qc.txt"]
     },
     {
       "name": "map_techrep",
       "label": "Mapping QC report",
       "class": "file",
-      "patterns": ["*_bismark_techrep_map_report.txt"]
+      "patterns": ["*_techrep_bismark_map_report.txt"]
     },
     {
       "name": "reads",

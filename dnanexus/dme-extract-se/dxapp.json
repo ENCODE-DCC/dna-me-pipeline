@@ -10,11 +10,18 @@
   ],
   "inputSpec": [
     {
-      "name": "bismark_bam",
-      "label": "A single bam file aligned with bismark/bowtie.",
-      "class": "file",
+      "name": "bam_set",
+      "label": "Two or more tech_rep bam files to merge",
+      "class": "array:file",
       "optional": false,
-      "patterns": ["*_bismark_biorep.bam","*_bismark.bam"]
+      "patterns": ["*_techrep_bismark.bam","*_bismark.bam"]
+    },
+    {
+      "name": "map_report_set",
+      "label": "Two or more mapping reports from tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_techrep_bismark_map_report.txt","*_bismark_map_report.txt"]
     },
     {
       "name": "dme_ix",
@@ -32,6 +39,18 @@
    }
    ],
   "outputSpec": [
+    {
+      "name": "bam_biorep_qc",
+      "label": "Text file with samtools flagstat/stats results",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_qc.txt"]
+    },
+    {
+      "name": "map_biorep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_map_report.txt"]
+    },
     {
       "name": "CpG_bed",
       "label": "CpG methyation BED file (gzipped)",
@@ -73,6 +92,12 @@
       "label": "M-Bias QC report",
       "class": "file",
       "patterns": ["*_bismark_mbias_report.txt"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the merged biorep bam",
+      "optional": true,
+      "class": "string"
     },
     {
       "name": "metadata",

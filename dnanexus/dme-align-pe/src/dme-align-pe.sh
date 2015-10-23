@@ -14,6 +14,9 @@ main() {
     echo "* Value of min_insert:      $min_insert"
     echo "* Value of max_insert:      $max_insert"
 
+    # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
+    #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
+
     # NOTE: not expecting an array of files, but supporting it nonetheless.
     # load and concat reads1
     outfile_name=""
@@ -91,10 +94,10 @@ main() {
     dx download "$dme_ix" -o - | tar zxvf -
     #ls -l input
 
-    bam_root="${reads1_root}_${reads2_root}_bismark_techrep"
+    bam_root="${reads1_root}_${reads2_root}_techrep_bismark"
     # Try to simplify the names
     if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_bismark_techrep"
+        bam_root="${rep_root}_techrep_bismark"
     fi
     echo "* Expect to create '${bam_root}.bam'"
 

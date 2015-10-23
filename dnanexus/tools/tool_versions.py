@@ -6,18 +6,19 @@ import sys, os, argparse, json, commands
 
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
-    # dna-me:    
-    #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
-    #"dme-align-bowtie2-se": [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
     "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
     "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
-    "dme-merge-bams":       [ "samtools" ],
     "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
     "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
 
     # utility:    
+    "dme-combine-reports":  [ "bismark" ],
     #"dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
     "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie" ],
+    # No Longer used:    
+    #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
+    #"dme-align-bowtie2-se": [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
+    #"dme-merge-bams":       [ "samtools" ],
     }
 # Virtual apps only differ from their parent by name/version. 
 VIRTUAL_APPS = {
@@ -45,7 +46,7 @@ ALL_TOOLS = {
             "mott-trim-pe.py":              "echo unversioned",
             "mott-trim-se.py":              "echo unversioned",
             "bedToBigBed":                  "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
-            "cxrepo-bed.py":                "grep -i copyright cxrepo-bed.py | awk '{print $2,$3,$4}'",
+            "cxrepo-bed.py":                "grep -i copyright /usr/bin/cxrepo-bed.py | awk '{print $2,$3,$4}'",
 
             #"bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
             }
@@ -56,7 +57,7 @@ def parse_dxjson(dxjson):
         dxapp = json.load(data_file)
 
     appver = "unknown"    
-    applet = dxapp.get("name")
+    applet = dxapp.get("name").split()[0]
     if "version" in dxapp:
         appver = dxapp.get("version")
     else:
