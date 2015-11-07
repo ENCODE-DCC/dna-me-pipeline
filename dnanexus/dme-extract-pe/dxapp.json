@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-pe",
-  "title": "extract methylation pe (v2.0.0)",
+  "title": "extract methylation pe (v1.1.0)",
   "summary": "WGBS ENCODE Pipeline step: Extract paired-end methylation and report Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
-  "version": "2.0.0",
+  "version": "1.1.0",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -31,14 +31,27 @@
       "patterns": ["*_bismark_bowtie1_index.tgz"]
     },
     {
+      "name": "uncompress_bam",
+      "label": "Uncompress bam file (faster but more storage needed).",
+      "class": "boolean",
+      "default": true,
+      "optional": false
+    },
+    {
       "name": "nthreads",
       "label": "Number of threads to use",
       "class": "int",
-      "optional": true,
-      "default": 8
+      "default": 32,
+      "optional": false
    }
    ],
   "outputSpec": [
+    {
+      "name": "signal",
+      "label": "Signal file (bigWig format)",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bw"]
+    },
     {
       "name": "bam_biorep_qc",
       "label": "Text file with samtools flagstat/stats results",
@@ -110,10 +123,10 @@
     "file": "src/dme-extract-pe.sh",
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x8"
+        "instanceType": "mem1_hdd2_x32"
       },
       "myEntryPoint": {
-        "instanceType": "mem3_hdd2_x8"
+        "instanceType": "mem1_hdd2_x32"
       }
     }
   },

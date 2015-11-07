@@ -31,14 +31,27 @@
       "patterns": ["*_bismark_bowtie1_index.tgz"]
     },
     {
+      "name": "uncompress_bam",
+      "label": "Uncompress bam file (faster but more storage needed).",
+      "class": "boolean",
+      "default": true,
+      "optional": false
+    },
+    {
       "name": "nthreads",
       "label": "Number of threads to use",
       "class": "int",
-      "optional": true,
-      "default": 8
+      "default": 8,
+      "optional": false
    }
    ],
   "outputSpec": [
+    {
+      "name": "signal",
+      "label": "Signal file (bigWig format)",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bw"]
+    },
     {
       "name": "bam_biorep_qc",
       "label": "Text file with samtools flagstat/stats results",
@@ -106,13 +119,19 @@
    }
   ],
   "runSpec": {
-    "interpreter": "bash",
-    "file": "src/dme-extract-se.sh",
+    "interpreter": "python2.7",
+    "file": "src/dme-extract-se.py",
     "systemRequirements": {
       "main": {
         "instanceType": "mem3_hdd2_x8"
       },
-      "myEntryPoint": {
+      "extract": {
+        "instanceType": "mem1_hdd2_x32"
+      },
+      "extractor": {
+        "instanceType": "mem1_hdd2_x32"
+      },
+      "*": {
         "instanceType": "mem3_hdd2_x8"
       }
     }

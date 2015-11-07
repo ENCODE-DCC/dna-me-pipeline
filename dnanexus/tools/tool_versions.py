@@ -8,8 +8,8 @@ import sys, os, argparse, json, commands
 APP_TOOLS = {
     "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
     "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
-    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
-    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py" ],
+    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig" ],
+    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
@@ -29,6 +29,8 @@ VIRTUAL_APPS = {
 
 # ALL_TOOLS contains the printable tool name (key) and the command that is used to determine the version.
 ALL_TOOLS = {
+            "bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
+            "bedToBigBed":               "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
             "bismark":                      "bismark --version | grep Version | awk '{print $3}'",
             "bismark_genome_preparation":   "bismark_genome_preparation --version | grep Version | awk '{print $5}'",
             "bismark_methylation_extractor":"bismark_methylation_extractor --version | grep Version | awk '{print $4}'",

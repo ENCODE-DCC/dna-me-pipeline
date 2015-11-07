@@ -220,13 +220,14 @@ class DmeLaunch(Launch):
             assert len(river['tributaries']) >= 1  # It could be the case that there is one tech_rep for a bio_rep!
             # river_id for ['a','b'] = 'b-bio_rep1'
             river_id = river['tributaries'][-1] + '-bio_rep' + str(bio_rep)
-            reps[river_id] = river
-            # Special case of 2 allows for designating sisters
-            if len(river['tributaries']) == 2:
-                reps[river['tributaries'][0]]['sister'] = river['tributaries'][1]
-                reps[river['tributaries'][1]]['sister'] = river['tributaries'][0]
-            if debug:
-                print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+            if len(river['tributaries']) > 1:
+                reps[river_id] = river
+                # Special case of 2 allows for designating sisters
+                if len(river['tributaries']) == 2:
+                    reps[river['tributaries'][0]]['sister'] = river['tributaries'][1]
+                    reps[river['tributaries'][1]]['sister'] = river['tributaries'][0]
+                if debug:
+                    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
 
         # Finally a pair of bio_reps are merged and processing finishes up
         if 'COMBINED_REPS' in self.PIPELINE_BRANCH_ORDER:

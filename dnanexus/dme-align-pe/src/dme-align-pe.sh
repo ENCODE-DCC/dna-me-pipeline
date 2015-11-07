@@ -94,10 +94,10 @@ main() {
     dx download "$dme_ix" -o - | tar zxvf -
     #ls -l input
 
-    bam_root="${reads1_root}_${reads2_root}_techrep_bismark"
+    bam_root="${reads1_root}_${reads2_root}_pe_techrep_bismark"
     # Try to simplify the names
     if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_techrep_bismark"
+        bam_root="${rep_root}_pe_techrep_bismark"
     fi
     echo "* Expect to create '${bam_root}.bam'"
 

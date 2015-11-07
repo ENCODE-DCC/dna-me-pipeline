@@ -15,6 +15,8 @@ EXPECTED_PARSING = {
     "fastqStatsAndSubsample": {"type": "fastqstats"},
     "samtools_flagstats":     {"type": "flagstats"},
     "samtools_stats":         {"type": "samstats"},
+# Implicit:
+#    "bismark_extract":        {"type": "bismark_extract"},
 #    "bismark_map":            {"type": "bismark_map"},
 #    "bismark_lambda":         {"type": "bismark_lambda"},
 }
@@ -416,6 +418,57 @@ def read_bismark_combine(filePaths,verbose=False):
     return metrics
 
 
+def read_bismark_split(filePath,verbose=False):
+    '''
+    SPECIAL CASE for bismark splitting_reports. 
+    '''
+    pairs = {}
+
+
+    fh = open(filePath, 'r')
+    while True:
+        line = readline_may_continue( fh )
+        if line == None:
+            break
+        if verbose:
+            print "["+line+"]"
+        line = strip_comments(line,True)
+        if line == '':
+            continue
+       
+        parts = line.replace('\t',' ').split(':')
+        
+        #Processed 9260092 lines in total
+        if len(parts) == 1 and parts[0].startswith("Processed ") and parts[0].endswith(" lines in total"):
+            pairs["Bismark result lines processed"] = string_or_number(line.split()[1])
+            continue
+        if len(parts) != 2:
+            continue
+        #Bismark Extractor Version: v0.14.4
+        #Bismark result file: single-end (SAM format)
+        #Output specified: comprehensive
+        #Total number of methylation call strings processed: 9260092
+        #Total number of C's analysed:	184118189
+        #Total methylated C's in CpG context:	6330842
+        #Total methylated C's in CHG context:	1106648
+        #Total methylated C's in CHH context:	3837779
+        #Total C to T conversions in CpG context:	3361736
+        #Total C to T conversions in CHG context:	37848548
+        #Total C to T conversions in CHH context:	131632636
+        #C methylated in CpG context:	65.3%
+        #C methylated in CHG context:	2.8%
+        #C methylated in CHH context:	2.8%
+        if parts[0].startswith("Total ") \
+        or parts[0].startswith("C methylated in ") \
+        or parts[0].startswith("Bismark Extractor ") \
+        or parts[0].startswith("Bismark result ") \
+        or parts[0].startswith("Output "):
+            var = parts[0]
+            pairs[var] = string_or_number(parts[1].replace(' ',''))
+
+    fh.close()
+    return pairs
+    
 def read_edwComparePeaks(filePath,verbose=False):
     '''
     SPECIAL CASE for edwComparePeaks. 
@@ -603,6 +656,8 @@ def main():
         metrics = read_edwComparePeaks(args.file,args.verbose)
     elif parsing["type"] == "bismark_map" or parsing["type"] == "bismark_ref" or parsing["type"] == "bismark_lambda":
         metrics = read_bismark_combine(args.file,args.verbose)
+    elif parsing["type"] == "bismark_extract":
+        metrics = read_bismark_split(args.file,args.verbose)
     elif parsing["type"] == "fastqstats":
         metrics = read_fastqstats(args.file,args.verbose)
     elif parsing["type"] == 'flagstats':
