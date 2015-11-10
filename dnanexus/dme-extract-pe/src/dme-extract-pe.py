@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# dme-extract-se.py  extract methylation using bismark
+# dme-extract-pe.py  extract methylation using bismark
 #
 # Methyl extraction using bismark is slow and needs a great deal of storage.
 # Only part of the extraction can capitalize on multiple cpus.
@@ -14,7 +14,7 @@
 # 2) bismark2bedGraph and coverage2cytosine are then run on the main job/instance,
 #    hopefully keeping cost down.
 # 3) Results of this applet are 3 bed and 3 bb files, plus qc, mbias report and a bw.
-# NOTE: at this time, this version only differs from the PE version by a single 
+# NOTE: at this time, this version only differs from the SE version by a single 
 #       parameter in the bismark_methylation_extractor comand. Nevertheless,
 #       encodeD requires distinct pe and se analysis_steps so these are separate applets.
 
@@ -225,7 +225,7 @@ def bismark_simple_extract(target_root, alignments, ncores):
     print "* extractor(): Analyse methylation in %s and using %d threads..." % (alignments, ncores)
     # TODO: missing: --no_overlap/--include_overlap --ignore_XXX
     # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
-    cmd = 'bismark_methylation_extractor --multicore %d --single-end -s --comprehensive -output output/ %s' % (ncores, alignments)
+    cmd = 'bismark_methylation_extractor --multicore %d --paired-end -s --comprehensive -output output/ %s' % (ncores, alignments)
     run_cmd('mkdir -p output/')
     run_cmd(cmd)
     run_cmd('ls -l output/')
@@ -277,6 +277,7 @@ def merge_extract(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, props)
     print "* merge_extract(): Storing extraction results..."
     biorep_bam_qc_dxfile = dxpy.upload_local_file(biorep_bam_qc,properties=props,details=qc_metrics)
     biorep_map_dxfile    = dxpy.upload_local_file(biorep_map,   properties=props,details=qc_metrics)
+    split_report_dxfile  = dxpy.upload_local_file(target_root+'_splitting_report.txt')
     split_report_dxfile  = dxpy.upload_local_file(target_root+'_splitting_report.txt')
     chrom_sizes_dxfile   = dxpy.upload_local_file('input/chrom.sizes')
     mbias_report_dxfile  = dxpy.upload_local_file(target_root+'_mbias_report.txt',properties=props,details=qc_metrics)
@@ -446,6 +447,7 @@ def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
     print "* Value of uncompress_bam: '" + str(uncompress_bam) + "'"
 
     print "* Calling merge_extract()..."
+    #def merge_extract(bam_set, dme_ix_dxlink, uncompress_bam, props)
     inp = {
         'bam_set':        bam_set,
         'map_report_set': map_report_set, 
@@ -477,7 +479,7 @@ def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
         #"bam_biorep":    extract_out['biorep_bam_dxlink'], 
         "bam_biorep_qc": extract_out['biorep_bam_qc_dxlink'], 
         "map_biorep":    extract_out['biorep_map_dxlink'],
-        "mbias_report":  extract_out["mbias_report_dxlink"],
+        "mbias_report": extract_job.get_output_ref("mbias_report_dxlink"),
         
         # from post_extraction() 
         "signal": post_extraction_out["bigWig_dxlink"],

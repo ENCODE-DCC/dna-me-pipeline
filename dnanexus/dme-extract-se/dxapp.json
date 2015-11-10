@@ -1,7 +1,7 @@
 {
   "name": "dme-extract-se",
   "title": "extract methylation se (v2.0.0)",
-  "summary": "WGBS ENCODE Pipeline step: Extract single-ended methylation and report Whole Genome Bisulphite Analysis",
+  "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis",
   "dxapi": "1.0.0",
   "version": "2.0.0",
   "categories": [
@@ -35,13 +35,6 @@
       "label": "Uncompress bam file (faster but more storage needed).",
       "class": "boolean",
       "default": true,
-      "optional": false
-    },
-    {
-      "name": "nthreads",
-      "label": "Number of threads to use",
-      "class": "int",
-      "default": 8,
       "optional": false
    }
    ],
@@ -124,6 +117,12 @@
     "systemRequirements": {
       "main": {
         "instanceType": "mem3_hdd2_x8"
+      },
+      "merge_extract": {
+        "instanceType": "mem1_hdd2_x32"
+      },
+      "merge_extract_full": {
+        "instanceType": "mem1_hdd2_x32"
       },
       "extract": {
         "instanceType": "mem1_hdd2_x32"
