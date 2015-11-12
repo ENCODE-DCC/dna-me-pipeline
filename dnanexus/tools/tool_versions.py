@@ -13,7 +13,7 @@ APP_TOOLS = {
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
-    #"dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
+    "dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
     "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie" ],
     # No Longer used:    
     #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],

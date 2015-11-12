@@ -14,14 +14,14 @@
       "label": "Two or more tech_rep bam files to merge",
       "class": "array:file",
       "optional": false,
-      "patterns": ["*_techrep_bismark.bam","*_bismark.bam"]
+      "patterns": ["*_techrep_bismark_pe.bam","*_bismark.bam"]
     },
     {
       "name": "map_report_set",
       "label": "Two or more mapping reports from tech_rep bam files to merge",
       "class": "array:file",
       "optional": false,
-      "patterns": ["*_techrep_bismark_map_report.txt","*_bismark_map_report.txt"]
+      "patterns": ["*_techrep_bismark_pe_map_report.txt","*_bismark_map_report.txt"]
     },
     {
       "name": "dme_ix",

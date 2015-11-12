@@ -1,5 +1,5 @@
 #!/bin/bash
-# dme-index-bismark.sh - index genome with bismark/bowtie1
+# dme-index-bismark.sh - Creates C->T indexed genomic files with Bismark/Bowtie1 used for Whole Genome Bisulphite Analysis
 
 main() {
     # If available, will print tool versions to stderr and json string to stdout

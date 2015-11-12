@@ -44,9 +44,9 @@ class DmeLaunch(Launch):
                                 "app": "dme-align-pe", 
                                 "params": { "min_insert": "min_insert", "min_insert": "min_insert" }, 
                                 "results": {
-                                    "bam_techrep":      "bam_techrep", 
-                                    "bam_techrep_qc":   "bam_techrep_qc",
-                                    "map_techrep":      "map_techrep",
+                                    "bam_techrep_pe":    "bam_techrep", 
+                                    "bam_techrep_pe_qc": "bam_techrep_qc",
+                                    "map_techrep_pe":    "map_techrep",
                                 },
                             }, 
                 }
@@ -58,34 +58,30 @@ class DmeLaunch(Launch):
                             "dme-extract-pe": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-pe", 
-                                "params": { "nthreads": "nthreads" }, 
+                                "params": { }, 
                                 "results": {
-                                    "bam_biorep":   "bam_biorep", 
+                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    "CpG_bed":      "CpG_bed", 
-                                    "CHG_bed":      "CHG_bed", 
-                                    "CHH_bed":      "CHH_bed", 
-                                    "CpG_bb":       "CpG_bb", 
-                                    "CHG_bb":       "CHG_bb", 
-                                    "CHH_bb":       "CHH_bb",
+                                    #"signal":       "signal",
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                     "mbias_report": "mbias_report", 
                                 },
                             },
                             "dme-extract-se": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-se", 
-                                "params": { "nthreads": "nthreads" }, 
+                                "params": { }, 
                                 "results": {
-                                    "bam_biorep":   "bam_biorep", 
+                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    "CpG_bed":      "CpG_bed", 
-                                    "CHG_bed":      "CHG_bed", 
-                                    "CHH_bed":      "CHH_bed", 
-                                    "CpG_bb":       "CpG_bb", 
-                                    "CHG_bb":       "CHG_bb", 
-                                    "CHH_bb":       "CHH_bb",
+                                    #"signal":       "signal",
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                     "mbias_report": "mbias_report", 
                                 },
                             }, 
@@ -102,35 +98,32 @@ class DmeLaunch(Launch):
         # dme-align-pe/se results:
         "bam_techrep":              "/*_bismark.bam", 
         "map_techrep":              "/*_techrep_bismark_map_report.txt",
-        "bam_techrep_qc":           "/*_bismark_techrep_qc.txt",
+        "bam_techrep_qc":           "/*_techrep_bismark_qc.txt",
+        "bam_techrep_pe":           "/*_techrep_bismark_pe.bam", 
+        "map_techrep_pe":           "/*_techrep_bismark_pe_map_report.txt",
+        "bam_techrep_pe_qc":        "/*_techrep_bismark_pe_qc.txt",
         # dme-extract-pe/se inp/results:
         "bam_ABC":                  "/*_bismark.bam", 
-        "map_report_ABC":           "/*_bismark_map_report.txt",
-        "bam_biorep":               "/*_bismark_biorep.bam", 
+        "map_report_ABC":           "/*_techrep_bismark_map_report.txt",
+        ###"bam_biorep":               "/*_bismark_biorep.bam", ### Not holding on to biorep bam
         "bam_biorep_qc":            "/*_bismark_biorep_qc.txt", 
-        "map_biorep":               "/*_bismark_techrep_map_report.txt",
-        "CpG_bed":                  "/*_bismark_CpG.bed.gz", 
-        "CHG_bed":                  "/*_bismark_CHG.bed.gz", 
-        "CHH_bed":                  "/*_bismark_CHH.bed.gz", 
-        "CpG_bb":                   "/*_bismark_CpG.bb", 
-        "CHG_bb":                   "/*_bismark_CHG.bb", 
-        "CHH_bb":                   "/*_bismark_CHH.beb", 
-        "mbias_report":             "/*_bismark_mbias_report.txt",
+        "map_biorep":               "/*_bismark_biorep_map_report.txt",
+        "signal":                   "/*_bismark_biorep.bw", 
+        "CpG_bed":                  "/*_bismark_biorep_CpG.bed.gz", 
+        "CpG_bb":                   "/*_bismark_biorep_CpG.bb", 
+        "CHG_bed":                  "/*_bismark_biorep_CHG.bed.gz", 
+        "CHG_bb":                   "/*_bismark_biorep_CHG.bb", 
+        "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz", 
+        "CHH_bb":                   "/*_bismark_biorep_CHH.bb", 
+        "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
     }
 
-    REF_PROJECT_DEFAULT = "dna-me-pipeline"  # TODO: move all ref files to ref project!
     REFERENCE_FILES = {
         # For looking up reference file names.
         # TODO: should use ACCESSION based fileNames
         "dme_ix":   {
-                        "hg19": {
-                                "female":   "hg19_female_bismark_bowtie1_index.tgz",
-                                "male":     "hg19_male_bismark_bowtie1_index.tgz"
-                                },
-                        "mm10": {
-                                "female":   "mm10_male_bismark_bowtie1_index.tgz",
-                                "male":     "mm10_male_bismark_bowtie1_index.tgz"
-                                }
+                        "hg19": "hg19_male_bismark_bowtie1_index.tgz",
+                        "mm10": "mm10_male_bismark_bowtie1_index.tgz"
                         },
         }
 
@@ -166,12 +159,10 @@ class DmeLaunch(Launch):
 
     def find_ref_files(self,priors):
         '''Locates all reference files based upon organism and gender.'''
-        # TODO:  move all ref files to ref project and replace "/ref/" and self.REF_PROJECT_DEFAULT
         #bwaIx = self.psv['refLoc']+self.REFERENCE_FILES['bwa_index'][self.psv['genome']][self.psv['gender']]
-        base_dir = "/ref/" + self.psv['genome'] + "/dna-me/"
-        dmeIx = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']][self.psv['gender']]
-        #dmeIxFid = dxencode.find_file(dmeIx,dxencode.REF_PROJECT_DEFAULT)
-        dmeIxFid = dxencode.find_file(dmeIx,self.REF_PROJECT_DEFAULT)
+        base_dir = '/' + self.psv['genome'] + "/dna-me/"
+        dmeIx = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']]
+        dmeIxFid = dxencode.find_file(dmeIx,dxencode.REF_PROJECT_DEFAULT)
         if dmeIxFid == None:
             sys.exit("ERROR: Unable to locate Bismark index file '" + dmeIx + "'")
         else:

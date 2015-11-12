@@ -146,7 +146,7 @@ def merge_bams(bam_set, ncores):
     else:
         # sorting needed due to samtools cat
         print "* Sorting merged bam..."
-        run_cmd('samtools sort -@ %d -m 6G -f sofar.bam %s.bam' % (ncores,target_root) )
+        run_cmd('samtools sort -@ %d -m 1600M -f sofar.bam %s.bam' % (ncores,target_root) )
         run_cmd('rm sofar.bam') # STORAGE IS LIMITED
         print "* Files merged into '%s.bam'" % target_root
     

@@ -1,0 +1,76 @@
+{
+  "name": "dme-index-bismark-bowtie2",
+  "title": "index genome with bismark/bowtie2 (v2.0.0)",
+  "summary": "WGBS ENCODE Pipeline step: Creates C->T indexed genomic files with Bismark/Bowtie2 used for Whole Genome Bisulphite Analysis",
+  "dxapi": "1.0.0",
+  "version": "2.0.0",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "reference",
+      "class": "file",
+      "optional": false,
+      "label": "Reference genome (.fa.gz)",
+      "patterns": ["*.fasta.gz", "*.fa.gz"]
+    },
+    {
+      "name": "chrom_sizes",
+      "label": "Chromosome Sizes",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*chrom.sizes","*.txt"]
+    },
+    {
+      "name": "lambda",
+      "class": "file",
+      "optional": false,
+      "label": "Lambda genome (.fa.gz)",
+      "patterns": ["*.fasta.gz", "*.fa.gz"]
+    },
+    {
+      "name": "genome",
+      "class": "string",
+      "optional": true,
+      "label": "Genome assembly",
+      "default": "",
+      "patterns": ["hg19", "hg38", "mm10"]
+    },
+    {
+      "name": "gender",
+      "class": "string",
+      "optional": true,
+      "label": "Gender",
+      "default": "",
+      "patterns": ["female", "male"]
+      }
+  ],
+  "outputSpec": [
+    {
+      "name": "dme_ix",
+      "label": "Converted Genome Index",
+      "class": "file",
+      "patterns": ["*_bismark_bowtie2_index.tgz"]
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-index-bismark-bowtie2.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x2"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x2"
+      }
+    }
+  },
+  "authorizedUsers": []
+}
