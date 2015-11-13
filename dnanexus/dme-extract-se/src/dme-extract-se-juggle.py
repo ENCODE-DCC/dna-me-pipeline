@@ -229,6 +229,9 @@ def bismark_simple_extract(target_root, alignments, ncores):
     if os.path.isfile('output/%s_splitting_report.txt' % target_root): 
         run_cmd('mv output/%s_splitting_report.txt %s_splitting_report.txt' % (target_root,target_root)) 
     run_cmd('mv output/%s.M-bias.txt %s_mbias_report.txt' % (target_root, target_root))
+    run_cmd('mv output/CpG_context_%s.txt CpG_context_%s.txt' % (target_root, target_root))
+    run_cmd('mv output/CHG_context_%s.txt CHG_context_%s.txt' % (target_root, target_root))
+    run_cmd('mv output/CHH_context_%s.txt CHH_context_%s.txt' % (target_root, target_root))
 
 def bismark_qc_metrics(target_root, qc_metrics):
     # bismark_methylation_extractor
@@ -277,9 +280,12 @@ def merge_extract(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, props)
     split_report_dxfile  = dxpy.upload_local_file(target_root+'_splitting_report.txt')
     chrom_sizes_dxfile   = dxpy.upload_local_file('input/chrom.sizes')
     mbias_report_dxfile  = dxpy.upload_local_file(target_root+'_mbias_report.txt',properties=props,details=qc_metrics)
-    CpG_context_dxfile   = dxpy.upload_local_file('output/CpG_context_%s.txt' % (target_root))
-    CHG_context_dxfile   = dxpy.upload_local_file('output/CHG_context_%s.txt' % (target_root))
-    CHH_context_dxfile   = dxpy.upload_local_file('output/CHH_context_%s.txt' % (target_root))
+    run_cmd('pigz CpG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHH_context_%s.txt' % (target_root))
+    CpG_context_dxfile   = dxpy.upload_local_file('CpG_context_%s.txt.gz' % (target_root))
+    CHG_context_dxfile   = dxpy.upload_local_file('CHG_context_%s.txt.gz' % (target_root))
+    CHH_context_dxfile   = dxpy.upload_local_file('CHH_context_%s.txt.gz' % (target_root))
 
     print "* merge_extract(): Check storage..."
     run_cmd('ls -l')
@@ -323,9 +329,12 @@ def extractor(biorep_bam_dxlink, dme_ix_dxlink, uncompress_bam, target_root, qc_
     split_report_dxfile = dxpy.upload_local_file(target_root+'_splitting_report.txt')
     chrom_sizes_dxfile = dxpy.upload_local_file('input/chrom.sizes')
     mbias_report_dxfile = dxpy.upload_local_file(target_root+'_mbias_report.txt',properties=props,details=qc_metrics)
-    CpG_context_dxfile = dxpy.upload_local_file('output/CpG_context_%s.txt' % (target_root))
-    CHG_context_dxfile = dxpy.upload_local_file('output/CHG_context_%s.txt' % (target_root))
-    CHH_context_dxfile = dxpy.upload_local_file('output/CHH_context_%s.txt' % (target_root))
+    run_cmd('pigz CpG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHH_context_%s.txt' % (target_root))
+    CpG_context_dxfile   = dxpy.upload_local_file('CpG_context_%s.txt.gz' % (target_root))
+    CHG_context_dxfile   = dxpy.upload_local_file('CHG_context_%s.txt.gz' % (target_root))
+    CHH_context_dxfile   = dxpy.upload_local_file('CHH_context_%s.txt.gz' % (target_root))
 
     print "* extractor(): Check storage..."
     run_cmd('ls -l')
@@ -361,7 +370,7 @@ def bismark_coverage(target_root, CpG_context, CHG_context, CHH_context, gzip=Tr
     elif os.path.isfile('output/'+bedGraph):
         run_cmd("mv output/%s %s" % (bedGraph,bedGraph))
         if gzip:
-            run_cmd('gzip ' + bedGraph)
+            run_cmd('pigz ' + bedGraph)
             bedGraph = bedGraph + '.gz'
 
     print "* bismark_coverage(): Generating CX_context file..."
@@ -385,18 +394,21 @@ def coverage(CpG_context_dxlink, CHG_context_dxlink, CHH_context_dxlink, dme_ix_
     '''subjob runs bismark2bedGraph and coverage2cytosine on mem3_hdd2_x8'''
 
     print "* coverage(): Retrieve context files and index..."
-    CpG_context = 'output/CpG_context_%s.txt' % target_root
-    CHG_context = 'output/CHG_context_%s.txt' % target_root
-    CHH_context = 'output/CHH_context_%s.txt' % target_root
+    CpG_context = 'CpG_context_%s.txt' % target_root
+    CHG_context = 'CHG_context_%s.txt' % target_root
+    CHH_context = 'CHH_context_%s.txt' % target_root
     run_cmd('mkdir -p output/')
-    dxpy.download_dxfile(CpG_context_dxlink, CpG_context)
-    dxpy.download_dxfile(CHG_context_dxlink, CHG_context)
-    dxpy.download_dxfile(CHH_context_dxlink, CHH_context)
+    dxpy.download_dxfile(CpG_context_dxlink, 'output/%s.gz' % CpG_context)
+    dxpy.download_dxfile(CHG_context_dxlink, 'output/%s.gz' % CHG_context)
+    dxpy.download_dxfile(CHH_context_dxlink, 'output/%s.gz' % CHH_context)
     dme_ix = "dme_index.tar.gz"
     dxpy.download_dxfile(dme_ix_dxlink, dme_ix)
 
-    print "* coverage(): Uncompress index..."
+    print "* coverage(): Uncompress..."
     run_cmd('tar -zxf ' + dme_ix)
+    run_cmd('gunzip output/%s.gz' % CpG_context)
+    run_cmd('gunzip output/%s.gz' % CHG_context)
+    run_cmd('gunzip output/%s.gz' % CHH_context)
 
     (bedGraph_gz, cx_report) = bismark_coverage(target_root, CpG_context, CHG_context, CHH_context)
     
@@ -436,9 +448,9 @@ def bedmethyl(target_root, cx_report, chrom_sizes, cleanup=False):
     run_cmd('bedToBigBed %s.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 %s %s.bb' % (CpG_root,chrom_sizes,CpG_root))
     run_cmd('bedToBigBed %s.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 %s %s.bb' % (CHG_root,chrom_sizes,CHG_root))
     run_cmd('bedToBigBed %s.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 %s %s.bb' % (CHH_root,chrom_sizes,CHH_root))
-    run_cmd('gzip %s.bed' % CpG_root)
-    run_cmd('gzip %s.bed' % CHG_root)
-    run_cmd('gzip %s.bed' % CHH_root)
+    run_cmd('pigz %s.bed' % CpG_root)
+    run_cmd('pigz %s.bed' % CHG_root)
+    run_cmd('pigz %s.bed' % CHH_root)
     return (CpG_root + '.bed.gz',CHG_root + '.bed.gz',CHH_root + '.bed.gz',CpG_root + '.bb',CHG_root + '.bb',CHH_root + '.bb')
 
 

@@ -8,8 +8,8 @@ import sys, os, argparse, json, commands
 APP_TOOLS = {
     "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
     "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
-    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig" ],
-    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig" ],
+    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
+    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
@@ -49,6 +49,7 @@ ALL_TOOLS = {
             "mott-trim-se.py":              "echo unversioned",
             "bedToBigBed":                  "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
             "cxrepo-bed.py":                "grep -i copyright /usr/bin/cxrepo-bed.py | awk '{print $2,$3,$4}'",
+            "pigz":                         "pigz --version 2>&1 | awk '{print $2}'",
 
             #"bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
             }

@@ -1,28 +1,20 @@
 #!/usr/bin/env python
-# dme-extract-se.py  extract methylation using bismark
+# dme-extract-pe.py  extract methylation using bismark
 #
 # Methyl extraction using bismark is slow and needs a great deal of storage.
-# A dx execution instance mem1_hdd2_x32 has 32 cpus and 3360GB of storage.
-# Only part of the bismark extraction can capitalize on multiple cpus, but
-# unfortunately, the single threaded bismark2bedGraph and coverage2cytosine 
-# have been running out of storage when run in an instance with "only"
-# 1680GB.  So this will run the full bismark_methylation_extractor (with
-# coverage reporting), on the large, expensive mem1_hdd2_x32, then continue
-# with signal and bed/bb creation on a less expensive instance.
-
+# Only part of the extraction can capitalize on multiple cpus.
 # The encodeD files graph relating steps and dependencies suggests that a 
 # single step going from tech_rep bams all the way to bed/bb results is most
 # appropriate.  Therefore:
 # 1) This applet is run on a cheaper cpu with enough storage, but runs a sub-job
-#    for techrep bam merge/sort and full bismark_methylation_extraction 
-#    (--cytosine_report --CX_contexton) on a mem1_hdd2_x32.  Only the samtools sort,
-#    extraction and pigz compression can benefit from 32 cpus.  However, the large
-#    storage of this instance is proving necessary for the single threaded cytosine
-#    report gneration.
-# 2) Context reports to bed/bb and bedGraph to bw are run on the main instance with
-#    hopefuuly smaller storage footprint.
+#    for techrep bam merge/sort and bismark initial extraction on a mem1_hdd2_x32.
+#    Both the samtools sort and the extraction can benefit from 32 cpus and the 
+#    large amount of storage available, and only the interrim results need to be
+#    up/downloaded to the main instance.
+# 2) bismark2bedGraph and coverage2cytosine are then run on the main job/instance,
+#    hopefully keeping cost down.
 # 3) Results of this applet are 3 bed and 3 bb files, plus qc, mbias report and a bw.
-# NOTE: at this time, this version only differs from the PE version by a single 
+# NOTE: at this time, this version only differs from the SE version by a single 
 #       parameter in the bismark_methylation_extractor comand. Nevertheless,
 #       encodeD requires distinct pe and se analysis_steps so these are separate applets.
 
@@ -227,20 +219,22 @@ def biorep_bam_qc_metrics(target_root, all_reports):
     return (qc_metrics, reads, target_root+'_qc.txt')
 
 ###### Bismark extraction
-def bismark_full_extract(target_root, alignments, ncores):
-    '''bismark_methylation_extractor'''
+def bismark_simple_extract(target_root, alignments, ncores):
+    '''bismark_methylation_extractor without coverage.'''
      
-    print "* bismark_full_extract(): Analyse methylation in %s and using %d threads..." % (alignments, ncores)
+    print "* extractor(): Analyse methylation in %s and using %d threads..." % (alignments, ncores)
     # TODO: missing: --no_overlap/--include_overlap --ignore_XXX
     # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
-    cmd = 'bismark_methylation_extractor --multicore %d --single-end -s --comprehensive --cytosine_report ' % (ncores)
-    cmd += '--CX_context --ample_mem --output output/ --zero_based --genome_folder input ' + alignments
+    cmd = 'bismark_methylation_extractor --multicore %d --paired-end -s --comprehensive -output output/ %s' % (ncores, alignments)
     run_cmd('mkdir -p output/')
     run_cmd(cmd)
     run_cmd('ls -l output/')
     if os.path.isfile('output/%s_splitting_report.txt' % target_root): 
         run_cmd('mv output/%s_splitting_report.txt %s_splitting_report.txt' % (target_root,target_root)) 
     run_cmd('mv output/%s.M-bias.txt %s_mbias_report.txt' % (target_root, target_root))
+    run_cmd('mv output/CpG_context_%s.txt CpG_context_%s.txt' % (target_root, target_root))
+    run_cmd('mv output/CHG_context_%s.txt CHG_context_%s.txt' % (target_root, target_root))
+    run_cmd('mv output/CHH_context_%s.txt CHH_context_%s.txt' % (target_root, target_root))
 
 def bismark_qc_metrics(target_root, qc_metrics):
     # bismark_methylation_extractor
@@ -251,15 +245,15 @@ def bismark_qc_metrics(target_root, qc_metrics):
         qc_metrics.update(json.loads('{'+meta+'}'))
     return qc_metrics
 
-@dxpy.entry_point("merge_extract_full")
-def merge_extract_full(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, props):
+@dxpy.entry_point("merge_extract")
+def merge_extract(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, props):
     '''subjob runs bismark_methylation_extractor on mem1_hdd2_x32'''
 
     (target_root,biorep_bam) = merge_bams(bam_set, 32)
     (biorep_map,all_reports) = merge_map_reports(map_report_set, target_root)
     (qc_metrics, reads, biorep_bam_qc) = biorep_bam_qc_metrics(target_root, all_reports)
     
-    print "* merge_extract_full(): Retrieve and uncompress index..."
+    print "* merge_extract(): Retrieve and uncompress index..."
     dme_ix = "dme_index.tar.gz"
     dxpy.download_dxfile(dme_ix_dxlink, dme_ix)
     run_cmd('tar -zxf ' + dme_ix)
@@ -267,10 +261,10 @@ def merge_extract_full(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, p
     # NOTE: Better to use sam and let extractor use more threads, but this takes up precious storage
     (alignments, ncores) = bam_or_sam(biorep_bam, uncompress_bam, target_root)
 
-    bismark_full_extract(target_root, alignments, ncores)
+    bismark_simple_extract(target_root, alignments, ncores)
     qc_metrics = bismark_qc_metrics(target_root, qc_metrics)
 
-    print "* merge_extract_full(): Retrieve split report..."
+    print "* Retrieve split report..."
     append_line("\n===== bismark_methylation_extractor: splitting_report =====",biorep_bam_qc)
     run_cmd('cat %s_splitting_report.txt' % target_root,out=biorep_bam_qc,append=True,silent=True)
 
@@ -283,18 +277,20 @@ def merge_extract_full(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, p
     #else:
     #    biorep_bam_dxlink = bam_set[0]
 
-    print "* merge_extract_full(): Storing extraction results..."
+    print "* merge_extract(): Storing extraction results..."
     biorep_bam_qc_dxfile = dxpy.upload_local_file(biorep_bam_qc,properties=props,details=qc_metrics)
     biorep_map_dxfile    = dxpy.upload_local_file(biorep_map,   properties=props,details=qc_metrics)
-    #  4659116760 Oct 26 02:49 CG_ENCFF002CCT.fq_ENCFF002CCR.fq_bismark_biorep.CX_report.txt
-    run_cmd('pigz output/%s.CX_report.txt' % target_root)
-    cx_report_dxfile     = dxpy.upload_local_file('output/%s.CX_report.txt.gz' % target_root)
-    bedgraph_gz_dxfile   = dxpy.upload_local_file('output/%s.bedGraph.gz' % target_root)
-    chrom_sizes_dxfile   = dxpy.upload_local_file('input/chrom.sizes')
     split_report_dxfile  = dxpy.upload_local_file(target_root+'_splitting_report.txt')
+    chrom_sizes_dxfile   = dxpy.upload_local_file('input/chrom.sizes')
     mbias_report_dxfile  = dxpy.upload_local_file(target_root+'_mbias_report.txt',properties=props,details=qc_metrics)
+    run_cmd('pigz CpG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHG_context_%s.txt' % (target_root))
+    run_cmd('pigz CHH_context_%s.txt' % (target_root))
+    CpG_context_dxfile   = dxpy.upload_local_file('CpG_context_%s.txt.gz' % (target_root))
+    CHG_context_dxfile   = dxpy.upload_local_file('CHG_context_%s.txt.gz' % (target_root))
+    CHH_context_dxfile   = dxpy.upload_local_file('CHH_context_%s.txt.gz' % (target_root))
 
-    print "* merge_extract_full(): Check storage..."
+    print "* merge_extract(): Check storage..."
     run_cmd('ls -l')
     run_cmd('df -k .')
 
@@ -302,16 +298,54 @@ def merge_extract_full(bam_set, map_report_set, dme_ix_dxlink, uncompress_bam, p
         #"biorep_bam_dxlink":    biorep_bam_dxfile,
         "biorep_bam_qc_dxlink": dxpy.dxlink(biorep_bam_qc_dxfile),
         "biorep_map_dxlink":    dxpy.dxlink(biorep_map_dxfile),
+        "CpG_context_dxlink":   dxpy.dxlink(CpG_context_dxfile),
+        "CHG_context_dxlink":   dxpy.dxlink(CHG_context_dxfile),
+        "CHH_context_dxlink":   dxpy.dxlink(CHH_context_dxfile),
         "split_report_dxlink":  dxpy.dxlink(split_report_dxfile),
-        "cx_report_dxlink":     dxpy.dxlink(cx_report_dxfile),
-        "bedgraph_gz_dxlink":   dxpy.dxlink(bedgraph_gz_dxfile),
         "chrom_sizes_dxlink":   dxpy.dxlink(chrom_sizes_dxfile),
         "mbias_report_dxlink":  dxpy.dxlink(mbias_report_dxfile),
         "target_root":          target_root,
         "qc_metrics":           qc_metrics
     }
 
-###### Post extraction routines
+###### all but extract
+def bismark_coverage(target_root, CpG_context, CHG_context, CHH_context, gzip=True, cleanup=False):
+    '''bismark2bedGraph.'''
+     
+    print "* bismark_coverage(): Generating bedGraph from context files..."
+    bedGraph = '%s.bedGraph' % target_root
+    cmd = 'bismark2bedGraph --CX_context --ample_mem  --zero --dir output/ -output '
+    cmd += '%s %s %s %s' % (bedGraph, CpG_context, CHG_context, CHH_context)
+    run_cmd(cmd)
+    run_cmd('ls -l output/')
+    if os.path.isfile('output/'+bedGraph+'.gz'):
+        run_cmd("mv output/%s.gz %s.gz" % (bedGraph,bedGraph))
+        if gzip:
+            bedGraph = bedGraph + '.gz'
+        else:
+            run_cmd('gunzip %s.gz' % bedGraph)
+    elif os.path.isfile('output/'+bedGraph):
+        run_cmd("mv output/%s %s" % (bedGraph,bedGraph))
+        if gzip:
+            run_cmd('pigz ' + bedGraph)
+            bedGraph = bedGraph + '.gz'
+
+    print "* bismark_coverage(): Generating CX_context file..."
+    cov_file = '%s.bismark.cov.gz' % (target_root)
+    cx_report = '%s.CX_report.txt' % (target_root)
+    cmd = "coverage2cytosine --output %s --dir 'output/' --genome 'input/' --parent_dir '/home/dnanexus' --zero --CX_context output/%s" \
+                                                                                                % (cx_report, cov_file)
+    run_cmd(cmd)
+    if cleanup:
+        run_cmd("rm -rf input/")
+        run_cmd("mv output/%s %s" % (cx_report,cx_report))
+        run_cmd("rm -rf output/")
+        run_cmd('mkdir -p output/')
+        run_cmd("mv %s output/%s" % (cx_report,cx_report)) # cx_report should remain in output
+    run_cmd('ls -l output/')
+
+    return (bedGraph, cx_report)
+
 def bedmethyl(target_root, cx_report, chrom_sizes, cleanup=False):
     '''runs cxrepo-bed.py and bedToBigBed.'''
      
@@ -335,43 +369,6 @@ def bedmethyl(target_root, cx_report, chrom_sizes, cleanup=False):
     run_cmd('pigz %s.bed' % CHH_root)
     return (CpG_root + '.bed.gz',CHG_root + '.bed.gz',CHH_root + '.bed.gz',CpG_root + '.bb',CHG_root + '.bb',CHH_root + '.bb')
 
-#@dxpy.entry_point("bedmethyl_io")
-def bedmethyl_io(cx_report_dxlink, chrom_sizes_dxlink, target_root, qc_metrics, props):
-    '''subjob runs cxrepo-bed.py, bedToBigBed on mem3_hdd2_x8'''
-
-    print "* bedmethyl_io(): Retrieve CX report and chrom.sizes..."
-    run_cmd('mkdir -p output/')
-    cx_report = target_root + ".CX_report.txt"
-    chrom_sizes = "chrom.sizes"
-    dxpy.download_dxfile(chrom_sizes_dxlink, chrom_sizes)
-    dxpy.download_dxfile(cx_report_dxlink, 'output/%s.gz' % cx_report)
-    run_cmd('gunzip output/%s.gz' % cx_report)
-
-    (CpG_bed,CHG_bed,CHH_bed,CpG_bb,CHG_bb,CHH_bb) = bedmethyl(target_root, cx_report, chrom_sizes) #,cleanup=True) # TODO
-    
-    print "* bedmethyl_io(): Storing bedmethyl results..."
-    CpG_bed_dxfile = dxpy.upload_local_file(CpG_bed,properties=props,details=qc_metrics)
-    CHG_bed_dxfile = dxpy.upload_local_file(CHG_bed,properties=props,details=qc_metrics)
-    CHH_bed_dxfile = dxpy.upload_local_file(CHH_bed,properties=props,details=qc_metrics)
-
-    CpG_bb_dxfile = dxpy.upload_local_file(CpG_bb,properties=props,details=qc_metrics)
-    CHG_bb_dxfile = dxpy.upload_local_file(CHG_bb,properties=props,details=qc_metrics)
-    CHH_bb_dxfile = dxpy.upload_local_file(CHH_bb,properties=props,details=qc_metrics)
-
-    print "* bedmethyl_io(): Check storage..."
-    run_cmd('ls -l')
-    run_cmd('df -k .')
-
-    return {
-        "CpG_bed_dxlink": dxpy.dxlink(CpG_bed_dxfile),
-        "CHG_bed_dxlink": dxpy.dxlink(CHG_bed_dxfile),
-        "CHH_bed_dxlink": dxpy.dxlink(CHH_bed_dxfile),
-        "CpG_bb_dxlink":  dxpy.dxlink(CpG_bb_dxfile),
-        "CHG_bb_dxlink":  dxpy.dxlink(CHG_bb_dxfile),
-        "CHH_bb_dxlink":  dxpy.dxlink(CHH_bb_dxfile)
-    }
-
-
 def signal(target_root, bedGraph, chrom_sizes, cleanup=False):
     '''subjob runs bedGraphToBigWig on mem3_hdd2_x8'''
 
@@ -386,28 +383,62 @@ def signal(target_root, bedGraph, chrom_sizes, cleanup=False):
     
     return bigWig
 
-def signal_io(bedgraph_gz_dxlink, chrom_sizes_dxlink, target_root, qc_metrics, props):
-    '''subjob runs bedGraphToBigWig on mem3_hdd2_x8'''
+def post_extraction(CpG_context_dxlink, CHG_context_dxlink, CHH_context_dxlink, dme_ix_dxlink, target_root, qc_metrics, props):
+    '''runs everything after bismark simple extraction in the main instance'''
 
-    print "* signal_io(): Retrieve bedgraph and chrom.sizes..."
-    bedGraph = target_root + ".bedGraph"
-    bedGraph_gz = bedGraph + ".gz"
-    chrom_sizes = "chrom.sizes"
-    dxpy.download_dxfile(bedgraph_gz_dxlink, bedGraph_gz)
-    dxpy.download_dxfile(chrom_sizes_dxlink, chrom_sizes)
+    print "* post_extraction(): Retrieve context files and index..."
+    CpG_context = 'CpG_context_%s.txt' % target_root
+    CHG_context = 'CHG_context_%s.txt' % target_root
+    CHH_context = 'CHH_context_%s.txt' % target_root
+    run_cmd('mkdir -p output/')
+    dxpy.download_dxfile(CpG_context_dxlink, 'output/%s.gz' % CpG_context)
+    dxpy.download_dxfile(CHG_context_dxlink, 'output/%s.gz' % CHG_context)
+    dxpy.download_dxfile(CHH_context_dxlink, 'output/%s.gz' % CHH_context)
+    dme_ix = "dme_index.tar.gz"
+    dxpy.download_dxfile(dme_ix_dxlink, dme_ix)
 
-    bigWig = signal(target_root, bedGraph_gz, chrom_sizes)
+    print "* post_extraction(): Uncompress..."
+    run_cmd('tar -zxf ' + dme_ix)
+    run_cmd('mv input/chrom.sizes .')
+    chrom_sizes = "chrom.sizes"    
+    run_cmd('gunzip output/%s.gz' % CpG_context)
+    run_cmd('gunzip output/%s.gz' % CHG_context)
+    run_cmd('gunzip output/%s.gz' % CHH_context)
 
-    print "* signal_io(): Storing signal results..."
-    bigWig_dxfile = dxpy.upload_local_file(bigWig,properties=props,details=qc_metrics) #,cleanup=True) # TODO
+    # First coverage:
+    (bedGraph, cx_report) = bismark_coverage(target_root, CpG_context, CHG_context, CHH_context, gzip=False, cleanup=True)
+    
+    # Next beds
+    (CpG_bed,CHG_bed,CHH_bed,CpG_bb,CHG_bb,CHH_bb) = bedmethyl(target_root, cx_report, chrom_sizes, cleanup=True)
+    
+    # Finally signal
+    bigWig = signal(target_root, bedGraph, chrom_sizes, cleanup=True)
 
-    print "* signal_io(): Check storage..."
+    print "* post_extraction(): Storing results..."
+    CpG_bed_dxfile = dxpy.upload_local_file(CpG_bed,properties=props,details=qc_metrics)
+    CHG_bed_dxfile = dxpy.upload_local_file(CHG_bed,properties=props,details=qc_metrics)
+    CHH_bed_dxfile = dxpy.upload_local_file(CHH_bed,properties=props,details=qc_metrics)
+
+    CpG_bb_dxfile = dxpy.upload_local_file(CpG_bb,properties=props,details=qc_metrics)
+    CHG_bb_dxfile = dxpy.upload_local_file(CHG_bb,properties=props,details=qc_metrics)
+    CHH_bb_dxfile = dxpy.upload_local_file(CHH_bb,properties=props,details=qc_metrics)
+
+    bigWig_dxfile = dxpy.upload_local_file(bigWig,properties=props,details=qc_metrics)
+
+    print "* post_extraction(): Check storage..."
     run_cmd('ls -l')
     run_cmd('df -k .')
 
     return {
-        "bigWig_dxlink": dxpy.dxlink(bigWig_dxfile)
+        "CpG_bed_dxlink": dxpy.dxlink(CpG_bed_dxfile),
+        "CHG_bed_dxlink": dxpy.dxlink(CHG_bed_dxfile),
+        "CHH_bed_dxlink": dxpy.dxlink(CHH_bed_dxfile),
+        "CpG_bb_dxlink":  dxpy.dxlink(CpG_bb_dxfile),
+        "CHG_bb_dxlink":  dxpy.dxlink(CHG_bb_dxfile),
+        "CHH_bb_dxlink":  dxpy.dxlink(CHH_bb_dxfile),
+        "bigWig_dxlink":  dxpy.dxlink(bigWig_dxfile)
     }
+
 
 @dxpy.entry_point("main")
 def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
@@ -423,7 +454,7 @@ def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
     print "* Value of dme_ix:         '" + str(dme_ix) + "'"
     print "* Value of uncompress_bam: '" + str(uncompress_bam) + "'"
 
-    print "* Calling merge_extract_full()..."
+    print "* Calling merge_extract()..."
     inp = {
         'bam_set':        bam_set,
         'map_report_set': map_report_set, 
@@ -431,36 +462,23 @@ def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
         'uncompress_bam': uncompress_bam,
         'props':          props
     }
-    extract_job = dxpy.new_dxjob(inp, "merge_extract_full")
+    extract_job = dxpy.new_dxjob(inp, "merge_extract")
     print "* Kicked off extract() and waiting..."
     extract_job.wait_on_done() # Wait because we want the qc_metrics to pass to other jobs.
     extract_out = extract_job.describe()['output']
     target_root = extract_out['target_root']
     qc_metrics = extract_out['qc_metrics']
 
-
-    print "* Calling bedmethyl()..."
-    # What is cheaper?  bedmethyl and signal in main or farm one out to a separate process?
-    bedmethyl_out = bedmethyl_io(extract_out["cx_report_dxlink"], extract_out["chrom_sizes_dxlink"], target_root, qc_metrics, props)
-    #inp = {
-    #    'cx_report_dxlink':   extract_out["cx_report_dxlink"],
-    #    'chrom_sizes_dxlink': extract_out["chrom_sizes_dxlink"],
-    #    'target_root':        target_root,
-    #    'qc_metrics':         qc_metrics,
-    #    'props':              props
-    #}
-    #bedmethyl_job = dxpy.new_dxjob(inp, "bedmethyl_io")
-    #print "* Kicked off bedmethyl() but not waiting waiting..."
-
-    print "* Calling signal()..."
-    signal_out = signal_io(extract_out["bedgraph_gz_dxlink"],extract_out["chrom_sizes_dxlink"],target_root,qc_metrics,props)
+    print "* Calling post_extraction()..."
+    post_extraction_out = post_extraction(extract_out["CpG_context_dxlink"], \
+                                          extract_out["CHG_context_dxlink"], \
+                                          extract_out["CHH_context_dxlink"], \
+                                          dme_ix, target_root, qc_metrics, props)
 
     print "* Check storage..."
     run_cmd('ls -l')
     run_cmd('df -k .')
 
-    #bedmethyl_job.wait_on_done() # Wait because we want the qc_metrics to pass to other jobs.
-    #bedmethyl_out = bedmethyl_job.describe()['output']
     print "* Finished."
 
     return {
@@ -469,17 +487,17 @@ def main(bam_set, map_report_set, dme_ix, uncompress_bam=True):
         "bam_biorep_qc": extract_out['biorep_bam_qc_dxlink'], 
         "map_biorep":    extract_out['biorep_map_dxlink'],
         "mbias_report":  extract_out["mbias_report_dxlink"],
-                
-        # from signal() 
-        "signal": signal_out["bigWig_dxlink"],
         
-        # from bedmethyl() 
-        "CpG_bed": bedmethyl_out["CpG_bed_dxlink"],
-        "CHG_bed": bedmethyl_out["CHG_bed_dxlink"],
-        "CHH_bed": bedmethyl_out["CHH_bed_dxlink"],
-        "CpG_bb":  bedmethyl_out["CpG_bb_dxlink"],
-        "CHG_bb":  bedmethyl_out["CHG_bb_dxlink"],
-        "CHH_bb":  bedmethyl_out["CHH_bb_dxlink"],
+        # from post_extraction() 
+        "signal": post_extraction_out["bigWig_dxlink"],
+        
+        "CpG_bed": post_extraction_out["CpG_bed_dxlink"],
+        "CHG_bed": post_extraction_out["CHG_bed_dxlink"],
+        "CHH_bed": post_extraction_out["CHH_bed_dxlink"],
+        
+        "CpG_bb": post_extraction_out["CpG_bb_dxlink"],
+        "CHG_bb": post_extraction_out["CHG_bb_dxlink"],
+        "CHH_bb": post_extraction_out["CHH_bb_dxlink"],
 
         "metadata": json.dumps(qc_metrics) 
         }

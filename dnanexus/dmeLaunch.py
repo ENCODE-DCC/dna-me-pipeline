@@ -118,12 +118,14 @@ class DmeLaunch(Launch):
         "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
     }
 
+    GENOMES_SUPPORTED = ['GRCh38', 'hg19', 'mm10']
     REFERENCE_FILES = {
         # For looking up reference file names.
         # TODO: should use ACCESSION based fileNames
         "dme_ix":   {
-                        "hg19": "hg19_male_bismark_bowtie1_index.tgz",
-                        "mm10": "mm10_male_bismark_bowtie1_index.tgz"
+                        "GRCh38": "GRCh38_XY_bismark_bowtie1_index.tgz",
+                        "hg19":   "hg19_male_bismark_bowtie1_index.tgz",
+                        "mm10":   "mm10_male_bismark_bowtie1_index.tgz"
                         },
         }
 

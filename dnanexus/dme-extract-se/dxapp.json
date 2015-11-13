@@ -114,6 +114,7 @@
   "runSpec": {
     "interpreter": "python2.7",
     "file": "src/dme-extract-se.py",
+    "execDepends": [{"name": "pigz"}],
     "systemRequirements": {
       "main": {
         "instanceType": "mem3_hdd2_x8"
@@ -122,12 +123,6 @@
         "instanceType": "mem1_hdd2_x32"
       },
       "merge_extract_full": {
-        "instanceType": "mem1_hdd2_x32"
-      },
-      "extract": {
-        "instanceType": "mem1_hdd2_x32"
-      },
-      "extractor": {
         "instanceType": "mem1_hdd2_x32"
       },
       "*": {
