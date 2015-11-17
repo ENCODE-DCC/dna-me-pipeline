@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-pe",
-  "title": "extract methylation pe (v2.0.0)",
-  "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract paired-end methylation and report WGBS Analysis",
+  "title": "extract methylation pe (v2.0.1)",
+  "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract paired-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -36,7 +36,7 @@
       "class": "boolean",
       "default": true,
       "optional": false
-    }
+   }
    ],
   "outputSpec": [
     {
@@ -47,7 +47,7 @@
     },
     {
       "name": "bam_biorep_qc",
-      "label": "Text file with samtools flagstat/stats results",
+      "label": "Text file with samtools flagstat results",
       "class": "file",
       "patterns": ["*_bismark_biorep_qc.txt"]
     },
@@ -112,21 +112,16 @@
    }
   ],
   "runSpec": {
-    "interpreter": "python2.7",
-    "file": "src/dme-extract-pe.py",
+    "interpreter": "bash",
+    "file": "src/dme-extract-pe.sh",
+    "file": "src/dme-extract-se.sh",
     "execDepends": [{"name": "pigz"}],
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x8"
-      },
-      "merge_extract": {
         "instanceType": "mem1_hdd2_x32"
       },
-      "merge_extract_full": {
+      "myEntryPoint": {
         "instanceType": "mem1_hdd2_x32"
-      },
-      "*": {
-        "instanceType": "mem3_hdd2_x8"
       }
     }
   },

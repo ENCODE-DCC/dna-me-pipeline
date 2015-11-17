@@ -133,6 +133,31 @@ def file_describe(filePath,key=None,project=None,verbose=False):
     
     return value
 
+def file_details(filePath,key=None,project=None,verbose=False):
+    '''Returns dx file's description property matching 'key'.'''
+
+    dxfile = get_dxfile(filePath,project=project)    
+    
+    details = dxfile.describe(incl_details=True).get('details')
+    if not details:
+        sys.stderr.write('ERROR: unable to find details of file "' + filePath + '": \n') 
+        sys.exit(0)  # Do not error on tool run in dx script 
+    
+    if key == None:
+        if verbose:
+            sys.stderr.write(json.dumps(details) + '\n')
+        return details
+    
+    if key not in details:
+        sys.stderr.write('ERROR: unable to find "'+key+'" in details of file "' + filePath + '": \n') 
+        sys.exit(0)  # Do not error on tool run in dx script
+    value = details[key]
+         
+    if verbose:
+        sys.stderr.write(value + '\n')
+    
+    return value
+
 def file_create_root(filePath,project=None,verbose=False,quiet=False):
     '''Returns a standard file name root when in folder {exp_acc}/repN_N.'''
 
@@ -242,6 +267,9 @@ def main():
                         help="Project (especially helpfule when calling from DX app).",
                         default=None,
                         required=False)
+    parser.add_argument('--details',
+                        help="Return details json.",
+                        default=None, action="store_true", required=False)
     parser.add_argument('--root_name', action="store_true", required=False, default=False, 
                         help="Return a standardized file name root based on file location.")
     parser.add_argument('--rep_tech', action="store_true", required=False, default=False, 
@@ -281,6 +309,16 @@ def main():
         print rep
         if not args.quiet:
             sys.stderr.write("rep: '"+rep+"'\n")
+        sys.exit(0)
+        
+    elif args.details:
+        details = file_details(args.file,args.key,project=args.project,verbose=args.verbose)
+        print json.dumps(details)
+        if args.key != None:
+            if not args.quiet:
+                sys.stderr.write(args.key + ": '"+json.dumps(details,indent=4,sort_keys=True)+"'\n")
+        elif not args.quiet:
+            sys.stderr.write(json.dumps(details,indent=4,sort_keys=True)+"\n")
         sys.exit(0)
         
     elif args.describe:

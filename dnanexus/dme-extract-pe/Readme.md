@@ -1,7 +1,7 @@
 <!-- dx-header -->
 # Whole Genome Bisulphite Analysis (DNAnexus Platform App)
 
-WGBS ENCODE Pipeline step: Extract paired-end methylation and report Whole Genome Bisulphite Analysis.
+WGBS ENCODE Pipeline step: Merge techrep bams, extract paired-end methylation and report WGBS Analysis.
 
 This is the source code for an app that runs on the DNAnexus Platform.
 For more information about how to run or modify it, see

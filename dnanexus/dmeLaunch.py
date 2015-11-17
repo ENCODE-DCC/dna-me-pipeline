@@ -52,8 +52,8 @@ class DmeLaunch(Launch):
                 }
         },
         "BIO_REP":  {
-                "ORDER": { "se": [  "dme-extract-se" ],
-                           "pe": [  "dme-extract-pe" ] },
+                "ORDER": { "se": [  "dme-extract-meth-se", "dme-cx-to-bed", "dme-bg-to-signal" ],
+                           "pe": [  "dme-extract-pe", "dme-cx-to-bed-alt", "dme-bg-to-signal-alt" ] },
                 "STEPS": {
                             "dme-extract-pe": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
@@ -70,19 +70,66 @@ class DmeLaunch(Launch):
                                     "mbias_report": "mbias_report", 
                                 },
                             },
-                            "dme-extract-se": {
+                            #"dme-extract-se": {
+                            #    "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
+                            #    "app": "dme-extract-se", 
+                            #    "params": { }, 
+                            #    "results": {
+                            #        ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
+                            #        "bam_biorep_qc":"bam_biorep_qc",
+                            #        "map_biorep":   "map_biorep",
+                            #        #"signal":       "signal",
+                            #        "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
+                            #        "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                            #        "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
+                            #        "mbias_report": "mbias_report", 
+                            #    },
+                            #}, 
+                            "dme-extract-meth-se": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
-                                "app": "dme-extract-se", 
-                                "params": { }, 
+                                "app": "dme-extract-meth-se", 
                                 "results": {
                                     ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    #"signal":       "signal",
+                                    "mbias_report": "mbias_report", 
+                                    "cx_report":    "cx_report", 
+                                    "bg_gz":        "bg_gz", 
                                     "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
                                     "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
                                     "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
-                                    "mbias_report": "mbias_report", 
+                                },
+                            }, 
+                            "dme-cx-to-bed": {
+                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" }, 
+                                "app": "dme-cx-to-bed", 
+                                "results": {
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
+                                },
+                            }, 
+                            "dme-bg-to-signal": {
+                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" }, 
+                                "app": "dme-bg-to-signal", 
+                                "results": {
+                                    "signal":       "signal",
+                                },
+                            }, 
+                            "dme-cx-to-bed-alt": {
+                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" }, 
+                                "app": "dme-cx-to-bed-alt", 
+                                "results": {
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
+                                },
+                            }, 
+                            "dme-bg-to-signal-alt": {
+                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" }, 
+                                "app": "dme-bg-to-signal-alt", 
+                                "results": {
+                                    "signal":       "signal",
                                 },
                             }, 
                 }
@@ -116,6 +163,8 @@ class DmeLaunch(Launch):
         "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz", 
         "CHH_bb":                   "/*_bismark_biorep_CHH.bb", 
         "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
+        "cx_report":                "/*_bismark_biorep.CX_report.txt.gz",
+        "bg_gz":                    "/*_bismark_biorep.bedGraph.gz",
     }
 
     GENOMES_SUPPORTED = ['GRCh38', 'hg19', 'mm10']
@@ -126,6 +175,11 @@ class DmeLaunch(Launch):
                         "GRCh38": "GRCh38_XY_bismark_bowtie1_index.tgz",
                         "hg19":   "hg19_male_bismark_bowtie1_index.tgz",
                         "mm10":   "mm10_male_bismark_bowtie1_index.tgz"
+                        },
+        "chrom_sizes":  {
+                        "GRCh38": "GRCh38_full_male.chrom.sizes",
+                        "hg19":   "male.hg19.chrom.sizes",
+                        "mm10":   "male.mm10.chrom.sizes"
                         },
         }
 
@@ -169,6 +223,13 @@ class DmeLaunch(Launch):
             sys.exit("ERROR: Unable to locate Bismark index file '" + dmeIx + "'")
         else:
             priors['dme_ix'] = dmeIxFid
+
+        chromSizes = '/' + self.psv['genome'] + "/"+self.REFERENCE_FILES['chrom_sizes'][self.psv['genome']]
+        chromSizesFid = dxencode.find_file(chromSizes,dxencode.REF_PROJECT_DEFAULT)
+        if chromSizesFid == None:
+            sys.exit("ERROR: Unable to locate Chrom Sizes file '" + chromSizes + "'")
+        else:
+            priors['chrom_sizes'] = chromSizesFid
         self.psv['ref_files'] = self.REFERENCE_FILES.keys()
     
 

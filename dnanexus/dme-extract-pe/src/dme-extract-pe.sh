@@ -1,5 +1,5 @@
 #!/bin/bash
-# dme-extract-pe.sh - WGBS ENCODE Pipeline step: Extract paired-end methylation and report Whole Genome Bisulphite Analysis.
+# dme-extract-pe.sh - WGBS ENCODE Pipeline step: Merge techrep bams, extract paired-end methylation and report WGBS Analysis.
 
 main() {
     # If available, will print tool versions to stderr and json string to stdout
@@ -9,10 +9,9 @@ main() {
     fi
 
     echo "* Value of bam_set:        '$bam_set'"
-    echo "* Value of map_report_set: '$bam_set'"
+    echo "* Value of map_report_set: '$map_report_set'"
     echo "* Value of dme_ix:         '$dme_ix'"
     echo "* Value of uncompress_bam: '$uncompress_bam'"
-    echo "* Value of nthreads:       '$nthreads'"
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
     #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
@@ -37,9 +36,9 @@ main() {
         # Try to simplify the names
         if [ -f /usr/bin/parse_property.py ]; then
             if [ "$exp_id" == "" ]; then
-                exp_id=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --exp_id -q`
+                exp_id=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --exp_id`
             fi
-            rep_tech=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --rep_tech -q`
+            rep_tech=`parse_property.py -f "'${bam_set[$ix]}'" --project "${DX_PROJECT_CONTEXT_ID}" --rep_tech`
             if [ "$rep_tech" != "" ]; then
                 if  [ "$tech_reps" != "" ]; then
                     tech_reps="${tech_reps}_${rep_tech}"
@@ -78,7 +77,7 @@ main() {
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."
         set -x
-        samtools sort -@ $nthreads -m 6G -f sofar.bam sorted.bam
+        samtools sort -@ 32 -m 1800M -f sofar.bam sorted.bam
         mv sorted.bam ${target_root}.bam
         rm sofar.bam # STORAGE IS LIMITED
         set +x
@@ -141,7 +140,7 @@ main() {
 
     # NOTE: Better to use sam and let extractor use more threads, but this takes up precious storage
     alignments_file=${target_root}.bam
-    ncores=$nthreads
+    ncores=32
     # TODO: What bam_size constitutes too large for sam?  93,953,130,496 is fine!
     bam_size=`ls -go ${target_root}.bam | awk '{print $3}'`
     if [ "$uncompress_bam" == "true" ] && [ $bam_size -lt 400000000000 ]; then
@@ -152,11 +151,11 @@ main() {
         rm ${target_root}.bam
         set +x
     else
-        ncores=`expr $nthreads / 2`
+        ncores=`expr $ncores / 2`
         if [ "$uncompress_bam" != "true" ]; then
             echo "* Using compressed biorep bam (size: $bam_size) and $ncores cores..."
         else
-            echo "* Using compressed bam and $ncores cores because bam_size: $bam_size exceeds 200GB."
+            echo "* Using compressed bam and $ncores cores because bam_size: $bam_size exceeds limit."
         fi
     fi
 
@@ -213,10 +212,12 @@ main() {
 
     echo "* Convert to BigBed..."
     set -x
-    bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CpG.bb
-    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHG.bb
     bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHH.bb
-    gzip *.bed
+    pigz ${target_root}_CHH.bed
+    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHG.bb
+    pigz ${target_root}_CHG.bed
+    bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CpG.bb
+    pigz ${target_root}_CpG.bed
     set +x
     ls -l 
     echo "* Check storage..."

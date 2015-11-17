@@ -11,6 +11,11 @@ APP_TOOLS = {
     "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
     "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
 
+    "dme-extract-meth-se":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-meth-pe":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-cx-to-bed":        [ "cxrepo-bed.py", "bedToBigBed", "pigz" ],
+    "dme-bg-to-signal":     [ "bedGraphToBigWig" ],
+
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
     "dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
@@ -23,7 +28,8 @@ APP_TOOLS = {
 # Virtual apps only differ from their parent by name/version. 
 VIRTUAL_APPS = {
     # lrna virtuals:    
-    "dme-merge-bams-alt":   "dme-merge-bams",
+    "dme-cx-to-bed-alt":      "dme-cx-to-bed",
+    "dme-bg-to-signal-alt":   "dme-bg-to-signal",
     }
 
 
