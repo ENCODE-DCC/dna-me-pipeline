@@ -5,7 +5,7 @@ import argparse,os, sys, json
 
 import dxpy
 from launch import Launch
-#from template import Launch
+#from template import Launch # (does not use dxencode at all)
 
 class DmeLaunch(Launch):
     '''Descendent from Launch class with 'rampage' methods'''
@@ -204,20 +204,21 @@ class DmeLaunch(Launch):
         '''Locates all reference files based upon organism and gender.'''
         #bwaIx = self.psv['refLoc']+self.REFERENCE_FILES['bwa_index'][self.psv['genome']][self.psv['gender']]
         base_dir = '/' + self.psv['genome'] + "/dna-me/"
-        dmeIx = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']]
-        dmeIxFid = self.find_file(dmeIx,self.REF_PROJECT_DEFAULT)
-        if dmeIxFid == None:
-            sys.exit("ERROR: Unable to locate Bismark index file '" + dmeIx + "'")
+        dme_path = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']]
+        dme_fid = self.find_file(dme_path,self.REF_PROJECT_DEFAULT)
+        if dme_fid == None:
+            sys.exit("ERROR: Unable to locate Bismark index file '" + dme_path + "'")
         else:
-            priors['dme_ix'] = dmeIxFid
+            priors['dme_ix'] = dme_fid
 
-        chromSizes = '/' + self.psv['genome'] + "/"+self.REFERENCE_FILES['chrom_sizes'][self.psv['genome']]
-        chromSizesFid = self.find_file(chromSizes,self.REF_PROJECT_DEFAULT)
-        if chromSizesFid == None:
-            sys.exit("ERROR: Unable to locate Chrom Sizes file '" + chromSizes + "'")
+        chrom_sizes = '/' + self.psv['genome'] + "/"+self.REFERENCE_FILES['chrom_sizes'][self.psv['genome']]
+        chrom_sizes_fid = self.find_file(chrom_sizes,self.REF_PROJECT_DEFAULT)
+        if chrom_sizes_fid == None:
+            sys.exit("ERROR: Unable to locate Chrom Sizes file '" + chrom_sizes + "'")
         else:
-            priors['chrom_sizes'] = chromSizesFid
+            priors['chrom_sizes'] = chrom_sizes_fid
         self.psv['ref_files'] = self.REFERENCE_FILES.keys()
+        return priors
     
 
     def add_combining_reps(self, psv):
