@@ -8,11 +8,9 @@ import sys, os, argparse, json, commands
 APP_TOOLS = {
     "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
     "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
-    "dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
-    "dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
 
-    "dme-extract-meth-se":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-extract-meth-pe":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-se":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-pe":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-cx-to-bed":        [ "cxrepo-bed.py", "bedToBigBed", "pigz" ],
     "dme-bg-to-signal":     [ "bedGraphToBigWig" ],
 
@@ -21,6 +19,8 @@ APP_TOOLS = {
     "dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
     "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie" ],
     # No Longer used:    
+    #"dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
+    #"dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
     #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
     #"dme-align-bowtie2-se": [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
     #"dme-merge-bams":       [ "samtools" ],

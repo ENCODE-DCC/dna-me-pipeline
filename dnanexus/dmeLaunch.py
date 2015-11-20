@@ -4,9 +4,8 @@
 import argparse,os, sys, json
 
 import dxpy
-#from dxencode import dxencode as dxencode
-import dxencode as dxencode
 from launch import Launch
+#from template import Launch
 
 class DmeLaunch(Launch):
     '''Descendent from Launch class with 'rampage' methods'''
@@ -52,42 +51,28 @@ class DmeLaunch(Launch):
                 }
         },
         "BIO_REP":  {
-                "ORDER": { "se": [  "dme-extract-meth-se", "dme-cx-to-bed", "dme-bg-to-signal" ],
-                           "pe": [  "dme-extract-pe", "dme-cx-to-bed-alt", "dme-bg-to-signal-alt" ] },
+                "ORDER": { "se": [  "dme-extract-se", "dme-cx-to-bed-alt", "dme-bg-to-signal-alt" ],
+                           "pe": [  "dme-extract-pe", "dme-cx-to-bed",     "dme-bg-to-signal" ] },
                 "STEPS": {
                             "dme-extract-pe": {
-                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
+                                "inputs": { "bam_pe_ABC": "bam_set", "map_report_pe_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-pe", 
                                 "params": { }, 
                                 "results": {
                                     ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    #"signal":       "signal",
+                                    "mbias_report": "mbias_report", 
+                                    "cx_report":    "cx_report", 
+                                    "bg_gz":        "bg_gz", 
                                     "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
                                     "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
                                     "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
-                                    "mbias_report": "mbias_report", 
                                 },
                             },
-                            #"dme-extract-se": {
-                            #    "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
-                            #    "app": "dme-extract-se", 
-                            #    "params": { }, 
-                            #    "results": {
-                            #        ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
-                            #        "bam_biorep_qc":"bam_biorep_qc",
-                            #        "map_biorep":   "map_biorep",
-                            #        #"signal":       "signal",
-                            #        "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
-                            #        "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
-                            #        "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
-                            #        "mbias_report": "mbias_report", 
-                            #    },
-                            #}, 
-                            "dme-extract-meth-se": {
+                            "dme-extract-se": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
-                                "app": "dme-extract-meth-se", 
+                                "app": "dme-extract-se", 
                                 "results": {
                                     ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
@@ -152,6 +137,8 @@ class DmeLaunch(Launch):
         # dme-extract-pe/se inp/results:
         "bam_ABC":                  "/*_bismark.bam", 
         "map_report_ABC":           "/*_techrep_bismark_map_report.txt",
+        "bam_pe_ABC":               "/*_techrep_bismark_pe.bam", 
+        "map_report_pe_ABC":        "/*_techrep_bismark_pe_map_report.txt",
         ###"bam_biorep":               "/*_bismark_biorep.bam", ### Not holding on to biorep bam
         "bam_biorep_qc":            "/*_bismark_biorep_qc.txt", 
         "map_biorep":               "/*_bismark_biorep_map_report.txt",
@@ -218,14 +205,14 @@ class DmeLaunch(Launch):
         #bwaIx = self.psv['refLoc']+self.REFERENCE_FILES['bwa_index'][self.psv['genome']][self.psv['gender']]
         base_dir = '/' + self.psv['genome'] + "/dna-me/"
         dmeIx = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']]
-        dmeIxFid = dxencode.find_file(dmeIx,dxencode.REF_PROJECT_DEFAULT)
+        dmeIxFid = self.find_file(dmeIx,self.REF_PROJECT_DEFAULT)
         if dmeIxFid == None:
             sys.exit("ERROR: Unable to locate Bismark index file '" + dmeIx + "'")
         else:
             priors['dme_ix'] = dmeIxFid
 
         chromSizes = '/' + self.psv['genome'] + "/"+self.REFERENCE_FILES['chrom_sizes'][self.psv['genome']]
-        chromSizesFid = dxencode.find_file(chromSizes,dxencode.REF_PROJECT_DEFAULT)
+        chromSizesFid = self.find_file(chromSizes,self.REF_PROJECT_DEFAULT)
         if chromSizesFid == None:
             sys.exit("ERROR: Unable to locate Chrom Sizes file '" + chromSizes + "'")
         else:

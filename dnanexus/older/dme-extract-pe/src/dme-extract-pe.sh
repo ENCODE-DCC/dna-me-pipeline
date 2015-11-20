@@ -22,7 +22,7 @@ main() {
     for ix in ${!bam_set[@]}
     do
         file_root=`dx describe "${bam_set[$ix]}" --name`
-        file_root=${file_root%_techrep_bismark_pe.bam}
+        file_root=${file_root%_techrep_bismark.bam}
         file_root=${file_root%_bismark.bam}
         if [ "${target_root}" == "" ]; then
             target_root="${file_root}"
@@ -77,7 +77,7 @@ main() {
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."
         set -x
-        samtools sort -@ 16 -m 3200M -f sofar.bam sorted.bam
+        samtools sort -@ 32 -m 1800M -f sofar.bam sorted.bam
         mv sorted.bam ${target_root}.bam
         rm sofar.bam # STORAGE IS LIMITED
         set +x
@@ -91,7 +91,7 @@ main() {
     for ix in ${!map_report_set[@]}
     do
         file_root=`dx describe "${map_report_set[$ix]}" --name`
-        file_root=${file_root%_techrep_bismark_pe_map_report.txt}
+        file_root=${file_root%_techrep_bismark_map_report.txt}
         file_root=${file_root%_bismark_map_report.txt}
         file_root=${file_root%_map_report.txt}
         echo "###################################" >> ${target_root}_map_report.txt
@@ -171,8 +171,6 @@ main() {
     mkdir -p /home/dnanexus/output/
     bismark_methylation_extractor --multicore $ncores --paired-end -s --comprehensive --cytosine_report \
         --CX_context --ample_mem --output output/ --zero_based --genome_folder input ${alignments_file}
-    pigz output/${target_root}.CX_report.txt
-    mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
     rm -f ${alignments_file} # STORAGE IS LIMITED
     set +x
 
@@ -186,27 +184,76 @@ main() {
     echo "===== bismark_methylation_extractor: splitting_report ====="   >> ${target_root}_qc.txt
     cat output/${target_root}_splitting_report.txt                       >> ${target_root}_qc.txt
 
+    echo "* Convert to signal bedGraph to bigWig..."
+    # NOTE: Not sure if we want signal
+    ls -l output/
+    set -x
+    rm -f output/*_context_${target_root}.txt # STORAGE IS LIMITED
+    rm -f output/${target_root}.bam_splitting_report.txt
+    rm -f output/${target_root}.bedGraph.gz.bismark.zero.cov
+    rm -f output/${target_root}.bismark.cov.gz
+    gunzip output/${target_root}.bedGraph.gz
+    bedGraphToBigWig output/${target_root}.bedGraph input/chrom.sizes ${target_root}.bw
+    rm -f output/${target_root}.bedGraph
+    set +x
+    
+    echo "* Create beds..."
+    set -x
+    cxrepo-bed.py -o output/ output/${target_root}.CX_report.txt
+    set +x
+    ls -l output/
+    set -x
+    mv output/CG_${target_root}.CX_report.txt  ${target_root}_CpG.bed
+    mv output/CHG_${target_root}.CX_report.txt ${target_root}_CHG.bed
+    mv output/CHH_${target_root}.CX_report.txt ${target_root}_CHH.bed
+    mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
+    set +x
+    ls -l 
+
+    echo "* Convert to BigBed..."
+    set -x
+    bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHH.bb
+    pigz ${target_root}_CHH.bed
+    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CHG.bb
+    pigz ${target_root}_CHG.bed
+    bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 input/chrom.sizes ${target_root}_CpG.bb
+    pigz ${target_root}_CpG.bed
+    set +x
+    ls -l 
+    echo "* Check storage..."
+    df -k .
+
     echo "* Uploading files..."
     # NOTE: Not saving merged bam
     #bam_biorep=$(dx upload ${target_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
     #                                           --property reads="$reads" --property read_length="$read_len" --brief)
     bam_biorep_qc=$(dx upload ${target_root}_qc.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
     map_biorep=$(dx upload ${target_root}_map_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
-    mbias_report=$(dx upload ${target_root}_mbias_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 
     #dx-jobutil-add-output bam_biorep "$bam_biorep" --class=file
     dx-jobutil-add-output bam_biorep_qc "$bam_biorep_qc" --class=file
     dx-jobutil-add-output map_biorep "$map_biorep" --class=file
+
+    CpG_bed=$(dx upload ${target_root}_CpG.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CHG_bed=$(dx upload ${target_root}_CHG.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CHH_bed=$(dx upload ${target_root}_CHH.bed.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CpG_bb=$(dx upload ${target_root}_CpG.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CHG_bb=$(dx upload ${target_root}_CHG.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
+    CHH_bb=$(dx upload ${target_root}_CHH.bb --details "{ $qc_stats }" --property SW="$versions" --brief)
+    mbias_report=$(dx upload ${target_root}_mbias_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
+
+    dx-jobutil-add-output CpG_bed "$CpG_bed" --class=file
+    dx-jobutil-add-output CHG_bed "$CHG_bed" --class=file
+    dx-jobutil-add-output CHH_bed "$CHH_bed" --class=file
+    dx-jobutil-add-output CpG_bb "$CpG_bb" --class=file
+    dx-jobutil-add-output CHG_bb "$CHG_bb" --class=file
+    dx-jobutil-add-output CHH_bb "$CHH_bb" --class=file
     dx-jobutil-add-output mbias_report "$mbias_report" --class=file
 
-    # Interim files
-    cx_report=$(dx upload output/${target_root}.CX_report.txt.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
-    bg_gz=$(dx upload output/${target_root}.bedGraph.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
-
-    dx-jobutil-add-output cx_report "$cx_report" --class=file
-    dx-jobutil-add-output bg_gz "$bg_gz" --class=file
-
-    # Metadata
+    # NOTE: Not sure if we want signal
+    signal=$(dx upload ${target_root}.bw --details "{ $qc_stats }" --property SW="$versions" --brief)
+    dx-jobutil-add-output signal "$signal" --class=file
+    
     dx-jobutil-add-output reads "$reads" --class=string
     dx-jobutil-add-output metadata "{ $qc_stats }" --class=string
 

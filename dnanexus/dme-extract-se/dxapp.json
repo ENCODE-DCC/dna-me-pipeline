@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-se",
-  "title": "extract methylation se (v2.0.1)",
+  "title": "extract methylation se (v2.0.2)",
   "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -40,12 +40,6 @@
    ],
   "outputSpec": [
     {
-      "name": "signal",
-      "label": "Signal file (bigWig format)",
-      "class": "file",
-      "patterns": ["*_bismark_biorep.bw"]
-    },
-    {
       "name": "bam_biorep_qc",
       "label": "Text file with samtools flagstat results",
       "class": "file",
@@ -58,46 +52,23 @@
       "patterns": ["*_bismark_biorep_map_report.txt"]
     },
     {
-      "name": "CpG_bed",
-      "label": "CpG methyation BED file (gzipped)",
-      "class": "file",
-      "patterns": ["*_bismark_CpG.bed.gz"]
-    },
-    {
-      "name": "CHG_bed",
-      "label": "CHG methyation BED file (gzipped)",
-      "class": "file",
-      "patterns": ["*_bismark_CHG.bed.gz"]
-    },
-    {
-      "name": "CHH_bed",
-      "label": "CHH methyation BED file (gzipped)",
-      "class": "file",
-      "patterns": ["*_bismark_CHH.bed.gz"]
-    },
-    {
-      "name": "CpG_bb",
-      "label": "CpG methyation bigBed file",
-      "class": "file",
-      "patterns": ["*_bismark_CpG.bb"]
-    },
-    {
-      "name": "CHG_bb",
-      "label": "CHG methyation bigBed file",
-      "class": "file",
-      "patterns": ["*_bismark_CHG.bb"]
-    },
-    {
-      "name": "CHH_bb",
-      "label": "CHH methyation bigBed file",
-      "class": "file",
-      "patterns": ["*_bismark_CHH.bb"]
-    },
-    {
       "name": "mbias_report",
       "label": "M-Bias QC report",
       "class": "file",
       "patterns": ["*_bismark_mbias_report.txt"]
+    },
+    {
+      "name": "cx_report",
+      "label": "Context report from bismark extraction",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_biorep.CX_report.txt.gz","*_bismark.CX_report.txt.gz"]
+    },
+    {
+      "name": "bg_gz",
+      "label": "BedGraph from bismark extraction",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bedGraph.gz","*_bismark.bedGraph.gz"]
     },
     {
       "name": "reads",
