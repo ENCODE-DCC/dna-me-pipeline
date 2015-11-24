@@ -65,9 +65,6 @@ class DmeLaunch(Launch):
                                     "mbias_report": "mbias_report", 
                                     "cx_report":    "cx_report", 
                                     "bg_gz":        "bg_gz", 
-                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
-                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
-                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                 },
                             },
                             "dme-extract-se": {
@@ -80,9 +77,6 @@ class DmeLaunch(Launch):
                                     "mbias_report": "mbias_report", 
                                     "cx_report":    "cx_report", 
                                     "bg_gz":        "bg_gz", 
-                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
-                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
-                                    "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                 },
                             }, 
                             "dme-cx-to-bed": {
