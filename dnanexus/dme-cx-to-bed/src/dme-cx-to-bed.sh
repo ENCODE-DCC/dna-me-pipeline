@@ -11,12 +11,14 @@ main() {
     echo "* Value of cx_report:   '$cx_report'"
     echo "* Value of chrom_sizes: '$chrom_sizes'"
 
-    echo "* Download files..."
+    echo "* Download and uncompress files..."
     cx_fn=`dx describe "$cx_report" --name`
     target_root=${cx_fn%.CX_report.txt.gz}
     echo "* Context file: '"$target_root".CX_report.txt.gz'"
-    mkdir -p output
-    dx download "$cx_report" -o output/${target_root}.CX_report.txt.gz
+    dx download "$cx_report" -o ${target_root}.CX_report.txt.gz
+    set -x
+    gunzip ${target_root}.CX_report.txt.gz
+    set +x
 
     dx download "$chrom_sizes" -o chrom.sizes
     
@@ -28,28 +30,10 @@ main() {
         qc_stats=`parse_property.py -f "'${cx_report}'" --details`
     fi
 
-    echo "* Create beds..."
-    set -x
-    gunzip output/${target_root}.CX_report.txt.gz
-    cxrepo-bed.py -o output/ output/${target_root}.CX_report.txt
-    set +x
-    ls -l output/
-    set -x
-    mv output/CG_${target_root}.CX_report.txt  ${target_root}_CpG.bed
-    mv output/CHG_${target_root}.CX_report.txt ${target_root}_CHG.bed
-    mv output/CHH_${target_root}.CX_report.txt ${target_root}_CHH.bed
-    set +x
-    ls -l 
-
-    echo "* Convert to BigBed..."
-    set -x
-    bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CHH.bb
-    pigz ${target_root}_CHH.bed
-    bedToBigBed ${target_root}_CHG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CHG.bb
-    pigz ${target_root}_CHG.bed
-    bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 chrom.sizes ${target_root}_CpG.bb
-    pigz ${target_root}_CpG.bed
-    set +x
+    echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
+    meth-cx-to-bed.sh ${target_root}.CX_report.txt chrom.sizes
+    echo "* ===== Returned from dnanexus and encodeD independent script ====="
+    
     echo "* Check storage..."
     ls -l 
     df -k .

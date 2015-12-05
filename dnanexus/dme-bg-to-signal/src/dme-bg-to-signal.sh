@@ -11,12 +11,14 @@ main() {
     echo "* Value of bg_gz:       '$bg_gz'"
     echo "* Value of chrom_sizes: '$chrom_sizes'"
 
-    echo "* Download files..."
+    echo "* Download and uncompress files..."
     bg_fn=`dx describe "$bg_gz" --name`
     target_root=${bg_fn%.bedGraph.gz}
-    echo "* BedGraph file: '"$target_root".bedGraph.gz'"
-    mkdir -p output
-    dx download "$bg_gz" -o output/${target_root}.bedGraph.gz
+    echo "* BedGraph file: '"$target_root".bg.gz'"
+    dx download "$bg_gz" -o ${target_root}.bg.gz
+    set -x
+    gunzip ${target_root}.bg.gz
+    set +x
 
     dx download "$chrom_sizes" -o chrom.sizes
 
@@ -26,14 +28,10 @@ main() {
         qc_stats=`parse_property.py -f "'${bg_gz}'" --details`
     fi
 
-    echo "* Convert to signal bedGraph to bigWig..."
-    # NOTE: Not sure if we want signal
-    ls -l output/
-    set -x
-    gunzip output/${target_root}.bedGraph.gz
-    bedGraphToBigWig output/${target_root}.bedGraph chrom.sizes ${target_root}.bw
-    rm -f output/${target_root}.bedGraph
-    set +x
+    echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
+    meth-bg-to-signal.sh ${target_root}.bg chrom.sizes
+    echo "* ===== Returned from dnanexus and encodeD independent script ====="
+    
     echo "* Check storage..."
     ls -l 
     df -k .

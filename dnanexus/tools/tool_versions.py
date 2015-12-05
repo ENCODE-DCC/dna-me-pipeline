@@ -6,13 +6,13 @@ import sys, os, argparse, json, commands
 
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
-    "dme-align-pe":         [ "mott-trim-pe.py", "bismark", "bowtie", "samtools" ],
-    "dme-align-se":         [ "mott-trim-se.py", "bismark", "bowtie", "samtools" ],
+    "dme-align-pe":         [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    "dme-align-se":         [ "cutadapt", "trim_galore", "bismark", "bowtie", "samtools" ],
 
-    "dme-extract-se":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-extract-pe":  [ "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-cx-to-bed":        [ "cxrepo-bed.py", "bedToBigBed", "pigz" ],
-    "dme-bg-to-signal":     [ "bedGraphToBigWig" ],
+    "dme-extract-se":       [ "meth-extract-se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-pe":       [ "meth-extract-pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-cx-to-bed":        [ "meth-cx-to-bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
+    "dme-bg-to-signal":     [ "meth-bg-to-signal.sh", "bedGraphToBigWig" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
@@ -35,8 +35,8 @@ VIRTUAL_APPS = {
 
 # ALL_TOOLS contains the printable tool name (key) and the command that is used to determine the version.
 ALL_TOOLS = {
-            "bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
-            "bedToBigBed":               "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
+            "bedGraphToBigWig":             "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
+            "bedToBigBed":                  "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
             "bismark":                      "bismark --version | grep Version | awk '{print $3}'",
             "bismark_genome_preparation":   "bismark_genome_preparation --version | grep Version | awk '{print $5}'",
             "bismark_methylation_extractor":"bismark_methylation_extractor --version | grep Version | awk '{print $4}'",
@@ -56,8 +56,13 @@ ALL_TOOLS = {
             "bedToBigBed":                  "bedToBigBed 2>&1 | grep 'bedToBigBed v' | awk '{print $2$3}'",
             "cxrepo-bed.py":                "grep -i copyright /usr/bin/cxrepo-bed.py | awk '{print $2,$3,$4}'",
             "pigz":                         "pigz --version 2>&1 | awk '{print $2}'",
-
-            #"bedGraphToBigWig":          "bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v' | awk '{print $2$3}'",
+            "trim_galore":                  "trim_galore -v | grep version | awk '{print $2}'",
+            "cutadapt":                     "cutadapt --version",
+            "meth-align-pe.sh":             "meth-align-pe.sh | grep usage | awk '{print $2}' | tr -d :",
+            "meth-extract-se.sh":           "meth-extract-se.sh | grep usage | awk '{print $2}' | tr -d :",
+            "meth-extract-pe.sh":           "meth-extract-pe.sh | grep usage | awk '{print $2}' | tr -d :",
+            "meth-bg-to-signal.sh":         "meth-bg-to-signal.sh | grep usage | awk '{print $2}' | tr -d :",
+            "meth-cx-to-bed.sh":            "meth-cx-to-bed.sh | grep usage | awk '{print $2}' | tr -d :",
             }
 
 def parse_dxjson(dxjson):

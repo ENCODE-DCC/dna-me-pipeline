@@ -21,6 +21,13 @@
       "class": "file",
       "optional": false,
       "patterns": ["*_bismark_bowtie1_index.tgz"]
+    },
+    {
+      "name": "ncpus",
+      "label": "Number of cpu's available",
+      "class": "int",
+      "optional": true,
+      "default": 32
     }
   ],
   "outputSpec": [
@@ -59,10 +66,10 @@
     "file": "src/dme-align-se.sh",
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x4"
+        "instanceType": "mem1_hdd2_x32"
       },
       "myEntryPoint": {
-        "instanceType": "mem3_hdd2_x4"
+        "instanceType": "mem1_hdd2_x32"
       }
     }
   },

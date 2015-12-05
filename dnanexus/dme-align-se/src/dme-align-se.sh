@@ -1,5 +1,5 @@
 #!/bin/bash
-# dme-align-se.sh - align se reads with bismark/bowtie1
+# dme-align-se.sh - align se reads with bismark/bowtie
 
 main() {
     # If available, will print tool versions to stderr and json string to stdout
@@ -10,8 +10,7 @@ main() {
 
     echo "* Value of reads:     '${reads[@]}'"
     echo "* Value of dme_ix:    '$dme_ix'"
-    #echo "* Value of min_insert:     $min_insert"  # N/A on se alignment
-    #echo "* Value of max_insert:     $max_insert"
+    echo "* Value of ncpus:      $ncpus"
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
     #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
@@ -55,9 +54,8 @@ main() {
     echo "* Fastq${concat} file: '${reads_root}.fq'"
     ls -l ${reads_root}.fq
 
-    echo "* Download and uncompress index archive..."
-    dx download "$dme_ix" -o - | tar zxvf -
-    #ls -l input
+    echo "* Download index archive..."
+    dx download "$dme_ix" -o index.tgz
 
     bam_root="${reads_root}_techrep_bismark"
     # Try to simplify the names
@@ -66,47 +64,16 @@ main() {
     fi
     echo "* Expect to create '${bam_root}.bam'"
 
-    echo "* Trimming reads..."
-    # NOTE: 2 different versions of mit-trim.py !  
-    set -x
-    mott-trim-se.py -q 3 -m 30 -t sanger ${reads_root}.fq > ${reads_root}_trimmed.fq
-    set +x
-
-    echo "* Mapping with bismark/bowtie1..."
-    # Note --bowtie2 and -p $nthreads are both SLOWER than single threaded bowtie1
-    set -x
-    mkdir output
-    bismark --bowtie1 -n 1 -l 28 --output_dir output --temp_dir output --basename ${bam_root} input ${reads_root}_trimmed.fq
-    set +x
-
-    echo "* Mapping to lambda with bismark/bowtie1..."
-    # Note that the bam will be discarded, it is only the report that is desired.
-    set -x
-    mkdir output/lambda
-    bismark --bowtie1 -n 1 -l 28 --output_dir output/lambda --temp_dir output/lambda --basename ${bam_root}_lambda \
-            input/lambda ${reads_root}_trimmed.fq
-    set +x
-
-    echo "* Collect bam stats..."
-    set -x
-    samtools flagstat output/${bam_root}.bam > ${bam_root}_flagstat.txt
-    samtools stats output/${bam_root}.bam > ${bam_root}_samstats.txt
-    head -3 ${bam_root}_samstats.txt
-    grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
-    set +x
+    echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
+    meth-align-se.sh index.tgz ${reads1s_root}.fq $ncpus $bam_root
+    echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
     echo "* Prepare metadata..."
-    echo "===== bismark reference =====" > ${bam_root}_map_report.txt
-    cat output/*SE_report.txt           >> ${bam_root}_map_report.txt
-    echo " "                            >> ${bam_root}_map_report.txt
-    echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
-    cat output/lambda/*SE_report.txt    >> ${bam_root}_map_report.txt
-
     qc_stats=''
     reads=0
     read_len=0
     if [ -f /usr/bin/qc_metrics.py ]; then
-        qc_stats=`qc_metrics.py -n bismark_ref -f ${bam_root}_map_report.txt`
+        qc_stats=`qc_metrics.py -n bismark_map -f ${bam_root}_map_report.txt`
         meta=`qc_metrics.py -n samtools_flagstats -f ${bam_root}_flagstat.txt`
         qc_stats=`echo $qc_stats, $meta`
         reads=`qc_metrics.py -n samtools_flagstats -f ${bam_root}_flagstat.txt -k total`
@@ -125,8 +92,8 @@ main() {
 
     echo "* Upload results..."
     ls -l /home/dnanexus/output
-    bam_techrep=$(dx upload output/${bam_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
-                                                    --property reads="$reads" --property read_length="$read_len" --brief)
+    bam_techrep=$(dx upload ${bam_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
+                                            --property reads="$reads" --property read_length="$read_len" --brief)
     bam_techrep_qc=$(dx upload ${bam_root}_qc.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
     map_techrep=$(dx upload ${bam_root}_map_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 

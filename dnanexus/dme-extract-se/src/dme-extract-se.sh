@@ -109,14 +109,12 @@ main() {
         cp ${file_root}_map_report.txt ${target_root}_map_report.txt
     fi
     
-    echo "* Collect bam stats..."
-    set -x
-    samtools flagstat ${target_root}.bam > ${target_root}_flagstat.txt
-    set +x
-    # NOTE: samtools stats may take longer than it is worth 
-    #samtools stats ${target_root}.bam > ${target_root}_samstats.txt
-    #head -3 ${target_root}_samstats.txt
-    #grep ^SN ${target_root}_samstats.txt | cut -f 2- > ${target_root}_samstats_summary.txt
+    echo "* Download index archive..."
+    dx download "$dme_ix" -o index.tgz
+
+    echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
+    meth-extract-se.sh index.tgz ${target_root}.bam 32 --scorched_earth
+    echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
     echo "* Prepare metadata..."
     qc_stats=''
@@ -130,63 +128,21 @@ main() {
         #meta=`qc_metrics.py -n samtools_stats -d ':' -f ${target_root}_samstats_summary.txt`
         #read_len=`qc_metrics.py -n samtools_stats -d ':' -f ${target_root}_samstats_summary.txt -k "average length"`
         #qc_stats=`echo $qc_stats, $meta`
-    fi
-    # All qc to one file per target file:
-    echo "===== samtools flagstat =====" > ${target_root}_qc.txt
-    cat ${target_root}_flagstat.txt     >> ${target_root}_qc.txt
-    #echo " "                            >> ${target_root}_qc.txt
-    #echo "===== samtools stats ====="   >> ${target_root}_qc.txt
-    #cat ${target_root}_samstats.txt     >> ${target_root}_qc.txt
-
-    # NOTE: Better to use sam and let extractor use more threads, but this takes up precious storage
-    alignments_file=${target_root}.bam
-    ncores=32
-    # TODO: What bam_size constitutes too large for sam?  93,953,130,496 is fine!
-    bam_size=`ls -go ${target_root}.bam | awk '{print $3}'`
-    if [ "$uncompress_bam" == "true" ] && [ $bam_size -lt 400000000000 ]; then
-        alignments_file=${target_root}.sam
-        echo "* Decompressing biorep bam (size: $bam_size)..."
-        set -x
-        samtools view ${target_root}.bam > ${alignments_file}
-        rm ${target_root}.bam
-        set +x
-    else
-        ncores=`expr $ncores / 2`
-        if [ "$uncompress_bam" != "true" ]; then
-            echo "* Using compressed biorep bam (size: $bam_size) and $ncores cores..."
-        else
-            echo "* Using compressed bam and $ncores cores because bam_size: $bam_size exceeds limit."
-        fi
-    fi
-
-    echo "* Download and uncompress index..."
-    set -x
-    dx download "$dme_ix" -o - | tar -zxf -
-    set +x
-
-    echo "* Analyse methylation in ${alignments_file} and using $ncores threads..."
-    # TODO: missing: --no_overlap/--include_overlap --ignore_XXX
-    # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
-    set -x
-    mkdir -p /home/dnanexus/output/
-    bismark_methylation_extractor --multicore $ncores --single-end -s --comprehensive --cytosine_report \
-        --CX_context --ample_mem --output output/ --zero_based --genome_folder input ${alignments_file}
-    pigz output/${target_root}.CX_report.txt
-    mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
-    rm -f ${alignments_file} # STORAGE IS LIMITED
-    set +x
-
-    echo "* More metadata..."
-    ls -l output/*_splitting_report.txt
-    if [ -f /usr/bin/qc_metrics.py ]; then
-        meta=`qc_metrics.py -n bismark_extract -f output/*_splitting_report.txt`
+        meta=`qc_metrics.py -n bismark_extract -f *_splitting_report.txt`
         qc_stats=`echo $qc_stats, $meta`
     fi
-    echo " "                                                             >> ${target_root}_qc.txt
-    echo "===== bismark_methylation_extractor: splitting_report ====="   >> ${target_root}_qc.txt
-    cat output/${target_root}_splitting_report.txt                       >> ${target_root}_qc.txt
+    # All qc to one file per target file:
+    echo "===== samtools flagstat ====="  > ${target_root}_qc.txt
+    cat ${target_root}_flagstat.txt      >> ${target_root}_qc.txt
+    #echo " "                             >> ${target_root}_qc.txt
+    #echo "===== samtools stats ====="    >> ${target_root}_qc.txt
+    #cat ${target_root}_samstats.txt      >> ${target_root}_qc.txt
+    echo " "                                                           >> ${target_root}_qc.txt
+    echo "===== bismark_methylation_extractor: splitting_report =====" >> ${target_root}_qc.txt
+    cat *_splitting_report.txt                                         >> ${target_root}_qc.txt
 
     echo "* Uploading files..."
+    ls -l 
     # NOTE: Not saving merged bam
     #bam_biorep=$(dx upload ${target_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
     #                                           --property reads="$reads" --property read_length="$read_len" --brief)
@@ -200,8 +156,8 @@ main() {
     dx-jobutil-add-output mbias_report "$mbias_report" --class=file
 
     # Interim files
-    cx_report=$(dx upload output/${target_root}.CX_report.txt.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
-    bg_gz=$(dx upload output/${target_root}.bedGraph.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    cx_report=$(dx upload ${target_root}.CX_report.txt.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
+    bg_gz=$(dx upload ${target_root}.bedGraph.gz --details "{ $qc_stats }" --property SW="$versions" --brief)
 
     dx-jobutil-add-output cx_report "$cx_report" --class=file
     dx-jobutil-add-output bg_gz "$bg_gz" --class=file

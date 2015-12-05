@@ -1,9 +1,9 @@
 {
   "name": "dme-align-pe",
-  "title": "align pe reads with bismark/bowtie1 (v1.1.0)",
+  "title": "align pe reads with bismark/bowtie (v1.1.1)",
   "summary": "WGBS ENCODE Pipeline step: Trim and map paired end reads for technical replicate using Bismark",
   "dxapi": "1.0.0",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "categories": [
     "DNA Methylation"
   ],
@@ -27,7 +27,14 @@
       "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
       "class": "file",
       "optional": false,
-      "patterns": ["*_bismark_bowtie1_index.tgz"]
+      "patterns": ["*_bismark_bowtie2_index.tgz", "*_bismark_bowtie1_index.tgz"]
+    },
+    {
+      "name": "ncpus",
+      "label": "Number of cpu's available",
+      "class": "int",
+      "optional": true,
+      "default": 32
     },
     {
       "name": "min_insert",
@@ -49,19 +56,19 @@
       "name": "bam_techrep",
       "label": "mapped bismark outputs",
       "class": "file",
-      "patterns": ["*_techrep_bismark.bam"]
+      "patterns": ["*_techrep_bismark_pe.bam"]
     },
     {
       "name": "bam_techrep_qc",
       "label": "Text file with samtools flagstat/stats results",
       "class": "file",
-      "patterns": ["*_techrep_bismark_qc.txt"]
+      "patterns": ["*_techrep_bismark_pe_qc.txt"]
     },
     {
       "name": "map_techrep",
       "label": "Mapping QC report",
       "class": "file",
-      "patterns": ["*_techrep_bismark_map_report.txt"]
+      "patterns": ["*_techrep_bismark_pe_map_report.txt"]
     },
     {
       "name": "reads",
@@ -78,14 +85,20 @@
   "runSpec": {
     "interpreter": "bash",
     "file": "src/dme-align-pe.sh",
+    "execDepends": [
+        {"name": "cutadapt",
+         "package_manager": "pip",
+         "version": "1.9.1"}
+    ],
     "systemRequirements": {
       "main": {
-        "instanceType": "mem3_hdd2_x8"
+        "instanceType": "mem1_hdd2_x32"
       },
       "myEntryPoint": {
-        "instanceType": "mem3_hdd2_x8"
+        "instanceType": "mem1_hdd2_x32"
       }
     }
   },
+  "access": { "network": ["*"] },
   "authorizedUsers": []
 }

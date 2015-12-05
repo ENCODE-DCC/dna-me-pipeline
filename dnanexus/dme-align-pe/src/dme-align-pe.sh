@@ -1,5 +1,5 @@
 #!/bin/bash
-# dme-align-pe.sh - align pe reads with bismark/bowtie1
+# dme-align-pe.sh - align pe reads with bismark/bowtie
 
 main() {
     # If available, will print tool versions to stderr and json string to stdout
@@ -8,11 +8,12 @@ main() {
         versions=`tool_versions.py --dxjson dnanexus-executable.json`
     fi
 
-    echo "* Value of  pair 1 reads: '${reads1[@]}"
-    echo "* Value of  pair 2 reads: '${reads2[@]}"
-    echo "* Value of dme_ix:         '$dme_ix'"
-    echo "* Value of min_insert:      $min_insert"
-    echo "* Value of max_insert:      $max_insert"
+    echo "* Value of pair 1 reads: '${reads1[@]}"
+    echo "* Value of pair 2 reads: '${reads2[@]}"
+    echo "* Value of dme_ix:       '$dme_ix'"
+    echo "* Value of ncpus:         $ncpus"
+    echo "* Value of min_insert:    $min_insert"
+    echo "* Value of max_insert:    $max_insert"
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
     #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
@@ -90,56 +91,21 @@ main() {
     echo "* Reads2 fastq${concat} file: '${reads2_root}.fq'"
     ls -l ${reads2_root}.fq
 
-    echo "* Download and uncompress index archive..."
-    dx download "$dme_ix" -o - | tar zxvf -
-    #ls -l input
+    echo "* Download index archive..."
+    dx download "$dme_ix" -o index.tgz
 
-    bam_root="${reads1_root}_${reads2_root}_pe_techrep_bismark"
+    bam_root="${reads1_root}_${reads2_root}_techrep_bismark_pe"
     # Try to simplify the names
     if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_pe_techrep_bismark"
+        bam_root="${rep_root}_techrep_bismark_pe"
     fi
     echo "* Expect to create '${bam_root}.bam'"
 
-    echo "* Trimming reads..."
-    set -x
-    mott-trim-pe.py -q 3 -m 30 -t sanger ${reads1_root}_trimmed.fq,${reads2_root}_trimmed.fq \
-                                         ${reads1_root}.fq,${reads2_root}.fq
-    set +x
-
-    echo "* Mapping to reference with bismark/bowtie1..."
-    # Note --bowtie2 and -p $nthreads are both SLOWER than single threaded bowtie1
-    set -x
-    mkdir output
-    bismark --bowtie1 -n 1 -l 28 --output_dir output --temp_dir output --basename ${bam_root} \
-            input -I $min_insert -X $max_insert -1 ${reads1_root}_trimmed.fq -2 ${reads2_root}_trimmed.fq
-    set +x
-
-    echo "* Mapping to lambda with bismark/bowtie1..."
-    # Note that the bam will be discarded, it is only the report that is desired.
-    set -x
-    mkdir output/lambda
-    bismark --bowtie1 -n 1 -l 28 --output_dir output/lambda --temp_dir output/lambda --basename ${bam_root}_lambda \
-            input/lambda -I $min_insert -X $max_insert -1 ${reads1_root}_trimmed.fq -2 ${reads2_root}_trimmed.fq
-    set +x
-
-    echo "* Collect bam stats..."
-    # Note that bismark is adding _pe (but not _seq) to the basename.
-    bam_root="${bam_root}_pe"
-    set -x
-    samtools flagstat output/${bam_root}.bam > ${bam_root}_flagstat.txt
-    samtools stats output/${bam_root}.bam > ${bam_root}_samstats.txt
-    head -3 ${bam_root}_samstats.txt
-    grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
-    set +x
+    echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
+    meth-align-pe.sh index.tgz ${reads1_root}.fq ${reads2_root}.fq $min_insert $max_insert $ncpus $bam_root
+    echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
     echo "* Prepare metadata..."
-    echo "===== bismark reference =====" > ${bam_root}_map_report.txt
-    cat output/*PE_report.txt           >> ${bam_root}_map_report.txt
-    echo " "                            >> ${bam_root}_map_report.txt
-    echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
-    cat output/lambda/*PE_report.txt    >> ${bam_root}_map_report.txt
-    
     qc_stats=''
     reads=0
     read_len=0
@@ -163,8 +129,8 @@ main() {
 
     echo "* Upload results..."
     #ls -l /home/dnanexus/output
-    bam_techrep=$(dx upload output/${bam_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
-                                                    --property reads="$reads" --property read_length="$read_len" --brief)
+    bam_techrep=$(dx upload ${bam_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
+                                            --property reads="$reads" --property read_length="$read_len" --brief)
     bam_techrep_qc=$(dx upload ${bam_root}_qc.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
     map_techrep=$(dx upload ${bam_root}_map_report.txt --details "{ $qc_stats }" --property SW="$versions" --brief)
 
