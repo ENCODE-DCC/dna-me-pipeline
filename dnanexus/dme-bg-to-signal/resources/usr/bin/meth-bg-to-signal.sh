@@ -11,11 +11,11 @@ chrom_sizes=$2 # chrom.sizes file used by bedGraphToBigWig
 target_root=${bedgraph%.bedGraph}
 target_root=${target_root%.bg}
 
-echo "* Convert to signal bedGraph to bigWig..."
+echo "-- Convert to signal bedGraph to bigWig..."
 set -x
 bedGraphToBigWig $bedgraph $chrom_sizes ${target_root}.bw
 set +x
 
-echo "* The results..."
+echo "-- The results..."
 ls -l ${target_root}*
 

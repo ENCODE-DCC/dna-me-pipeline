@@ -40,7 +40,7 @@ main() {
     # Try to simplify the names
     rep_root=""
     if [ -f /usr/bin/parse_property.py ]; then
-        rep_root=`parse_property.py -f "'${reads[0]}'" --project "${DX_PROJECT_CONTEXT_ID}" --root_name --quiet`
+        rep_root=`parse_property.py --job "${DX_JOB_ID}" --root_name --quiet`
     fi
     if [ "$rep_root" != "" ]; then
         outfile_name="${rep_root}_reads"
@@ -65,7 +65,7 @@ main() {
     echo "* Expect to create '${bam_root}.bam'"
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
-    meth-align-se.sh index.tgz ${reads1s_root}.fq $ncpus $bam_root
+    meth-align-se.sh index.tgz ${reads_root}.fq $ncpus $bam_root
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
     echo "* Prepare metadata..."

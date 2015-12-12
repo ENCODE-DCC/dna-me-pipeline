@@ -1,9 +1,9 @@
 {
   "name": "dme-align-se",
-  "title": "align se reads with bismark/bowtie1 (v1.1.0)",
+  "title": "align se reads with bismark/bowtie (v1.1.1)",
   "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark",
   "dxapi": "1.0.0",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "categories": [
     "DNA Methylation"
   ],
@@ -20,14 +20,14 @@
       "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
       "class": "file",
       "optional": false,
-      "patterns": ["*_bismark_bowtie1_index.tgz"]
+      "patterns": ["*_bismark_bowtie2_index.tgz", "*_bismark_bowtie1_index.tgz"]
     },
     {
       "name": "ncpus",
       "label": "Number of cpu's available",
       "class": "int",
       "optional": true,
-      "default": 32
+      "default": 8
     }
   ],
   "outputSpec": [
@@ -64,14 +64,20 @@
   "runSpec": {
     "interpreter": "bash",
     "file": "src/dme-align-se.sh",
+    "execDepends": [
+        {"name": "cutadapt",
+         "package_manager": "pip",
+         "version": "1.9.1"}
+    ],
     "systemRequirements": {
       "main": {
-        "instanceType": "mem1_hdd2_x32"
+        "instanceType": "mem3_hdd2_x8"
       },
       "myEntryPoint": {
-        "instanceType": "mem1_hdd2_x32"
+        "instanceType": "mem3_hdd2_x8"
       }
     }
   },
+  "access": { "network": ["*"] },
   "authorizedUsers": []
 }

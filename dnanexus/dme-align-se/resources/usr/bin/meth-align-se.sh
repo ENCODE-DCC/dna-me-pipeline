@@ -12,7 +12,7 @@ reads_fq=$2   # fastq of of paired-end read1, which will be trimmed resulting in
 ncpus=$3      # Number of cpus available (bismark uses 2 per multicore so --multi ncpus/2)
 bam_root=$4   # root name for output bam (e.g. "out_bam" will create "out_bam_pe.bam" and "out_bam_pe_flagstats.txt") 
 
-echo "* Uncompress index archive..."
+echo "-- Uncompress index archive..."
 set -x
 tar zxvf $index_tgz
 rm $index_tgz
@@ -22,24 +22,34 @@ if [ -f input/Bisulfite_Genome/CT_conversion/BS_CT.1.bt2 ]; then
     bowtie_ver="bowtie2"
 fi
 
-echo "* Trimming reads..."
 reads_root=${reads_fq%.gz}
 reads_root=${reads_root%.fastq}
 reads_root=${reads_root%.fq}
-###set -x
-###mkdir -p output/
-###trim_galore -o output --dont_gzip $reads_fq
-###mv output/${reads_root}*.fq ${reads_root}_trimmed.fq
-###set +x
-#rm -rf output/
-if [[ ${reads_fq} =~ \.gz$ ]]; then
-    set -x
-    gunzip ${reads_fq}
-    set +x
-fi
+
+echo "-- Trimming reads..."
 set -x
-mott-trim-se.py -q 3 -m 30 -t sanger ${reads_root}.fq > ${reads_root}_trimmed.fq
+mkdir -p output/
+trim_galore -o output --dont_gzip $reads_fq
+mv output/${reads_root}*.fq ${reads_root}_trimmed.fq
 set +x
+#rm -rf output/
+###echo "-- Normalize fastq name and uncompressed if necessary..."
+###if [[ ${reads_fq} =~ \.gz$ ]]; then
+###    set -x
+###    if [ ${reads_fq} != ${reads_root}.fq.gz ]; then
+###        mv ${reads_fq} ${reads_root}.fq.gz
+###    fi
+###    gunzip ${reads_root}.fq.gz
+###    set +x
+###elif [ ${reads_fq} != ${reads_root}.fq ]; then
+###    set -x
+###    mv ${reads_fq} ${reads_root}.fq
+###    set +x
+###fi
+###echo "-- Trimming reads..."
+###set -x
+###mott-trim-se.py -q 3 -m 30 -t sanger ${reads_root}.fq > ${reads_root}_trimmed.fq
+###set +x
 
 # Note --bowtie2 and -p $nthreads are both SLOWER than single threaded bowtie1
 if [ $ncpus -gt 1 ]; then
@@ -47,7 +57,7 @@ if [ $ncpus -gt 1 ]; then
 else
     ncores=$ncpus
 fi
-echo "* Mapping to reference with bismark/${bowtie_ver} on $ncores cores..."
+echo "-- Mapping to reference with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
@@ -65,7 +75,7 @@ ls -l output/
 mv output/*.bam ${bam_root}.bam
 set +x
 
-echo "* Mapping to lambda with bismark/${bowtie_ver} on $ncores cores..."
+echo "-- Mapping to lambda with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/lambda/
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
@@ -81,14 +91,14 @@ else
 fi
 # Don't care about the bam, only the map_report
 
-echo "* Combine map reports..."
+echo "-- Combine map reports..."
 echo "===== bismark reference =====" > ${bam_root}_map_report.txt
-cat output/*PE_report.txt           >> ${bam_root}_map_report.txt
+cat output/*SE_report.txt           >> ${bam_root}_map_report.txt
 echo " "                            >> ${bam_root}_map_report.txt
 echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
-cat output/lambda/*PE_report.txt    >> ${bam_root}_map_report.txt
+cat output/lambda/*SE_report.txt    >> ${bam_root}_map_report.txt
 
-echo "* Collect bam stats..."
+echo "-- Collect bam stats..."
 set -x
 samtools flagstat ${bam_root}.bam > ${bam_root}_flagstat.txt
 samtools stats ${bam_root}.bam > ${bam_root}_samstats.txt
@@ -96,7 +106,7 @@ head -3 ${bam_root}_samstats.txt
 grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
 set +x
 
-echo "* The results..."
+echo "-- The results..."
 ls -l ${target_root}*
 df -k .
 

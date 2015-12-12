@@ -15,7 +15,7 @@ max_insert=$5 # Maximum insert parameter (bismark -X nnn)
 ncpus=$6      # Number of cpus available (bismark uses 2 per multicore so --multi ncpus/2)
 bam_root=$7   # root name for output bam (e.g. "out_bam" will create "out_bam_pe.bam" and "out_bam_pe_flagstats.txt") 
 
-echo "* Uncompress index archive..."
+echo "-- Uncompress index archive..."
 set -x
 tar zxvf $index_tgz
 rm $index_tgz
@@ -25,13 +25,14 @@ if [ -f input/Bisulfite_Genome/CT_conversion/BS_CT.1.bt2 ]; then
     bowtie_ver="bowtie2"
 fi
 
-echo "* Trimming reads..."
 read1_root=${read1_fq%.gz}
 read1_root=${read1_root%.fastq}
 read1_root=${read1_root%.fq}
 read2_root=${read2_fq%.gz}
 read2_root=${read2_root%.fastq}
 read2_root=${read2_root%.fq}
+
+echo "-- Trimming reads..."
 set -x
 mkdir -p output/
 trim_galore -o output --dont_gzip --paired $read1_fq $read2_fq
@@ -46,7 +47,7 @@ if [ $ncpus -gt 1 ]; then
 else
     ncores=$ncpus
 fi
-echo "* Mapping to reference with bismark/${bowtie_ver} on $ncores cores..."
+echo "-- Mapping to reference with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
@@ -64,7 +65,7 @@ ls -l output/
 mv output/*.bam ${bam_root}.bam
 set +x
 
-echo "* Mapping to lambda with bismark/${bowtie_ver} on $ncores cores..."
+echo "-- Mapping to lambda with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/lambda/
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
@@ -80,14 +81,14 @@ else
 fi
 # Don't care about the bam, only the map_report
 
-echo "* Combine map reports..."
+echo "-- Combine map reports..."
 echo "===== bismark reference =====" > ${bam_root}_map_report.txt
 cat output/*PE_report.txt           >> ${bam_root}_map_report.txt
 echo " "                            >> ${bam_root}_map_report.txt
 echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
 cat output/lambda/*PE_report.txt    >> ${bam_root}_map_report.txt
 
-echo "* Collect bam stats..."
+echo "-- Collect bam stats..."
 set -x
 samtools flagstat ${bam_root}.bam > ${bam_root}_flagstat.txt
 samtools stats ${bam_root}.bam > ${bam_root}_samstats.txt
@@ -95,7 +96,7 @@ head -3 ${bam_root}_samstats.txt
 grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
 set +x
 
-echo "* The results..."
+echo "-- The results..."
 ls -l ${target_root}*
 df -k .
 

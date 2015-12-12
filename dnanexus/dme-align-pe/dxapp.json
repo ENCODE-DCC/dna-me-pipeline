@@ -34,7 +34,7 @@
       "label": "Number of cpu's available",
       "class": "int",
       "optional": true,
-      "default": 32
+      "default": 8
     },
     {
       "name": "min_insert",
@@ -92,10 +92,10 @@
     ],
     "systemRequirements": {
       "main": {
-        "instanceType": "mem1_hdd2_x32"
+        "instanceType": "mem3_hdd2_x8"
       },
       "myEntryPoint": {
-        "instanceType": "mem1_hdd2_x32"
+        "instanceType": "mem3_hdd2_x8"
       }
     }
   },

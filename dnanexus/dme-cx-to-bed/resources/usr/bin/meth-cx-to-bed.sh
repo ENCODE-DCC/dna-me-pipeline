@@ -9,7 +9,7 @@ cx_report=$1   # uncompressed CX_report output of coverage2cytosine.
 chrom_sizes=$2 # chrom.sizes file used by bedGraphToBigWig
 target_root=${cx_report%.CX_report.txt}
 
-echo "* Create beds..."
+echo "-- Create beds..."
 set -x
 mkdir -p output
 mv $cx_report output/
@@ -19,7 +19,7 @@ mv output/CHG_${target_root}.CX_report.txt ${target_root}_CHG.bed
 mv output/CHH_${target_root}.CX_report.txt ${target_root}_CHH.bed
 set +x
 
-echo "* Convert to bigBed..."
+echo "-- Convert to bigBed..."
 set -x
 bedToBigBed ${target_root}_CHH.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 $chrom_sizes ${target_root}_CHH.bb
 pigz ${target_root}_CHH.bed
@@ -29,6 +29,6 @@ bedToBigBed ${target_root}_CpG.bed -as=/opt/data/as/bedMethyl.as -type=bed9+2 $c
 pigz ${target_root}_CpG.bed
 set +x
 
-echo "* The results..."
+echo "-- The results..."
 ls -l ${target_root}*
 
