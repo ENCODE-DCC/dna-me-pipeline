@@ -6,8 +6,13 @@ import sys, os, argparse, json, commands
 
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
+    # Aligns default to PE: trim_galore/bowtie2;  SE: mott-trim/bowtie1
     "dme-align-pe":         [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
-    "dme-align-se":         [ "cutadapt", "trim_galore", "bismark", "bowtie", "samtools" ],
+    "dme-align-se":         [ "meth-align-se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
+
+    # Aligns and extracts could use other bowtie...
+    "dme-align-pe-bowtie1": [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
+    "dme-align-se-bowtie2": [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
     "dme-extract-se":       [ "meth-extract-se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-extract-pe":       [ "meth-extract-pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
@@ -17,12 +22,10 @@ APP_TOOLS = {
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
     "dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
-    "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie" ],
+    "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie1" ],
     # No Longer used:    
     #"dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
     #"dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
-    #"dme-align-bowtie2-pe": [ "mott-trim-pe.py", "bismark", "bowtie2", "samtools" ],
-    #"dme-align-bowtie2-se": [ "mott-trim-se.py", "bismark", "bowtie2", "samtools" ],
     #"dme-merge-bams":       [ "samtools" ],
     }
 # Virtual apps only differ from their parent by name/version. 
@@ -45,9 +48,9 @@ ALL_TOOLS = {
             "coverage2cytosine":            "coverage2cytosine --version | grep Version | awk '{print $4}'",
             "deduplicate_bismark":          "deduplicate_bismark --help | grep modified | awk '{printf \"%s %s %s %s %s %s\n\",$4,$5,$6,$7,$8,$9}'",
             "samtools":                     "samtools 2>&1 | grep Version | awk '{print $2}'",
-            "bowtie":                       "bowtie --version 2>&1 | grep bowtie | awk '{print $3}'",
-            "bowtie-build":                 "bowtie-build --version 2>&1 | grep bowtie | awk '{print $3}'",
-            "bowtie-inspect":               "bowtie-inspect --version 2>&1 | grep bowtie | awk '{print $3}'",
+            "bowtie1":                      "bowtie --version 2>&1 | grep bowtie | awk '{print $3}'",
+            "bowtie1-build":                "bowtie-build --version 2>&1 | grep bowtie | awk '{print $3}'",
+            "bowtie1-inspect":              "bowtie-inspect --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2":                      "bowtie2 --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2-build":                "bowtie2-build --version 2>&1 | grep bowtie | awk '{print $3}'",
             "bowtie2-inspect":              "bowtie2-inspect --version 2>&1 | grep bowtie | awk '{print $3}'",
@@ -59,6 +62,7 @@ ALL_TOOLS = {
             "trim_galore":                  "trim_galore -v | grep version | awk '{print $2}'",
             "cutadapt":                     "cutadapt --version",
             "meth-align-pe.sh":             "meth-align-pe.sh | grep usage | awk '{print $2}' | tr -d :",
+            "meth-align-se.sh":             "meth-align-se.sh | grep usage | awk '{print $2}' | tr -d :",
             "meth-extract-se.sh":           "meth-extract-se.sh | grep usage | awk '{print $2}' | tr -d :",
             "meth-extract-pe.sh":           "meth-extract-pe.sh | grep usage | awk '{print $2}' | tr -d :",
             "meth-bg-to-signal.sh":         "meth-bg-to-signal.sh | grep usage | awk '{print $2}' | tr -d :",

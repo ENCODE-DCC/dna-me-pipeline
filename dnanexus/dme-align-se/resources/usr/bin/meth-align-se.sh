@@ -26,32 +26,36 @@ reads_root=${reads_fq%.gz}
 reads_root=${reads_root%.fastq}
 reads_root=${reads_root%.fq}
 
-echo "-- Trimming reads..."
-set -x
-mkdir -p output/
-trim_galore -o output --dont_gzip $reads_fq
-mv output/${reads_root}*.fq ${reads_root}_trimmed.fq
-set +x
-#rm -rf output/
-###echo "-- Normalize fastq name and uncompressed if necessary..."
-###if [[ ${reads_fq} =~ \.gz$ ]]; then
-###    set -x
-###    if [ ${reads_fq} != ${reads_root}.fq.gz ]; then
-###        mv ${reads_fq} ${reads_root}.fq.gz
-###    fi
-###    gunzip ${reads_root}.fq.gz
-###    set +x
-###elif [ ${reads_fq} != ${reads_root}.fq ]; then
-###    set -x
-###    mv ${reads_fq} ${reads_root}.fq
-###    set +x
-###fi
-###echo "-- Trimming reads..."
-###set -x
-###mott-trim-se.py -q 3 -m 30 -t sanger ${reads_root}.fq > ${reads_root}_trimmed.fq
-###set +x
+if [ "$bowtie_ver" == "bowtie2" ]; then
+    echo "-- Trimming reads with 'trim_galore'..."
+    set -x
+    mkdir -p output/
+    trim_galore -o output --dont_gzip $reads_fq
+    mv output/${reads_root}*.fq ${reads_root}_trimmed.fq
+    set +x
+    #rm -rf output/
+else
+echo "-- Normalize fastq name and uncompressed if necessary..."
+    if [[ ${reads_fq} =~ \.gz$ ]]; then
+        set -x
+        if [ ${reads_fq} != ${reads_root}.fq.gz ]; then
+            mv ${reads_fq} ${reads_root}.fq.gz
+        fi
+        gunzip ${reads_root}.fq.gz
+        set +x
+    elif [ ${reads_fq} != ${reads_root}.fq ]; then
+        set -x
+        mv ${reads_fq} ${reads_root}.fq
+        set +x
+    fi
+    echo "-- Trimming reads with 'mott-trim'..."
+    set -x
+    mott-trim-se.py -q 3 -m 30 -t sanger ${reads_root}.fq > ${reads_root}_trimmed.fq
+    set +x
+fi
 
 # Note --bowtie2 and -p $nthreads are both SLOWER than single threaded bowtie1
+#      and --bowtie2 --multi 4 is not faster than --bowtie1 --multi 1 for single-end datasets
 if [ $ncpus -gt 1 ]; then
     ncores=`expr $ncpus / 2`
 else

@@ -5,7 +5,12 @@ main() {
     # If available, will print tool versions to stderr and json string to stdout
     versions=''
     if [ -f /usr/bin/tool_versions.py ]; then 
-        versions=`tool_versions.py --dxjson dnanexus-executable.json`
+        index_file=`dx describe "$dme_ix" --name`
+        if [[ $index_file =~ *"bowtie2"* ]]; then
+            versions=`tool_versions.py --applet dme-align-se-bowtie2`
+        else
+            versions=`tool_versions.py --dxjson dnanexus-executable.json`
+        fi
     fi
 
     echo "* Value of reads:     '${reads[@]}'"

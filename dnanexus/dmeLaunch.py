@@ -136,6 +136,9 @@ class DmeLaunch(Launch):
         ###"bam_biorep":               "/*_bismark_biorep.bam", ### Not holding on to biorep bam
         "bam_biorep_qc":            "/*_bismark_biorep_qc.txt", 
         "map_biorep":               "/*_bismark_biorep_map_report.txt",
+        "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
+        "cx_report":                "/*_bismark_biorep.CX_report.txt.gz",
+        "bg_gz":                    "/*_bismark_biorep.bedGraph.gz",
         "signal":                   "/*_bismark_biorep.bw", 
         "CpG_bed":                  "/*_bismark_biorep_CpG.bed.gz", 
         "CpG_bb":                   "/*_bismark_biorep_CpG.bb", 
@@ -143,9 +146,6 @@ class DmeLaunch(Launch):
         "CHG_bb":                   "/*_bismark_biorep_CHG.bb", 
         "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz", 
         "CHH_bb":                   "/*_bismark_biorep_CHH.bb", 
-        "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
-        "cx_report":                "/*_bismark_biorep.CX_report.txt.gz",
-        "bg_gz":                    "/*_bismark_biorep.bedGraph.gz",
     }
 
     GENOMES_SUPPORTED = ['GRCh38', 'hg19', 'mm10']
@@ -153,12 +153,15 @@ class DmeLaunch(Launch):
         # For looking up reference file names.
         # TODO: should use ACCESSION based fileNames
         "dme_ix":   {
-                        "GRCh38": "GRCh38_XY_bismark_bowtie1_index.tgz",
-                        "hg19":   "hg19_male_bismark_bowtie1_index.tgz",
-                        "mm10":   "mm10_male_bismark_bowtie1_index.tgz"
+                        "GRCh38": { "SE": "GRCh38_bismark_bowtie1_index.tgz",      # Human only has "PE" so far
+                                    "PE": "GRCh38_bismark_bowtie2_index.tgz" },
+                        "hg19":   { "SE": "hg19_male_bismark_bowtie1_index.tgz",
+                                    "PE": "hg19_male_bismark_bowtie1_index.tgz" }, # hg19 only has bowtie1 index
+                        "mm10":   { "SE": "mm10_male_bismark_bowtie1_index.tgz",
+                                    "PE": "mm10_male_bismark_bowtie2_index.tgz" }, # Mouse only has "SE" so far
                         },
         "chrom_sizes":  {
-                        "GRCh38": "GRCh38_full_male.chrom.sizes",
+                        "GRCh38": "GRCh38_EBV.chrom.sizes",
                         "hg19":   "male.hg19.chrom.sizes",
                         "mm10":   "male.mm10.chrom.sizes"
                         },
@@ -196,9 +199,11 @@ class DmeLaunch(Launch):
 
     def find_ref_files(self,priors):
         '''Locates all reference files based upon organism and gender.'''
-        #bwaIx = self.psv['refLoc']+self.REFERENCE_FILES['bwa_index'][self.psv['genome']][self.psv['gender']]
+        SE_or_PE = 'SE'
+        if self.psv['paired_end']:
+            SE_or_PE = 'PE'
         base_dir = '/' + self.psv['genome'] + "/dna-me/"
-        dme_path = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']]
+        dme_path = base_dir+self.REFERENCE_FILES["dme_ix"][self.psv['genome']][SE_or_PE]
         dme_fid = self.find_file(dme_path,self.REF_PROJECT_DEFAULT)
         if dme_fid == None:
             sys.exit("ERROR: Unable to locate Bismark index file '" + dme_path + "'")

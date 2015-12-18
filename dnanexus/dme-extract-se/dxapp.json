@@ -28,7 +28,7 @@
       "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
       "class": "file",
       "optional": false,
-      "patterns": ["*_bismark_bowtie1_index.tgz"]
+      "patterns": ["*_bismark_bowtie1_index.tgz","*_bismark_bowtie2_index.tgz"]
     },
     {
       "name": "uncompress_bam",
