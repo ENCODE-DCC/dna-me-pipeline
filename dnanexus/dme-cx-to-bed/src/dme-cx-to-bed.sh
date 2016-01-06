@@ -31,7 +31,9 @@ main() {
     fi
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
-    meth-cx-to-bed.sh ${target_root}.CX_report.txt chrom.sizes
+    set -x
+    dname_cx_to_bed.sh ${target_root}.CX_report.txt chrom.sizes
+    set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
     
     echo "* Check storage..."

@@ -113,7 +113,9 @@ main() {
     dx download "$dme_ix" -o index.tgz
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
-    meth-extract-pe.sh index.tgz ${target_root}.bam 32 --scorched_earth
+    set -x
+    dname_extract_pe.sh index.tgz ${target_root}.bam 32 --scorched_earth
+    set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
     
     echo "* Prepare metadata..."

@@ -7,17 +7,17 @@ import sys, os, argparse, json, commands
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
     # Aligns default to PE: trim_galore/bowtie2;  SE: mott-trim/bowtie1
-    "dme-align-pe":         [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
-    "dme-align-se":         [ "meth-align-se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
+    "dme-align-pe":         [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    "dme-align-se":         [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
 
     # Aligns and extracts could use other bowtie...
-    "dme-align-pe-bowtie1": [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
-    "dme-align-se-bowtie2": [ "meth-align-pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    "dme-align-pe-bowtie1": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
+    "dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
-    "dme-extract-se":       [ "meth-extract-se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-extract-pe":       [ "meth-extract-pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-cx-to-bed":        [ "meth-cx-to-bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
-    "dme-bg-to-signal":     [ "meth-bg-to-signal.sh", "bedGraphToBigWig" ],
+    "dme-extract-se":       [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-pe":       [ "dname_extract_pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-cx-to-bed":        [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
+    "dme-bg-to-signal":     [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
@@ -61,12 +61,12 @@ ALL_TOOLS = {
             "pigz":                         "pigz --version 2>&1 | awk '{print $2}'",
             "trim_galore":                  "trim_galore -v | grep version | awk '{print $2}'",
             "cutadapt":                     "cutadapt --version",
-            "meth-align-pe.sh":             "meth-align-pe.sh | grep usage | awk '{print $2}' | tr -d :",
-            "meth-align-se.sh":             "meth-align-se.sh | grep usage | awk '{print $2}' | tr -d :",
-            "meth-extract-se.sh":           "meth-extract-se.sh | grep usage | awk '{print $2}' | tr -d :",
-            "meth-extract-pe.sh":           "meth-extract-pe.sh | grep usage | awk '{print $2}' | tr -d :",
-            "meth-bg-to-signal.sh":         "meth-bg-to-signal.sh | grep usage | awk '{print $2}' | tr -d :",
-            "meth-cx-to-bed.sh":            "meth-cx-to-bed.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_align_pe.sh":            "dname_align_pe.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_align_se.sh":            "dname_align_se.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_extract_se.sh":          "dname_extract_se.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_extract_pe.sh":          "dname_extract_pe.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_bg_to_signal.sh":        "dname_bg_to_signal.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_cx_to_bed.sh":           "dname_cx_to_bed.sh | grep usage | awk '{print $2}' | tr -d :",
             }
 
 def parse_dxjson(dxjson):

@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [ $# -ne 2 ]; then
-    echo "usage v1: meth-cx-to-bed.sh <cx_report> <chrom.sizes>"
+    echo "usage v1: dname_cx_to_bed.sh <cx_report> <chrom.sizes>"
     echo "Converts coverage2cytosine CX_report to beds and bigBeds.  Is independent of DX and ENCODE."
     exit -1; 
 fi

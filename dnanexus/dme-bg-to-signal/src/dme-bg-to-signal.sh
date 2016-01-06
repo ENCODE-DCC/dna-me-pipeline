@@ -29,7 +29,9 @@ main() {
     fi
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
-    meth-bg-to-signal.sh ${target_root}.bg chrom.sizes
+    set -x
+    dname_bg_to_signal.sh ${target_root}.bg chrom.sizes
+    set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
     
     echo "* Check storage..."

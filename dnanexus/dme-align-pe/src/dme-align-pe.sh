@@ -99,16 +99,18 @@ main() {
     echo "* Download index archive..."
     dx download "$dme_ix" -o index.tgz
 
-    bam_root="${reads1_root}_${reads2_root}_techrep_bismark_pe"
+    bam_root="${reads1_root}_${reads2_root}_techrep"
     # Try to simplify the names
     if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_techrep_bismark_pe"
+        bam_root="${rep_root}_techrep"
     fi
-    echo "* Expect to create '${bam_root}.bam'"
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
-    meth-align-pe.sh index.tgz ${reads1_root}.fq ${reads2_root}.fq $min_insert $max_insert $ncpus $bam_root
+    set -x
+    dname_align_pe.sh index.tgz ${reads1_root}.fq ${reads2_root}.fq $min_insert $max_insert $ncpus $bam_root
+    set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
+    bam_root="${bam_root}_bismark_pe"
 
     echo "* Prepare metadata..."
     qc_stats=''

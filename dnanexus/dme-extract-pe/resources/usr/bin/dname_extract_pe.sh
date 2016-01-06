@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [ $# -lt 4 ] || [ $# -gt 4 ]; then
-    echo "usage v1: meth-extract-pe.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth]"
+    echo "usage v1: dname_extract_pe.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth]"
     echo "Extracts methylation from paired-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
     exit -1; 

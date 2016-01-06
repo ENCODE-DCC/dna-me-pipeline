@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [ $# -ne 2 ]; then
-    echo "usage v1: meth-bg-to-signal.sh <bedGraph> <chrom.sizes>"
+    echo "usage v1: dname_bg_to_signal.sh <bedGraph> <chrom.sizes>"
     echo "Converts bismark2bedGraph output to bigWig file.  Is independent of DX and ENCODE."
     exit -1; 
 fi
