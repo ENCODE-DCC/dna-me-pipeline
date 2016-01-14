@@ -34,6 +34,7 @@ VIRTUAL_APPS = {
     # lrna virtuals:    
     "dme-cx-to-bed-alt":      "dme-cx-to-bed",
     "dme-bg-to-signal-alt":   "dme-bg-to-signal",
+    "dme-rep-corr-alt":       "dme-rep-corr",
     }
 
 
