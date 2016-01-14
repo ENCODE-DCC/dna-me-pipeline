@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-if [ $# -lt 4 ] || [ $# -gt 4 ]; then
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
     echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth]"
     echo "Extracts methylation from single-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
@@ -72,7 +72,7 @@ mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
 set +x
 
 if [ $scorched == "earth" ]; then
-    # Storage can be maximized by aggressively splitting out bismark2bedGraph and coverage2cytosine... and aggressively
+    # Storage can be maximized by splitting out bismark2bedGraph and coverage2cytosine... and aggressively
     # removing no longer needed files.
     echo "-- Scorched earth cleanup to maximize available storage..."
     df -k .
@@ -97,7 +97,7 @@ fi
 
 echo "-- Bismark to bedGraph..."
 set -x
-bismark2bedGraph --CX_context --ample_mem --dir output/ -output ${target_root}.bedGraph \
+bismark2bedGraph --CX_context --ample_mem --dir output/ --output ${target_root}.bedGraph \
                  CpG_context_${target_root}.txt CHG_context_${target_root}.txt CHH_context_${target_root}.txt
 set +x
 if [ -f output/${target_root}.bedGraph ]; then
@@ -123,8 +123,8 @@ fi
     
 echo "-- Coverage to cytosine..."
 set -x
-coverage2cytosine --output ${target_root}.CX_report.txt --dir 'output/' --genome 'input/' --parent_dir '/home/dnanexus' \
-                  --zero --CX_context output/${target_root}.bismark.cov.gz
+coverage2cytosine --output ${target_root}.CX_report.txt --dir 'output/' --genome_folder 'input/' --parent_dir '/home/dnanexus' \
+                  --zero_based --CX_context ${target_root}.bismark.cov.gz
 pigz output/${target_root}.CX_report.txt
 mv output/${target_root}.CX_report.txt.gz .
 set +x

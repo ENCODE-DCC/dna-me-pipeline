@@ -127,18 +127,12 @@ main() {
         meta=`qc_metrics.py -n samtools_flagstats -f ${target_root}_flagstat.txt`
         qc_stats=`echo $qc_stats, $meta`
         reads=`qc_metrics.py -n samtools_flagstats -f ${target_root}_flagstat.txt -k total`
-        #meta=`qc_metrics.py -n samtools_stats -d ':' -f ${target_root}_samstats_summary.txt`
-        #read_len=`qc_metrics.py -n samtools_stats -d ':' -f ${target_root}_samstats_summary.txt -k "average length"`
-        #qc_stats=`echo $qc_stats, $meta`
         meta=`qc_metrics.py -n bismark_extract -f *_splitting_report.txt`
         qc_stats=`echo $qc_stats, $meta`
     fi
     # All qc to one file per target file:
     echo "===== samtools flagstat ====="  > ${target_root}_qc.txt
     cat ${target_root}_flagstat.txt      >> ${target_root}_qc.txt
-    #echo " "                             >> ${target_root}_qc.txt
-    #echo "===== samtools stats ====="    >> ${target_root}_qc.txt
-    #cat ${target_root}_samstats.txt      >> ${target_root}_qc.txt
     echo " "                                                           >> ${target_root}_qc.txt
     echo "===== bismark_methylation_extractor: splitting_report =====" >> ${target_root}_qc.txt
     cat *_splitting_report.txt                                         >> ${target_root}_qc.txt

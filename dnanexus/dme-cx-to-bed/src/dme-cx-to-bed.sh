@@ -36,10 +36,6 @@ main() {
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
     
-    echo "* Check storage..."
-    ls -l 
-    df -k .
-
     echo "* Uploading files..."
     CpG_bed=$(dx upload ${target_root}_CpG.bed.gz --details "$qc_stats" --property SW="$versions" --brief)
     CHG_bed=$(dx upload ${target_root}_CHG.bed.gz --details "$qc_stats" --property SW="$versions" --brief)

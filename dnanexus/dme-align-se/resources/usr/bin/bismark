@@ -7,7 +7,7 @@ $|++;
 use Getopt::Long;
 
 
-## This program is Copyright (C) 2010-15, Felix Krueger (felix.krueger@babraham.ac.uk)
+## This program is Copyright (C) 2010-16, Felix Krueger (felix.krueger@babraham.ac.uk)
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ use Getopt::Long;
 
 
 my $parent_dir = getcwd;
-my $bismark_version = 'v0.14.4';
+my $bismark_version = 'v0.15.0';
 my $command_line = join (" ",@ARGV);
 
 
@@ -36,7 +36,7 @@ foreach my $arg (@ARGV){
 }
 my @filenames;   # will be populated by processing the command line
 
-my ($genome_folder,$CT_index_basename,$GA_index_basename,$path_to_bowtie,$sequence_file_format,$bowtie_options,$directional,$unmapped,$ambiguous,$phred64,$solexa,$output_dir,$bowtie2,$vanilla,$sam_no_hd,$skip,$upto,$temp_dir,$non_bs_mm,$insertion_open,$insertion_extend,$deletion_open,$deletion_extend,$gzip,$bam,$samtools_path,$pbat,$prefix,$old_flag,$basename,$score_min_intercept,$score_min_slope,$bt2_large_index,$multicore) = process_command_line();
+my ($genome_folder,$CT_index_basename,$GA_index_basename,$path_to_bowtie,$sequence_file_format,$bowtie_options,$directional,$unmapped,$ambiguous,$phred64,$solexa,$output_dir,$bowtie2,$vanilla,$sam_no_hd,$skip,$upto,$temp_dir,$non_bs_mm,$insertion_open,$insertion_extend,$deletion_open,$deletion_extend,$gzip,$bam,$samtools_path,$pbat,$prefix,$old_flag,$basename,$score_min_intercept,$score_min_slope,$bt2_large_index,$multicore,$rg_tag,$rg_id,$rg_sample,$ambig_bam,$cram,$cram_ref) = process_command_line();
 
 my @fhs;         # stores alignment process names, bisulfite index location, bowtie filehandles and the number of times sequences produced an alignment
 my %chromosomes; # stores the chromosome sequences of the mouse genome
@@ -236,6 +236,13 @@ foreach my $filename (@filenames){
   @pids = ();
   $seqID_contains_tabs = 0;
 
+  ### if 2 or more files are provided we can hold the genome in memory and don't need to read it in a second time
+  unless (%chromosomes){
+      my $cwd = getcwd; # storing the path of the current working directory
+      warn "Current working directory is: $cwd\n\n";
+      read_genome_into_memory($cwd);
+  }
+
   ### As of version 0.14.0 we support multi-threading. In a first instance we accomplish this by
   ### splitting the input file(s) into several smaller subfiles and merging the results back at
   ### the end.
@@ -246,7 +253,7 @@ foreach my $filename (@filenames){
   my ($single_end,$paired_end);
   ### PAIRED-END ALIGNMENTS
   if ($filename =~ ','){
-
+      
     $single_end = 0;
     $paired_end = 1;
 
@@ -467,7 +474,7 @@ foreach my $filename (@filenames){
 
     ### FastA format
     if ($sequence_file_format eq 'FASTA'){
-      warn "Inut file is in FastA format\n";
+      warn "Input file is in FastA format\n";
       if ($directional){
 	($C_to_T_infile) = biTransformFastAFiles ($filename);
 	$fhs[0]->{inputfile} = $fhs[1]->{inputfile} = $C_to_T_infile;
@@ -554,6 +561,7 @@ foreach my $filename (@filenames){
       my @temp_unmapped_2;
       my @temp_ambiguous_1; # will store single end reads or R1 of paired-end
       my @temp_ambiguous_2;
+      my @temp_ambig_bam; 
 
       for (1..$offset){
 
@@ -592,12 +600,14 @@ foreach my $filename (@filenames){
 	
 	  if ($bowtie2){
 	    if ($gzip){
-	      push @temp_output,     "${output_dir}${add_prefix}${original_filename}.temp.${_}.gz_bismark_bt2.bam";
-	      push @temp_reports,    "${output_dir}${add_prefix}${original_filename}.temp.${_}.gz_bismark_bt2_SE_report.txt";
+		push @temp_output,     "${output_dir}${add_prefix}${original_filename}.temp.${_}.gz_bismark_bt2.bam";
+		push @temp_reports,    "${output_dir}${add_prefix}${original_filename}.temp.${_}.gz_bismark_bt2_SE_report.txt";
+		push @temp_ambig_bam,  "${output_dir}${add_prefix}${original_filename}.temp.${_}.gz_bismark_bt2.ambig.bam";   # only for Bowtie 2 
 	    }
 	    else{
-	      push @temp_output,     "${output_dir}${add_prefix}${original_filename}.temp.${_}_bismark_bt2.bam";
-	      push @temp_reports,    "${output_dir}${add_prefix}${original_filename}.temp.${_}_bismark_bt2_SE_report.txt";
+		push @temp_output,     "${output_dir}${add_prefix}${original_filename}.temp.${_}_bismark_bt2.bam";
+		push @temp_reports,    "${output_dir}${add_prefix}${original_filename}.temp.${_}_bismark_bt2_SE_report.txt";
+		push @temp_ambig_bam,  "${output_dir}${add_prefix}${original_filename}.temp.${_}_bismark_bt2.ambig.bam";      # only for Bowtie 2 
 	    }
 	  }
 	  else{
@@ -635,10 +645,12 @@ foreach my $filename (@filenames){
 	    if ($gzip){
 	      push @temp_output,     "${output_dir}${add_prefix}${original_filename_1}.temp.${_}.gz_bismark_bt2_pe.bam";
 	      push @temp_reports,    "${output_dir}${add_prefix}${original_filename_1}.temp.${_}.gz_bismark_bt2_PE_report.txt";
+	      push @temp_ambig_bam,  "${output_dir}${add_prefix}${original_filename_1}.temp.${_}.gz_bismark_bt2_pe.ambig.bam";      # only for Bowtie 2 
 	    }
 	    else{
 	      push @temp_output,     "${output_dir}${add_prefix}${original_filename_1}.temp.${_}_bismark_bt2_pe.bam";
 	      push @temp_reports,    "${output_dir}${add_prefix}${original_filename_1}.temp.${_}_bismark_bt2_PE_report.txt";
+	      push @temp_ambig_bam,  "${output_dir}${add_prefix}${original_filename_1}.temp.${_}_bismark_bt2_pe.ambig.bam";         # only for Bowtie 2 
 	    }
 	  }
 	  else{
@@ -696,16 +708,38 @@ foreach my $filename (@filenames){
       else{
 	merge_individual_BAM_files(\@temp_output,$original_filename_1,$single_end);
       }
-
+      
       # deleting temp BAM files
       warn "Deleting temporary BAM files...\n";
       foreach my $temp (@temp_output){
-	# print "$temp\t";
-	$temp =~ s/.*\///; # deleting path information
-	print "${output_dir}${temp}\t";
-	unlink "${output_dir}${temp}" or warn "Failed to delete temporary BAM file ${output_dir}${temp}: $!\n";
+	  # print "$temp\t";
+	  $temp =~ s/.*\///; # deleting path information
+	  print "${output_dir}${temp}\t";
+	  unlink "${output_dir}${temp}" or warn "Failed to delete temporary BAM file ${output_dir}${temp}: $!\n";
       }
       print "\n\n";
+      
+      ### AMBIGUOUS BAM files
+      if ($ambig_bam){
+
+	  # merging temp AMBIG BAM files
+	  if ($single_end){
+	      merge_individual_ambig_BAM_files(\@temp_ambig_bam,$original_filename,$single_end);
+	  }
+	  else{
+	      merge_individual_ambig_BAM_files(\@temp_ambig_bam,$original_filename_1,$single_end);
+	  }
+	  
+	  # deleting temp BAM files
+	  warn "Deleting temporary ambiguous BAM files...\n";
+	  foreach my $temp (@temp_ambig_bam){
+	      # print "$temp\t";
+	      $temp =~ s/.*\///; # deleting path information
+	      print "${output_dir}${temp}\t";
+	      unlink "${output_dir}${temp}" or warn "Failed to delete temporary ambiguous BAM file ${output_dir}${temp}: $!\n";
+	  }
+	  print "\n\n";
+      }
 
       if ($unmapped){
 	if ($single_end){
@@ -1252,11 +1286,20 @@ sub merge_individual_BAM_files{
       $merged_name = "${basename}_pe.bam";
     }
   }
+  if ($cram){
+      $merged_name =~ s/bam$/cram/;
+      warn "At this stage we write out a single CRAM file and delete all temporary BAM files\n";
+      warn "Now merging BAM files @$tempbam into >>> $merged_name <<<\n";
+      
+      open (OUT,"| $samtools_path view -h -C -T $cram_ref 2>/dev/null - > ${output_dir}${merged_name}") or die "Failed to write to CRAM file $merged_name: $!\nPlease note that this option requires Samtools version 1.2 or higher!\n\n";
+  }
+  else{
+      warn "Now merging BAM files @$tempbam into >>> $merged_name <<<\n";
+      open (OUT,"| $samtools_path view -bSh 2>/dev/null - > ${output_dir}${merged_name}") or die "Failed to write to $merged_name: $!\n";
+  }  
 
-  warn "Now merging BAM files @$tempbam into >>> $merged_name <<<\n";
-  open (OUT,"| $samtools_path view -bSh 2>/dev/null - > ${output_dir}${merged_name}") or die "Failed to write to $merged_name: $!\n";
   my $first = 0;
-
+  
   foreach my $temp_bam(@$tempbam){
     # $temp_bam =~ s/.*\///; # deleting path information
 
@@ -1278,6 +1321,70 @@ sub merge_individual_BAM_files{
   warn "\n";
 
   close OUT or warn "Failed to close output filehandle\n\n";
+}
+
+
+sub merge_individual_ambig_BAM_files{
+    
+    my ($tempbam,$original_filename,$single_end) = @_;
+    my $merged_name = $original_filename;
+    
+    # warn "merged name is: $merged_name\n";
+    $merged_name =~ s/.*\///; # deleting path information
+    # warn "merged name is: $merged_name\n"; sleep(1);
+
+    foreach my $temp_bam(@$tempbam){
+	$temp_bam =~ s/.*\///; # deleting path information
+    }
+    
+    if ($prefix){
+	$merged_name = "$prefix.$merged_name";
+    }
+    
+    if ($single_end){
+	if ($bowtie2){ # BAM format is the default for Bowtie 2
+	    $merged_name .= '_bismark_bt2.ambig.bam';
+	}
+	
+	if ($basename){ # Output file basename is set using the -B argument
+	    $merged_name = "${basename}.ambig.bam";
+	}
+    }
+    else{
+	if ($bowtie2){ # BAM format is the default for Bowtie 2
+	    $merged_name .= '_bismark_bt2_pe.ambig.bam';
+	}
+	
+	if ($basename){ # Output file basename is set using the -B argument
+	    $merged_name = "${basename}_pe.ambig.bam";
+	}
+    }
+
+    warn "Now merging ambiguous BAM files @$tempbam into >>> $merged_name <<<\n";
+    open (OUT,"| $samtools_path view -bSh 2>/dev/null - > ${output_dir}${merged_name}") or die "Failed to write to $merged_name: $!\n";
+    my $first = 0;
+    
+    foreach my $temp_bam(@$tempbam){
+	# $temp_bam =~ s/.*\///; # deleting path information
+	
+	warn "Merging from file >> $temp_bam <<\n";
+	
+	if ($first > 0){
+	    open (IN,"$samtools_path view ${output_dir}${temp_bam} |") or die "Failed to read from BAM file ${output_dir}${temp_bam}\n";
+	}
+	else{ # only for the first file we print the header as well
+	    open (IN,"$samtools_path view -h ${output_dir}${temp_bam} |") or die "Failed to read from BAM file ${output_dir}${temp_bam}\n";
+	}
+
+	while (<IN>){
+	    print OUT;
+	}
+	close IN or warn "Failed to close filehandle\n";
+	++$first;
+    }
+    warn "\n";
+    
+    close OUT or warn "Failed to close output filehandle\n\n";
 }
 
 sub start_methylation_call_procedure_single_ends {
@@ -1311,22 +1418,42 @@ sub start_methylation_call_procedure_single_ends {
   }
 
   $bam = 0 unless (defined $bam);
+  
+  if ($ambig_bam){
+      my $ambig_bam_out = $outfile;
+      $ambig_bam_out =~ s/sam$/ambig.bam/;
+      warn "Ambiguous BAM output: $ambig_bam_out\n";
+      open (AMBIBAM,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$ambig_bam_out") or die "Failed to write to $ambig_bam_out: $!\n";
+  }
 
-  if ($bam == 1){ ### Samtools is installed, writing out BAM directly
-    $outfile =~ s/sam$/bam/;
-    open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+  if ($cram){ ### Samtools is installed, writing out CRAM directly. This qill require Samtools version 1.2 or higher!
+      ### for multicore processing we write out BAM files by default and merge them together as a single CRAM file in the merging step later on.
+      ### This avoids having to change all the the file endings on the way
+      if($multicore > 1){
+	  $outfile =~ s/sam$/bam/;
+	  open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      }
+      else{ # single-core mode
+	  $outfile =~ s/sam$/cram/;
+	  open (OUT,"| $samtools_path view -h -C -T $cram_ref 2>/dev/null - > $output_dir$outfile") or die "Failed to write to CRAM file $outfile: $!\nPlease note that this option requires Samtools version 1.2 or higher!\n\n";
+      }
+  }
+  elsif($bam == 1){ ### Samtools is installed, writing out BAM directly
+      $outfile =~ s/sam$/bam/;
+      open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
   elsif($bam == 2){ ### no Samtools found on system. Using GZIP compression instead
-    $outfile .= '.gz';
-    open (OUT,"| gzip -c - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      $outfile .= '.gz';
+      open (OUT,"| gzip -c - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
   else{ # uncompressed ouput, default
-    open (OUT,'>',"$output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      open (OUT,'>',"$output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
-
   warn "\n>>> Writing bisulfite mapping results to $output_dir$outfile <<<\n\n";
-  sleep(1);
 
+ 
+  sleep(1);
+  
   if ($vanilla){
     print OUT "Bismark version: $bismark_version\n";
   }
@@ -1418,33 +1545,27 @@ sub start_methylation_call_procedure_single_ends {
   }
 
   if ($directional){
-    print REPORT "Option '--directional' specified (default mode): alignments to complementary strands (CTOT, CTOB) were ignored (i.e. not performed)\n";
+      print REPORT "Option '--directional' specified (default mode): alignments to complementary strands (CTOT, CTOB) were ignored (i.e. not performed)\n";
   }
   elsif ($pbat){
-    print REPORT "Option '--pbat' specified: alignments to original strands (OT and OB) strands were ignored (i.e. not performed)\n";
+      print REPORT "Option '--pbat' specified: alignments to original strands (OT and OB) strands were ignored (i.e. not performed)\n";
   }
   else{
-    print REPORT "Option '--non_directional' specified: alignments to all strands were being performed (OT, OB, CTOT, CTOB)\n";
+      print REPORT "Option '--non_directional' specified: alignments to all strands were being performed (OT, OB, CTOT, CTOB)\n";
   }
-
+  
   if ($bowtie2){
-    print REPORT "Bismark was run with Bowtie 2 against the bisulfite genome of $genome_folder with the specified options: $bowtie_options\n\n";
+      print REPORT "Bismark was run with Bowtie 2 against the bisulfite genome of $genome_folder with the specified options: $bowtie_options\n\n";
   }
   else{
-    print REPORT "Bismark was run with Bowtie against the bisulfite genome of $genome_folder with the specified options: $bowtie_options\n\n";
+      print REPORT "Bismark was run with Bowtie against the bisulfite genome of $genome_folder with the specified options: $bowtie_options\n\n";
   }
 
-  ### if 2 or more files are provided we can hold the genome in memory and don't need to read it in a second time
-  unless (%chromosomes){
-    my $cwd = getcwd; # storing the path of the current working directory
-    print "Current working directory is: $cwd\n\n";
-    read_genome_into_memory($cwd);
-  }
-
+  
   unless ($vanilla or $sam_no_hd){
-    generate_SAM_header();
+      generate_SAM_header();
   }
-
+  
   ### Input file is in FastA format
   if ($sequence_file_format eq 'FASTA'){
     process_single_end_fastA_file_for_methylation_call($sequence_file,$C_to_T_infile,$G_to_A_infile,$pid);
@@ -1457,16 +1578,15 @@ sub start_methylation_call_procedure_single_ends {
 
 sub start_methylation_call_procedure_paired_ends {
   my ($sequence_file_1,$sequence_file_2,$C_to_T_infile_1,$G_to_A_infile_1,$C_to_T_infile_2,$G_to_A_infile_2,$pid) = @_;
-
   my ($dir_1,$filename_1);
-
+    
   if ($sequence_file_1 =~ /\//){
-    ($dir_1,$filename_1) = $sequence_file_1 =~ m/(.*\/)(.*)$/;
+      ($dir_1,$filename_1) = $sequence_file_1 =~ m/(.*\/)(.*)$/;
   }
   else{
-    $filename_1 = $sequence_file_1;
+      $filename_1 = $sequence_file_1;
   }
-
+  
   my ($dir_2,$filename_2);
 
   if  ($sequence_file_2 =~ /\//){
@@ -1492,23 +1612,40 @@ sub start_methylation_call_procedure_paired_ends {
     $outfile =~ s/$/_bismark_pe.sam/;
   }
 
+
   if ($basename){ # Output file basename is set using the -B argument
     $outfile = "${basename}_pe.sam";
   }
-
-
+  
+  if ($ambig_bam){
+      my $ambig_bam_out = $outfile;
+      $ambig_bam_out =~ s/sam$/ambig.bam/;
+      warn "Ambiguous BAM output: $ambig_bam_out\n";
+      open (AMBIBAM,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$ambig_bam_out") or die "Failed to write to $ambig_bam_out: $!\n";
+  }
+  
   $bam = 0 unless (defined $bam);
-
-  if ($bam == 1){ ### Samtools is installed, writing out BAM directly
-    $outfile =~ s/sam$/bam/;
-    open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+  
+  if ($cram){ ### Samtools is installed, writing out CRAM directly. This qill require Samtools version 1.2 or higher!
+      if ($multicore > 1){
+	  $outfile =~ s/sam$/bam/;
+	  open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      }
+      else{ # single-core mode
+	  $outfile =~ s/sam$/cram/;
+	  open (OUT,"| $samtools_path view -h -C -T $cram_ref 2>/dev/null - > $output_dir$outfile") or die "Failed to write to CRAM file $outfile: $!\nPlease note that this option requires Samtools version 1.2 or higher!\n\n";
+      }
+  }
+  elsif ($bam == 1){ ### Samtools is installed, writing out BAM directly
+      $outfile =~ s/sam$/bam/;
+      open (OUT,"| $samtools_path view -bSh 2>/dev/null - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
   elsif($bam == 2){ ### no Samtools found on system. Using GZIP compression instead
-    $outfile .= '.gz';
-    open (OUT,"| gzip -c - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      $outfile .= '.gz';
+      open (OUT,"| gzip -c - > $output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
   else{ # uncompressed ouput, default
-    open (OUT,'>',"$output_dir$outfile") or die "Failed to write to $outfile: $!\n";
+      open (OUT,'>',"$output_dir$outfile") or die "Failed to write to $outfile: $!\n";
   }
 
   warn "\n>>> Writing bisulfite mapping results to $outfile <<<\n\n";
@@ -1644,14 +1781,6 @@ sub start_methylation_call_procedure_paired_ends {
   }
 
 
-
-
-  ### if 2 or more files are provided we might still hold the genome in memory and don't need to read it in a second time
-  unless (%chromosomes){
-    my $cwd = getcwd; # storing the path of the current working directory
-    warn "Current working directory is: $cwd\n\n";
-    read_genome_into_memory($cwd);
-  }
 
   unless ($vanilla or $sam_no_hd){
     generate_SAM_header();
@@ -2214,7 +2343,9 @@ sub process_single_end_fastQ_file_for_methylation_call{
   print "Processed $counting{sequences_count} sequences in total\n\n";
 
   print_final_analysis_report_single_end($C_to_T_infile,$G_to_A_infile,$pid);
-
+  if ($ambig_bam){
+      close AMBIBAM or warn "Had trouble closing filehandle AMBIBAM: $!\n";
+  }
 }
 
 sub process_fastA_files_for_paired_end_methylation_calls{
@@ -2344,7 +2475,6 @@ sub process_fastQ_files_for_paired_end_methylation_calls{
     my $ident_2 = <IN2>;         # not needed
     my $quality_value_2 = <IN2>; # not needed
     last unless ($identifier_1 and $sequence_1 and $quality_value_1 and $identifier_2 and $sequence_2 and $quality_value_2);
-
     $identifier_1 = fix_IDs($identifier_1); # this is to avoid problems with truncated read ID when they contain white spaces
     $identifier_2 = fix_IDs($identifier_2);
 
@@ -2418,6 +2548,9 @@ sub process_fastQ_files_for_paired_end_methylation_calls{
   warn "Processed $counting{sequences_count} sequences in total\n\n";
 
   close OUT or warn "Failed to close filehandle OUT: $!\n\n";
+  if ($ambig_bam){
+      close AMBIBAM or warn "Had trouble closing filehandle AMBIBAM: $!\n\n";
+  }
 
   print_final_analysis_report_paired_ends($C_to_T_infile_1,$G_to_A_infile_1,$C_to_T_infile_2,$G_to_A_infile_2,$pid);
 
@@ -2727,7 +2860,6 @@ sub check_bowtie_results_single_end{
 sub check_bowtie_results_single_end_bowtie2{
   my ($sequence,$identifier,$quality_value) = @_;
 
-
   unless ($quality_value){ # FastA sequences get assigned a quality value of Phred 40 throughout
     $quality_value = 'I'x(length$sequence);
   }
@@ -2735,8 +2867,9 @@ sub check_bowtie_results_single_end_bowtie2{
   # as of version Bowtie 2 2.0.0 beta7, when input reads are unpaired, Bowtie 2 no longer removes the trailing /1 or /2 from the read name.
   # $identifier =~ s/\/[1234567890]+$//; # some sequencers don't just have /1 or /2 at the end of read IDs
   # print "sequence $sequence\nid $identifier\nquality: '$quality_value'\n";
-
+  
   my $alignment_ambiguous = 0;
+  my $first_ambig_alignment; # storing the first ambiguous alignment so it can be written out in case '--ambig_bam' was specified
   my $best_AS_so_far;   ## we need to keep a memory of the best alignment score so far
   my $amb_same_thread = 0;   ## if a reads primary and secondary alignments have the same alignment score we set this to true.
 
@@ -2838,20 +2971,31 @@ sub check_bowtie_results_single_end_bowtie2{
       }
 
       if (!defined $best_AS_so_far){
-	$best_AS_so_far = $alignment_score;
-	# warn "First alignment score, setting \$best_AS_so_far to $best_AS_so_far\n";
+	  $best_AS_so_far = $alignment_score;
+	  # warn "First alignment score, setting \$best_AS_so_far to $best_AS_so_far\n";
+	  if ($ambig_bam){ # also setting the first_ambig_alignment
+	      $first_ambig_alignment = $fhs[$index]->{last_line};
+	      $first_ambig_alignment =~ s/_(CT|GA)_converted//;
+	      # warn "$first_ambig_alignment\n"; sleep(1);
+	  }	
       }
       else{
-	if ($alignment_score > $best_AS_so_far){ # AS are generally negative with a maximum of 0
-	  $best_AS_so_far = $alignment_score;
-	  # warn "Found better alignment score ($alignment_score), setting \$best_AS_so_far to $best_AS_so_far\n";
-	  # resetting the ambiguous within thread memory (if applicable at all)
-	  # warn "Resetting amb within thread value to 0\n";
-	  $amb_same_thread = 0;
-	}
-	else{
-	  # warn "current alignment (AS $alignment_score) isn't better than the best so far ($best_AS_so_far). Not changing anything\n";
-	}
+	  if ($alignment_score > $best_AS_so_far){ # AS are generally negative with a maximum of 0
+	      $best_AS_so_far = $alignment_score;
+	      # warn "Found better alignment score ($alignment_score), setting \$best_AS_so_far to $best_AS_so_far\n";
+	      # resetting the ambiguous within thread memory (if applicable at all)
+	      # warn "Resetting amb within thread value to 0\n";
+	      $amb_same_thread = 0;
+
+	      if ($ambig_bam){ # also setting a new first_ambig_alignment
+		  $first_ambig_alignment = $fhs[$index]->{last_line};
+		  $first_ambig_alignment =~ s/_(CT|GA)_converted//;
+		  # warn "$first_ambig_alignment\n"; sleep(1);
+	      }
+	  }
+	  else{
+	      # warn "current alignment (AS $alignment_score) isn't better than the best so far ($best_AS_so_far). Not changing anything\n";
+	  }
       }
 
       # warn "First  best alignment_score is: '$alignment_score'\n";
@@ -2964,9 +3108,9 @@ sub check_bowtie_results_single_end_bowtie2{
 	  }
 	}
 	else{
-	  # assigning undef to last_seq_id and last_line and jumping to the next index (end of Bowtie 2 output)
-	  $fhs[$index]->{last_seq_id} = undef;
-	  $fhs[$index]->{last_line} = undef;
+	    # assigning undef to last_seq_id and last_line and jumping to the next index (end of Bowtie 2 output)
+	    $fhs[$index]->{last_seq_id} = undef;
+	    $fhs[$index]->{last_line} = undef;
 	}
       }
     }
@@ -2974,30 +3118,34 @@ sub check_bowtie_results_single_end_bowtie2{
 
   ### If there were several equally good alignments for the best alignment score we will boot the read
   if ($amb_same_thread){
-    # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
-    $alignment_ambiguous = 1;
-    # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
+      $alignment_ambiguous = 1;
+      # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
   }
   else{
-    # warn "alignment won't be considered ambiguous. This time....\n";
+      # warn "alignment won't be considered ambiguous. This time....\n";
   }
 
   ### if the read produced several ambiguous alignments already now can returning already now. If --ambiguous or --unmapped was specified the read sequence will be printed out.
   if ($alignment_ambiguous == 1){
-    $counting{unsuitable_sequence_count}++;
-    ### report that the sequence has multiple hits with bitwise flag 256. We can print the sequence to the result file straight away and skip everything else
-    # my $ambiguous_read_output = join("\t",$identifier,'256','*','0','0','*','*','0','0',$sequence,$quality_value);
-    # print "$ambiguous_read_output\n";
+      $counting{unsuitable_sequence_count}++;
+      ### report that the sequence has multiple hits with bitwise flag 256. We can print the sequence to the result file straight away and skip everything else
+      # my $ambiguous_read_output = join("\t",$identifier,'256','*','0','0','*','*','0','0',$sequence,$quality_value);
+      # print "$ambiguous_read_output\n";
 
-    if ($ambiguous){
-      return 2; # => exits to next sequence, and prints it out to _ambiguous_reads.txt if '--ambiguous' was specified
-    }
-    elsif ($unmapped){
-      return 1; # => exits to next sequence, and prints it out to _unmapped_reads.txt if '--unmapped' but not '--ambiguous' was specified
-    }
-    else{
-      return 0;
-    }
+      if ($ambig_bam){ 
+	  # warn "Sequence is ambiguous, printing out BAM file:\n";
+	  print AMBIBAM "$first_ambig_alignment\n";
+      }  
+
+      if ($ambiguous){
+	  return 2; # => exits to next sequence, and prints it out to _ambiguous_reads.txt if '--ambiguous' was specified
+      }
+      elsif ($unmapped){
+	  return 1; # => exits to next sequence, and prints it out to _unmapped_reads.txt if '--unmapped' but not '--ambiguous' was specified
+      }
+      else{
+	  return 0;
+      }
   }
 
   ### if there was no alignment found for a certain sequence at all we continue with the next sequence in the sequence file
@@ -3593,13 +3741,14 @@ sub check_bowtie_results_paired_ends_bowtie2{
   unless ($quality_value_2){
     $quality_value_2 = 'I'x(length$sequence_2);
   }
-
-
   # print "$identifier\n$fhs[0]->{last_seq_id}\n$fhs[1]->{last_seq_id}\n$fhs[2]->{last_seq_id}\n$fhs[3]->{last_seq_id}\n\n";
-
 
   my %alignments;
   my $alignment_ambiguous = 0;
+
+  my $first_ambig_alignment_line1; # storing the first ambiguous alignment so it can be written out in case '--ambig_bam' was specified R1
+  my $first_ambig_alignment_line2; # R2
+
   my $best_AS_so_far;   ## we need to keep a memory of the best alignment score so far
   my $amb_same_thread = 0;   ## if a reads primary and secondary alignments have the same alignment score we set this to true.
 
@@ -3617,9 +3766,9 @@ sub check_bowtie_results_paired_ends_bowtie2{
 
     ### if the sequence pair we are currently looking at produced an alignment we are doing various things with it
     if ($fhs[$index]->{last_seq_id} eq $identifier) {
-
-      my ($id_1,$flag_1,$mapped_chromosome_1,$position_1,$mapping_quality_1,$cigar_1,$bowtie_sequence_1,$qual_1) = (split (/\t/,$fhs[$index]->{last_line_1}))[0,1,2,3,4,5,9,10];
-      my ($id_2,$flag_2,$mapped_chromosome_2,$position_2,$mapping_quality_2,$cigar_2,$bowtie_sequence_2,$qual_2) = (split (/\t/,$fhs[$index]->{last_line_2}))[0,1,2,3,4,5,9,10];
+	
+	my ($id_1,$flag_1,$mapped_chromosome_1,$position_1,$mapping_quality_1,$cigar_1,$bowtie_sequence_1,$qual_1) = (split (/\t/,$fhs[$index]->{last_line_1}))[0,1,2,3,4,5,9,10];
+	my ($id_2,$flag_2,$mapped_chromosome_2,$position_2,$mapping_quality_2,$cigar_2,$bowtie_sequence_2,$qual_2) = (split (/\t/,$fhs[$index]->{last_line_2}))[0,1,2,3,4,5,9,10];
       #  print "Index: $index\t$fhs[$index]->{last_line_1}\n";
       #  print "Index: $index\t$fhs[$index]->{last_line_2}\n";	
       #  print join ("\t",$id_1,$flag_1,$mapped_chromosome_1,$position_1,$mapping_quality_1,$cigar_1,$bowtie_sequence_1,$qual_1),"\n";
@@ -3755,18 +3904,37 @@ sub check_bowtie_results_paired_ends_bowtie2{
       if (!defined $best_AS_so_far){
 	$best_AS_so_far = $sum_of_alignment_scores_1;
 	# warn "First alignment score, setting \$best_AS_so_far to $best_AS_so_far\n";
+	if ($ambig_bam){ # also setting the first_ambig_alignment
+	    # Read 1
+	    $first_ambig_alignment_line1 = $fhs[$index]->{last_line_1};
+	    $first_ambig_alignment_line1 =~ s/_(CT|GA)_converted//;
+	    # Read 2
+	    $first_ambig_alignment_line2 = $fhs[$index]->{last_line_2};
+	    $first_ambig_alignment_line2 =~ s/_(CT|GA)_converted//;
+	    # warn "$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n\n"; sleep(1);
+	}
       }
       else{
-	if ($sum_of_alignment_scores_1 > $best_AS_so_far){ # AS are generally negative with a maximum of 0
-	  $best_AS_so_far = $sum_of_alignment_scores_1;
-	  # warn "Found better sum of alignment scores ($sum_of_alignment_scores), setting \$best_AS_so_far to $best_AS_so_far\n";
-	  # resetting the ambiguous within thread memory (if applicable at all)
-	  # warn "Resetting amb within thread value to 0\n";
-	  $amb_same_thread = 0;
-	}
-	else{
-	  # warn "current alignment (AS $sum_of_alignment_scores) isn't better than the best so far ($best_AS_so_far). Not changing anything\n";
-	}
+	  if ($sum_of_alignment_scores_1 > $best_AS_so_far){ # AS are generally negative with a maximum of 0
+	      $best_AS_so_far = $sum_of_alignment_scores_1;
+	      # warn "Found better sum of alignment scores ($sum_of_alignment_scores), setting \$best_AS_so_far to $best_AS_so_far\n";
+	      # resetting the ambiguous within thread memory (if applicable at all)
+	      # warn "Resetting amb within thread value to 0\n";
+	      $amb_same_thread = 0;
+
+	      if ($ambig_bam){ # also setting a new first_ambig_alignment
+		  # Read 1
+		  $first_ambig_alignment_line1 = $fhs[$index]->{last_line_1};
+		  $first_ambig_alignment_line1 =~ s/_(CT|GA)_converted//;
+		  # Read 2
+		  $first_ambig_alignment_line2 = $fhs[$index]->{last_line_2};
+		  $first_ambig_alignment_line2 =~ s/_(CT|GA)_converted//;
+		  # warn "$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n\n"; sleep(1);
+	      }
+	  }
+	  else{
+	      # warn "current alignment (AS $sum_of_alignment_scores) isn't better than the best so far ($best_AS_so_far). Not changing anything\n";
+	  }
       }
 
       if (defined $second_best_1 and defined $second_best_2){
@@ -3949,33 +4117,45 @@ sub check_bowtie_results_paired_ends_bowtie2{
 
   ### If there were several equally good alignments for the best alignment score we will boot the read
   if ($amb_same_thread){
-    # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
-    $alignment_ambiguous = 1;
-    # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
+      # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
+      $alignment_ambiguous = 1;
+      # warn "\$alignment_ambiguous now: $alignment_ambiguous\n";
   }
   else{
-    # warn "alignment won't be considered ambiguous. This time....\n";
+      # warn "alignment won't be considered ambiguous. This time....\n";
   }
-
+  
 
   ### if the read produced several ambiguous alignments for a single instance of Bowtie 2 we can return already now. If --ambiguous was specified the read sequence will be printed out in FastQ format
   if ($alignment_ambiguous == 1){
-    $counting{unsuitable_sequence_count}++;
-    ### report that the sequence pair has multiple hits with bitwise flag 256. We can print the sequence to the result file straight away and skip everything else
-    #  my $ambiguous_read_1 = join("\t",$identifier.'/1','256','*','0','0','*','*','0','0',$sequence_1,$quality_value_1);
-    #  my $ambiguous_read_2 = join("\t",$identifier.'/2','256','*','0','0','*','*','0','0',$sequence_2,$quality_value_2);
-    #  print "$ambiguous_read_1\n";
-    #  print "$ambiguous_read_2\n";
-
-    if ($ambiguous){
-      return 2; # => exits to next sequence pair, and prints it out to _ambiguous_reads_1.txt and _ambiguous_reads_2.txt if '--ambiguous' was specified
-    }
-    elsif ($unmapped){
-      return 1; # => exits to next sequence pair, and prints it out to _unmapped_reads_1.txt and _unmapped_reads_2.txt if '--unmapped' but not '--ambiguous' was specified
-    }
-    else{
-      return 0;
-    }
+      $counting{unsuitable_sequence_count}++;
+      ### report that the sequence pair has multiple hits with bitwise flag 256. We can print the sequence to the result file straight away and skip everything else
+      #  my $ambiguous_read_1 = join("\t",$identifier.'/1','256','*','0','0','*','*','0','0',$sequence_1,$quality_value_1);
+      #  my $ambiguous_read_2 = join("\t",$identifier.'/2','256','*','0','0','*','*','0','0',$sequence_2,$quality_value_2);
+      #  print "$ambiguous_read_1\n";
+      #  print "$ambiguous_read_2\n";
+      
+      if ($ambig_bam){ 
+	  # warn "Sequence is ambiguous, printing out to ambiguous BAM file:\n";
+	  # replacing the first /1\t in the ID of R1 
+	  # warn "Was\n$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n";
+	  $first_ambig_alignment_line1 =~ s/\/1\t/\t/;
+ 	  $first_ambig_alignment_line2 =~ s/\/2\t/\t/;
+	  # warn "Is:\n$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n\n";
+	  
+	  print AMBIBAM "$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n";
+   	  # print "$first_ambig_alignment_line1\n$first_ambig_alignment_line2\n";
+      }  
+      
+      if ($ambiguous){
+	  return 2; # => exits to next sequence pair, and prints it out to _ambiguous_reads_1.txt and _ambiguous_reads_2.txt if '--ambiguous' was specified
+      }
+      elsif ($unmapped){
+	  return 1; # => exits to next sequence pair, and prints it out to _unmapped_reads_1.txt and _unmapped_reads_2.txt if '--unmapped' but not '--ambiguous' was specified
+      }
+      else{
+	  return 0;
+      }
   }
 
   ### if no alignment was found for a certain sequence at all we continue with the next sequence in the sequence file
@@ -5507,8 +5687,10 @@ sub methylation_call{
 }
 
 sub read_genome_into_memory{
+
     ## working directoy
     my $cwd = shift;
+    
     ## reading in and storing the specified genome in the %chromosomes hash
     chdir ($genome_folder) or die "Can't move to $genome_folder: $!";
     warn "Now reading in and storing sequence information of the genome specified in: $genome_folder\n\n";
@@ -5588,6 +5770,26 @@ sub read_genome_into_memory{
     }
     print "\n";
     chdir $cwd or die "Failed to move to directory $cwd\n";
+
+    ### If no single multi-FastA genome file was specified explicitely we will generate one here and write it to the output directory
+    if ($cram){
+	unless (defined $cram_ref){
+	    warn "Reconstituting a single multi-FastA genome file as CRAM reference (you may specify such a file using --cram_ref <file> explicitely to prevent this behaviour)\n";	
+
+	    $cram_ref = "${output_dir}Bismark_genome_CRAM_reference.mfa";
+	    warn "Writing multi-FastA file to $cram_ref\n";
+	    open (REF,'>',"$cram_ref") or die "Failed to write to file $cram_ref\n";
+	    foreach my $chr(keys %chromosomes){
+		print REF ">$chr\n$chromosomes{$chr}\n";
+	    }
+	    warn "Complete\n";
+	    close REF or warn "Failed to close filehandle REF: $!\n";
+	}
+	
+    }
+    
+
+
 }
 
 sub extract_chromosome_name {
@@ -7336,11 +7538,20 @@ sub process_command_line{
   my $sam;
   my $multicore;
   my $bowtie1;
-
+  my $rg_tag;
+  my $rg_id;
+  my $rg_sample;
+  my $genome_folder;
+  my $singles;
+  my $ambig_bam;
+  my $cram;
+  my $cram_ref;
+  
   my $command_line = GetOptions ('help|man'                => \$help,
 				 '1=s'                     => \$mates1,
 				 '2=s'                     => \$mates2,
 				 'path_to_bowtie=s'        => \$path_to_bowtie,
+				 'genome_folder=s'         => \$genome_folder,
 				 'f|fasta'                 => \$fasta,
 				 'q|fastq'                 => \$fastq,
 				 's|skip=i'                => \$skip,
@@ -7383,6 +7594,13 @@ sub process_command_line{
 				 'B|basename=s'            => \$basename,
 				 'sam'                     => \$sam,
 				 'multicore=i'             => \$multicore,
+				 'rg_tag'                  => \$rg_tag,
+				 'rg_id=s'                 => \$rg_id,
+				 'rg_sample=s'             => \$rg_sample,
+				 'se|single_end=s'         => \$singles,
+				 'ambig_bam'               => \$ambig_bam,
+				 'cram'                    => \$cram,
+				 'cram_ref=s'              => \$cram_ref,
 				);
 
 
@@ -7456,61 +7674,90 @@ VERSION
 
 
   if ($sam){
-    warn "Output format manually set as SAM\n";
+      warn "Output format manually set as SAM\n";
+  }
+  elsif($cram){
+      warn "Output format set to CRAM\n";
+      if (defined $cram_ref){
+	  warn "CRAM reference given as: '$cram_ref'\n\n";
+	  unless (-e $cram_ref){
+	      die "There is a problem with the CRAM reference '$cram_ref': $!\n\n";
+	  }
+	  
+	  # determining full path information for the cram reference
+	  if ($cram_ref =~/\//){
+	      if (chdir $cram_ref){
+		  my $absolute_cram_ref_folder = getcwd; ## making the genome folder path absolute
+		  unless ($absolute_cram_ref_folder =~/\/$/){
+		      $absolute_cram_ref_folder =~ s/$/\//;
+		  }
+	      }
+	  }
+      }
+      else{
+	  warn "CRAM reference not specified explicitely, regenerating from FastA reference files\n\n";
+      }
   }
   else{
-    $bam = 1;
-    warn "Output format is BAM (default)\n";
+      $bam = 1;
+      warn "Output format is BAM (default)\n";
   }
 
   ### OUTPUT REQUESTED AS BAM FILE (default)
-  if ($bam){
-    if ($vanilla){
-      die "Specifying BAM output is not compatible with \"--vanilla\" format. Please respecify\n\n";
-    }
-
-    ### PATH TO SAMTOOLS
-    if (defined $samtools_path){
-      # if Samtools was specified as full command
-      if ($samtools_path =~ /samtools$/){
-	if (-e $samtools_path){
-	  # Samtools executable found
-	}
-	else{
-	  die "Could not find an installation of Samtools at the location $samtools_path. Please respecify\n";
-	}
+  if ($bam or $cram){
+      if ($vanilla){
+	  die "Specifying BAM output is not compatible with \"--vanilla\" format. Please respecify\n\n";
       }
+
+      ### PATH TO SAMTOOLS
+      if (defined $samtools_path){
+	  # if Samtools was specified as full command
+	  if ($samtools_path =~ /samtools$/){
+	      if (-e $samtools_path){
+		  # Samtools executable found
+	      }
+	      else{
+		  die "Could not find an installation of Samtools at the location $samtools_path. Please respecify\n";
+	      }
+	  }
+	  else{
+	      unless ($samtools_path =~ /\/$/){
+		  $samtools_path =~ s/$/\//;
+	      }
+	      $samtools_path .= 'samtools';
+	      if (-e $samtools_path){
+		  # Samtools executable found
+	      }
+	      else{
+		  die "Could not find an installation of Samtools at the location $samtools_path. Please respecify\n";
+	      }
+	  }
+	  
+	  warn "Alignments will be written out in BAM format. Samtools path provided as: '$samtools_path'\n";
+	  $bam = 1;
+      }
+      # Check whether Samtools is in the PATH if no path was supplied by the user
       else{
-	unless ($samtools_path =~ /\/$/){
-	  $samtools_path =~ s/$/\//;
-	}
-	$samtools_path .= 'samtools';
-   	if (-e $samtools_path){
-	  # Samtools executable found
-	}
-	else{
-	  die "Could not find an installation of Samtools at the location $samtools_path. Please respecify\n";
-	}
+	  if (!system "which samtools >/dev/null 2>&1"){ # STDOUT is binned, STDERR is redirected to STDOUT. Returns 0 if samtools is in the PATH
+	      $samtools_path = `which samtools`;
+	      chomp $samtools_path;
+	      warn "Alignments will be written out in BAM format. Samtools found here: '$samtools_path'\n"; sleep(1);
+	      $bam = 1;
+	  }
       }
-
-      warn "Alignments will be written out in BAM format. Samtools path provided as: '$samtools_path'\n";
-      $bam = 1;
-    }
-    # Check whether Samtools is in the PATH if no path was supplied by the user
-    else{
-      if (!system "which samtools >/dev/null 2>&1"){ # STDOUT is binned, STDERR is redirected to STDOUT. Returns 0 if samtools is in the PATH
-	$samtools_path = `which samtools`;
-	chomp $samtools_path;
-	warn "Alignments will be written out in BAM format. Samtools found here: '$samtools_path'\n";
-	$bam = 1;
+      
+      unless (defined $samtools_path){
+	  $bam = 2;
+	  warn "Did not find Samtools on the system. Alignments will be compressed with GZIP instead (.sam.gz)\n";
       }
-    }
+      sleep (1);
+  }
 
-    unless (defined $samtools_path){
-      $bam = 2;
-      warn "Did not find Samtools on the system. Alignments will be compressed with GZIP instead (.sam.gz)\n";
-    }
-    sleep (1);
+  ### OPTION AMBIGUOUS BAM
+  if ($ambig_bam){
+      unless ($bowtie2){
+	  die "The option --ambig_bam is only available for Bowtie2 alignments\n";
+      }
   }
 
 
@@ -7518,7 +7765,13 @@ VERSION
   ### PROCESSING ARGUMENTS
 
   ### GENOME FOLDER
-  my $genome_folder = shift @ARGV; # mandatory
+  if (defined $genome_folder){ # 25 11 2015 The genome folder may now also be defined with the option --genome_folder
+    # warn "Genome folder specified with --genome_folder $genome_folder\n";
+  }
+  else{
+    $genome_folder = shift @ARGV; # mandatory
+  }
+
   unless ($genome_folder){
     warn "Genome folder was not specified!\n";
     print_helpfile();
@@ -7613,7 +7866,7 @@ VERSION
 
   }
 
-  else{ ### Bowtie 1 (default)
+  else{ ### Bowtie 1
     ### checking the integrity of $CT_dir
     chdir $CT_dir or die "Failed to move to directory $CT_dir: $!\n";
     my @CT_bowtie_index = ('BS_CT.1.ebwt','BS_CT.2.ebwt','BS_CT.3.ebwt','BS_CT.4.ebwt','BS_CT.rev.1.ebwt','BS_CT.rev.2.ebwt');
@@ -7897,45 +8150,57 @@ VERSION
 
   ### PAIRED-END MAPPING
   if ($mates1){
-    my @mates1 = (split (/,/,$mates1));
-    die "Paired-end mapping requires the format: -1 <mates1> -2 <mates2>, please respecify!\n" unless ($mates2);
-    my @mates2 = (split(/,/,$mates2));
-    unless (scalar @mates1 == scalar @mates2){
-      die "Paired-end mapping requires the same amounnt of mate1 and mate2 files, please respecify! (format: -1 <mates1> -2 <mates2>)\n";
-    }
-    while (1){
-      my $mate1 = shift @mates1;
-      my $mate2 = shift @mates2;
-      last unless ($mate1 and $mate2);
-      push @filenames,"$mate1,$mate2";
-    }
-    if ($bowtie2){
-      push @bowtie_options,'--no-mixed';     ## By default Bowtie 2 is not looking for single-end alignments if it can't find concordant or discordant alignments
-      push @bowtie_options,'--no-discordant';## By default Bowtie 2 is not looking for discordant alignments if it can't find concordant ones
-    }
-
-    if ($old_flag){
-      warn "\nUsing FLAG values for paired-end SAM output used up to Bismark v0.8.2. In addition, paired-end sequences will have /1 and /2 appended to their read IDs\n\n" unless($vanilla);
-      sleep(3);
-    }
+      
+      if (defined $singles){ # if --single_end has been set explicitely
+	  die "You cannot set --single_end and supply files in paired-end format (-1 <mates1> -2 <mates2>). Please respecify!\n";
+      }
+      
+      my @mates1 = (split (/,/,$mates1));
+      die "Paired-end mapping requires the format: -1 <mates1> -2 <mates2>, please respecify!\n" unless ($mates2);
+      my @mates2 = (split(/,/,$mates2));
+      unless (scalar @mates1 == scalar @mates2){
+	  die "Paired-end mapping requires the same amounnt of mate1 and mate2 files, please respecify! (format: -1 <mates1> -2 <mates2>)\n";
+      }
+      while (1){
+	  my $mate1 = shift @mates1;
+	  my $mate2 = shift @mates2;
+	  last unless ($mate1 and $mate2);
+	  push @filenames,"$mate1,$mate2";
+      }
+      if ($bowtie2){
+	  push @bowtie_options,'--no-mixed';     ## By default Bowtie 2 is not looking for single-end alignments if it can't find concordant or discordant alignments
+	  push @bowtie_options,'--no-discordant';## By default Bowtie 2 is not looking for discordant alignments if it can't find concordant ones
+      }
+      
+      if ($old_flag){
+	  warn "\nUsing FLAG values for paired-end SAM output used up to Bismark v0.8.2. In addition, paired-end sequences will have /1 and /2 appended to their read IDs\n\n" unless($vanilla);
+	  sleep(3);
+      }
   }
   elsif ($mates2){
-    die "Paired-end mapping requires the format: -1 <mates1> -2 <mates2>, please respecify!\n";
+      die "Paired-end mapping requires the format: -1 <mates1> -2 <mates2>, please respecify!\n";
   }
-
+  
   ### SINGLE-END MAPPING
   # Single-end mapping will be performed if no mate pairs for paired-end mapping have been specified
-  my $singles;
+  
   unless ($mates1 and $mates2){
-    $singles = join (',',@ARGV);
-    unless ($singles){
-      die "\nNo filename supplied! Please specify one or more files for single-end Bismark mapping!\n";
-    }
-    $singles =~ s/\s/,/g;
-    @filenames = (split(/,/,$singles));
-    warn "\nFiles to be analysed:\n";
-    warn "@filenames\n\n";
-    sleep (3);
+      if (defined $singles){ # if --single_end has been set explicitely
+	  warn "Mapping set to single-end mode (user defined). File names need to be separated by commas [,] or colons [:]! Supplied file names are: $singles\n";
+	  $singles =~ s/:/,/g; # replacing colons (:) with commas
+      }
+      else{
+	  $singles = join (',',@ARGV);
+	  unless ($singles){
+	      die "\nNo filename supplied! Please specify one or more files for single-end Bismark mapping!\n";
+	  }
+	  $singles =~ s/\s/,/g; # replacing spaces with commas
+      }
+      
+      @filenames = (split(/,/,$singles));
+      warn "\nFiles to be analysed:\n";
+      warn "@filenames\n\n";
+      sleep (3);
   }
 
   ### MININUM INSERT SIZE (PAIRED-END ONLY)
@@ -8100,30 +8365,63 @@ VERSION
     die "Specifying --basename in conjuction with --multicore is currently not supported (but we are aiming to fix this soon). Please lose either --basename or --multicore to proceed\n\n";
   }
 
-  return ($genome_folder,$CT_index_basename,$GA_index_basename,$path_to_bowtie,$sequence_format,$bowtie_options,$directional,$unmapped,$multi_map,$phred64,$solexa,$output_dir,$bowtie2,$vanilla,$sam_no_hd,$skip,$qupto,$temp_dir,$non_bs_mm,$insertion_open,$insertion_extend,$deletion_open,$deletion_extend,$gzip,$bam,$samtools_path,$pbat,$prefix,$old_flag,$basename,$score_min_intercept,$score_min_slope,$bt2_large_index_present,$multicore);
+  # Read Group Tags for the @RG header
+  if (defined $rg_sample){
+    if (defined $rg_id){
+      warn "--rg_id set to '$rg_id', setting --rg_tag to TRUE\n";
+      $rg_tag++; # implicitely setting $rg_tag as well
+    }
+    else{
+      die "--rg_sample cannot be specified without without setting --rg_id. Please set both or none (which would result in the default name 'SAMPLE' for both)\n";
+    }
+  }
+
+  if ($rg_tag){ # either true because of --rg_tag, or because --rg_id/--rg_sample were defined as well
+    unless (defined $rg_id){
+      $rg_id = 'SAMPLE';
+    }
+    unless (defined $rg_sample){
+      $rg_sample = 'SAMPLE';
+    }
+  }
+
+  return ($genome_folder,$CT_index_basename,$GA_index_basename,$path_to_bowtie,$sequence_format,$bowtie_options,$directional,$unmapped,$multi_map,$phred64,$solexa,$output_dir,$bowtie2,$vanilla,$sam_no_hd,$skip,$qupto,$temp_dir,$non_bs_mm,$insertion_open,$insertion_extend,$deletion_open,$deletion_extend,$gzip,$bam,$samtools_path,$pbat,$prefix,$old_flag,$basename,$score_min_intercept,$score_min_slope,$bt2_large_index_present,$multicore,$rg_tag,$rg_id,$rg_sample,$ambig_bam,$cram,$cram_ref);
 }
 
 
 
 sub generate_SAM_header{
+    
+    print OUT "\@HD\tVN:1.0\tSO:unsorted\n";          # @HD = header, VN = version, SO = sort order
+    if ($ambig_bam){
+	print AMBIBAM "\@HD\tVN:1.0\tSO:unsorted\n";    
+    }
+    
+    #  Unordered printing of @SQ headers
+    #  foreach my $chr (keys %chromosomes){
+    #    my $length = length ($chromosomes{$chr});
+    #    print "\@SQ\tSN:$chr\tLN:$length\n";
+    #    print OUT "\@SQ\tSN:$chr\tLN:$length\n";        # @SQ = sequence, SN = seq name, LN = length
+    #  }
+    
+    foreach my $chr (sort {$a<=>$b} keys %SQ_order){
+	# warn "$chr\t$SQ_order{$chr}\n";
+	my $length = length ($chromosomes{$SQ_order{$chr}});
+	print OUT "\@SQ\tSN:$SQ_order{$chr}\tLN:$length\n"; # @SQ = sequence, SN = seq name, LN = length   
+	if ($ambig_bam){
+	    print AMBIBAM "\@SQ\tSN:$SQ_order{$chr}\tLN:$length\n";
+	}
+    }
 
-  print OUT "\@HD\tVN:1.0\tSO:unsorted\n";          # @HD = header, VN = version, SO = sort order
-
-  #  Unordered printing of @SQ headers
-  #  foreach my $chr (keys %chromosomes){
-  #    my $length = length ($chromosomes{$chr});
-  #    print "\@SQ\tSN:$chr\tLN:$length\n";
-  #    print OUT "\@SQ\tSN:$chr\tLN:$length\n";        # @SQ = sequence, SN = seq name, LN = length
-  #  }
-
-  foreach my $chr (sort {$a<=>$b} keys %SQ_order){
-    # warn "$chr\t$SQ_order{$chr}\n";
-    my $length = length ($chromosomes{$SQ_order{$chr}});
-    print OUT "\@SQ\tSN:$SQ_order{$chr}\tLN:$length\n"; # @SQ = sequence, SN = seq name, LN = length
-  }
-
-  print OUT "\@PG\tID:Bismark\tVN:$bismark_version\tCL:\"bismark $command_line\"\n";        # @PG = program, ID = unique identifier, PN = program name name, VN = program version
-
+    # 18 11 2015: Added @RG as a header line if --rg_tag or --rg_id/--rg_sample were set as well
+    if ($rg_tag){
+	print OUT "\@RG\tPL:ILLUMINA\tID:$rg_id\tSM:$rg_sample\n";  # @RG = Read Group, PL = Platform, ID: required, SM: sample, can be a description
+    }
+    
+    print OUT "\@PG\tID:Bismark\tVN:$bismark_version\tCL:\"bismark $command_line\"\n";        # @PG = program, ID = unique identifier, PN = program name name, VN = program version
+    if ($ambig_bam){
+	print AMBIBAM "\@PG\tID:Bismark\tVN:$bismark_version\tCL:\"bismark $command_line\"\n";
+    }
 }
 
 ### I would like to thank the following individuals for their valuable contributions to the Bismark SAM output format:
@@ -8337,16 +8635,33 @@ sub single_end_SAM_output{
 
   my $XA_tag = "XA:Z:$number_of_mismatches";
 
-  #####
+  ####
+
+  my $read_group; # optional
+  if ($rg_tag){
+    $read_group = "RG:Z:$rg_id";
+  }
+
+  ####
 
   # SAM format: QNAME, FLAG, RNAME, 1-based POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL, optional fields
   ### optionally print number of non-bisulfite mismatches
   if ($non_bs_mm){
-    print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag,$XA_tag)),"\n";
+    if ($rg_tag){
+      print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag,$XA_tag,$read_group)),"\n";
+    }
+    else{
+      print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag,$XA_tag)),"\n";
+    }
   }
   else{ # default
     # SAM format: QNAME, FLAG, RNAME, 1-based POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL, optional fields
-    print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag)),"\n";
+    if ($rg_tag){
+      print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag,$read_group)),"\n";
+    }
+    else{
+      print OUT join("\t",($id,$flag,$chr,$start,$mapq,$cigar,$rnext,$pnext,$tlen,$actual_seq,$qual,$NM_tag,$MD_tag,$XM_tag,$XR_tag,$XG_tag)),"\n";
+    }
   }
 }
 
@@ -8865,18 +9180,39 @@ sub paired_end_SAM_output{
   my $XA_tag = "XA:Z:$number_of_mismatches_1";
   my $XB_tag = "XB:Z:$number_of_mismatches_2";
 
+  ####
+
+  my $read_group; # optional
+  if ($rg_tag){
+    $read_group = "RG:Z:$rg_id";
+  }
+
+  ####
 
   # SAM format: QNAME, FLAG, RNAME, 1-based POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL, optional fields
   ### optionally print number of non-bisulfite mismatches
   if ($non_bs_mm){
-    print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag,$XA_tag)), "\n";
-    print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag,$XB_tag)), "\n";
+    if ($rg_tag){
+      print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag,$XA_tag,$read_group)), "\n";
+      print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag,$XB_tag,$read_group)), "\n";
+    }
+    else{
+      print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag,$XA_tag)), "\n";
+      print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag,$XB_tag)), "\n";
+    }
   }
   else{ # default
-    print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag)), "\n";
-    print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag)), "\n";
+    if ($rg_tag){
+      print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag,$read_group)), "\n";
+      print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag,$read_group)), "\n";
+    }
+    else{
+      print OUT join("\t", ($id_1, $flag_1, $chr, $start_read_1, $mapq, $cigar_1, $rnext, $pnext_1, $tlen_1, $actual_seq_1, $qual_1, $NM_tag_1, $MD_tag_1, $XM_tag_1,$XR_tag_1,$XG_tag)), "\n";
+      print OUT join("\t", ($id_2, $flag_2, $chr, $start_read_2, $mapq, $cigar_2, $rnext, $pnext_2, $tlen_2, $actual_seq_2, $qual_2, $NM_tag_2, $MD_tag_2, $XM_tag_2,$XR_tag_2,$XG_tag)), "\n";
+    }
   }
 }
+
 
 sub revcomp{
   my $seq = shift or die "Missing seq to reverse complement\n";
@@ -9290,7 +9626,8 @@ ARGUMENTS:
                          as well as the subfolders created by the Bismark_Genome_Preparation
                          script (/Bisulfite_Genome/CT_conversion/ and /Bisulfite_Genome/GA_conversion/).
                          Bismark expects one or more fastA files in this folder (file extension: .fa
-                         or .fasta). The path can be relative or absolute.
+                         or .fasta). The path can be relative or absolute. The path may also be set as
+                         '--genome_folder /path/to/genome/folder/'.
 
 -1 <mates1>              Comma-separated list of files containing the #1 mates (filename usually includes
                          "_1"), e.g. flyA_1.fq,flyB_1.fq). Sequences specified with this option must
@@ -9313,12 +9650,15 @@ OPTIONS:
 
 Input:
 
+--se/--single_end <list> Sets single-end mapping mode explicitly giving a list of file names as <list>.
+                         The filenames may be provided as a comma [,] or colon [:] separated list.       
+
 -q/--fastq               The query input files (specified as <mate1>,<mate2> or <singles> are FASTQ
                          files (usually having extension .fg or .fastq). This is the default. See also
                          --solexa-quals.
 
 -f/--fasta               The query input files (specified as <mate1>,<mate2> or <singles> are FASTA
-                         files (usually havin extension .fa, .mfa, .fna or similar). All quality values
+                         files (usually having extensions .fa, .mfa, .fna or similar). All quality values
                          are assumed to be 40 on the Phred scale. FASTA files are expected to contain both
                          the read name and the sequence on a single line (and not spread over several lines).
 
@@ -9436,6 +9776,15 @@ Output:
 --sam-no-hd              Suppress SAM header lines (starting with @). This might be useful when very large input files are
                          split up into several smaller files to run concurrently and the output files are to be merged.
 
+--rg_tag                 Write out a Read Group tag to the resulting SAM/BAM file. This will write the following line to the
+                         SAM header: \@RG PL: ILLUMINA ID:SAMPLE SM:SAMPLE ; to set ID and SM see --rg_id and --rg_sample.
+                         In addition each read receives an RG:Z:RG-ID tag. Default: OFF.
+
+--rg_id <string>         Sets the ID field in the \@RG header line. The default is 'SAMPLE'.
+
+--rg_sample <string>     Sets the SM field in the \@RG header line; can't be set without setting --rg_id as well. The default is
+                         'SAMPLE'.
+
 --quiet                  Print nothing besides alignments.
 
 --vanilla                Performs bisulfite mapping with Bowtie 1 and prints the 'old' output (as in Bismark 0.5.X) instead
@@ -9450,7 +9799,7 @@ Output:
 
 --ambiguous              Write all reads which produce more than one valid alignment with the same number of lowest
                          mismatches or other reads that fail to align uniquely to a file in the output directory.
-                         Written reads will appear as they did in the input, without any of the translation of quality
+                         Written reads will appear as. they did in the input, without any of the translation of quality
                          values that may have taken place within Bowtie or Bismark. Paired-end reads will be written to two
                          parallel files with _1 and _2 inserted in theit filenames, i.e. _ambiguous_reads_1.txt and
                          _ambiguous_reads_2.txt. These reads are not written to the file specified with --un.
@@ -9478,6 +9827,13 @@ Output:
                          attempt to use the path to Samtools that was specified with '--samtools_path', or, if it hasn't
                          been specified, attempt to find Samtools in the PATH. If no installation of Samtools can be found,
                          the SAM output will be compressed with GZIP instead (yielding a .sam.gz output file).
+
+--cram                   Writes the output to a CRAM file instead of BAM. This requires the use of Samtools 1.2 or higher.
+                         
+--cram_ref <ref_file>    CRAM output requires you to specify a reference genome as a single FastA file. If this single-FastA
+                         reference file is not supplied explicitly it will be regenerated from the genome .fa sequence(s)
+                         used for the Bismark run and written to a file called 'Bismark_genome_CRAM_reference.mfa' into the
+                         oputput directory.
 
 --samtools_path          The path to your Samtools installation, e.g. /home/user/samtools/. Does not need to be specified
                          explicitly if Samtools is in the PATH already.
@@ -9507,6 +9863,10 @@ Output:
 
                               CTOB:      163           83                 115          179
 
+--ambig_bam              For reads that have multiple alignments a random alignment is written out to a special file ending in
+                         '.ambiguous.bam'. The alignments are in Bowtie2 format and do not any contain Bismark specific
+                         entries such as the methylation call etc. These ambiguous BAM files are intended to be used as 
+                         coverage estimators for variant callers. 
 
 Other:
 
@@ -9676,7 +10036,7 @@ Bismark SAM OUTPUT (default):
 Each read of paired-end alignments is written out in a separate line in the above format.
 
 
-Last edited on 27 July 2015.
+Last edited on 14 Jan 2016.
 
 HOW_TO
 }

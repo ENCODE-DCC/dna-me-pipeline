@@ -13,7 +13,7 @@ echo "-- Create beds..."
 set -x
 mkdir -p output
 mv $cx_report output/
-cxrepo-bed.py -o output/ output/${cx_report}
+cxrepo-bed.py -N . -o output/ output/${cx_report}
 mv output/CG_${target_root}.CX_report.txt  ${target_root}_CpG.bed
 mv output/CHG_${target_root}.CX_report.txt ${target_root}_CHG.bed
 mv output/CHH_${target_root}.CX_report.txt ${target_root}_CHH.bed

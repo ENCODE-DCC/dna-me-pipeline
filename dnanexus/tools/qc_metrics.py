@@ -115,7 +115,7 @@ def parse_pair(line,columns='',delimit=None,verbose=False):
 
     key = ''
     val = ''
-    # columns could be '1-3,4' meaning key:2-3 and val:4
+    # columns could be '1-3,4' meaning key:1-3 and val:4
     if columns != None and columns != '':
         parts = line.split(delimit)
         col_parts = columns.split(',')
@@ -248,7 +248,7 @@ def read_horizontal(filePath,lines='',columns='',delimit=None,verbose=False):
            
 def read_singleton(filePath,key,delimit=None,verbose=False):
     '''
-    Generic case of single vale file. 
+    Generic case of single value file. 
     '''
     # TODO support selecting by line and columns!
     pairs = {}
@@ -594,10 +594,11 @@ def main():
     parser.add_argument('-f', '--file',
                         help='File containing QC metrics.',
                         required=True)
-    #parser.add_argument('-t', '--type',
-    #                    help='Type of parsing to be done.',
-    #                    choices=['pairs', 'horizontal'],
-    #                    required=True)
+    parser.add_argument('-t', '--type',
+                        help='Type of parsing to be done, if not already understood by name.',
+                        choices=['pairs', 'horizontal', 'vertical'],
+                        default=None,
+                        required=False)
     parser.add_argument('-l', '--lines',
                         help='Only include 1-based numbered lines (e.g. "1,2,5").',
                         default='',
@@ -632,8 +633,9 @@ def main():
     
     if args.name in EXPECTED_PARSING:
         parsing = EXPECTED_PARSING[args.name]
+    elif args.type != None and args.type in EXPECTED_PARSING: 
+        parsing = EXPECTED_PARSING[args.type]
     else: 
-        #parsing = EXPECTED_PARSING["vertical"]
         parsing = {"type": args.name }
         
     if args.lines != '':

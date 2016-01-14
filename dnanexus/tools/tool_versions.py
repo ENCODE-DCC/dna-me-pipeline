@@ -11,13 +11,14 @@ APP_TOOLS = {
     "dme-align-se":         [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
 
     # Aligns and extracts could use other bowtie...
-    "dme-align-pe-bowtie1": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
-    "dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    #"dme-align-pe-bowtie1": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
+    #"dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
     "dme-extract-se":       [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-extract-pe":       [ "dname_extract_pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-cx-to-bed":        [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
     "dme-bg-to-signal":     [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
+    "dme-rep-corr":         [ "dname_bed_corr.sh", "intersectBed (bedtools)", "bedmethyl_corr.py" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],
@@ -61,12 +62,15 @@ ALL_TOOLS = {
             "pigz":                         "pigz --version 2>&1 | awk '{print $2}'",
             "trim_galore":                  "trim_galore -v | grep version | awk '{print $2}'",
             "cutadapt":                     "cutadapt --version",
+            "intersectBed (bedtools)":      "intersectBed --help 2>&1 | grep Version | awk '{print $2}'",
+            "bedmethyl_corr.py":            "bedmethyl_corr.py --help | grep version | awk '{print $2}'",
             "dname_align_pe.sh":            "dname_align_pe.sh | grep usage | awk '{print $2}' | tr -d :",
             "dname_align_se.sh":            "dname_align_se.sh | grep usage | awk '{print $2}' | tr -d :",
             "dname_extract_se.sh":          "dname_extract_se.sh | grep usage | awk '{print $2}' | tr -d :",
             "dname_extract_pe.sh":          "dname_extract_pe.sh | grep usage | awk '{print $2}' | tr -d :",
             "dname_bg_to_signal.sh":        "dname_bg_to_signal.sh | grep usage | awk '{print $2}' | tr -d :",
             "dname_cx_to_bed.sh":           "dname_cx_to_bed.sh | grep usage | awk '{print $2}' | tr -d :",
+            "dname_bed_corr.sh":            "dname_bed_corr.sh | grep usage | awk '{print $2}' | tr -d :",
             }
 
 def parse_dxjson(dxjson):

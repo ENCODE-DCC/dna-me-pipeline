@@ -34,10 +34,6 @@ main() {
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
     
-    echo "* Check storage..."
-    ls -l 
-    df -k .
-
     echo "* Uploading files..."
     signal=$(dx upload ${target_root}.bw --details "$qc_stats" --property SW="$versions" --brief)
     dx-jobutil-add-output signal "$signal" --class=file
