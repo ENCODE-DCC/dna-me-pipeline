@@ -19,7 +19,7 @@ class DmeLaunch(Launch):
     RESULT_FOLDER_DEFAULT = '/dname/'
     ''' This the default location to place results folders for each experiment.'''
     
-    PIPELINE_BRANCH_ORDER = [ "TECH_REP", "BIO_REP" ] #, "COMBINED_REPS" ]
+    PIPELINE_BRANCH_ORDER = [ "TECH_REP", "BIO_REP", "COMBINED_REPS" ]
     '''A pipeline is frequently made of branches that flow into each other, such as replicate level to combined replicate.'''
     
     PIPELINE_BRANCHES = {
@@ -113,6 +113,30 @@ class DmeLaunch(Launch):
                             }, 
                 }
         },
+        "COMBINED_REPS": {
+                "ORDER": { "se": [ "dme-rep-corr-alt" ],
+                           "pe": [ "dme-rep-corr",    ] },
+                "STEPS": {
+                            "dme-rep-corr": {
+                                "inputs": {
+                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B", 
+                                }, 
+                                "app": "dme-rep-corr", 
+                                "results": {
+                                    "CpG_corr":       "CpG_corr", 
+                                },
+                            },
+                            "dme-rep-corr-alt": {
+                                "inputs": {
+                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B", 
+                                }, 
+                                "app": "dme-rep-corr-alt", 
+                                "results": {
+                                    "CpG_corr":       "CpG_corr", 
+                                },
+                            },
+                }
+        }
     }
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
@@ -145,7 +169,10 @@ class DmeLaunch(Launch):
         "CHG_bed":                  "/*_bismark_biorep_CHG.bed.gz", 
         "CHG_bb":                   "/*_bismark_biorep_CHG.bb", 
         "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz", 
-        "CHH_bb":                   "/*_bismark_biorep_CHH.bb", 
+        "CHH_bb":                   "/*_bismark_biorep_CHH.bb",
+        "CpG_A":                    "/*_bismark_biorep_CpG.bed.gz",
+        "CpG_B":                    "/*_bismark_biorep_CpG.bed.gz",
+        "CpG_corr":                 "/*_CpG_corr.txt",
     }
 
     GENOMES_SUPPORTED = ['GRCh38', 'hg19', 'mm10']

@@ -123,9 +123,8 @@ fi
     
 echo "-- Coverage to cytosine..."
 set -x
-coverage2cytosine --output ${target_root}.CX_report.txt --dir 'output/' --genome 'input/' --parent_dir '/home/dnanexus' \
+coverage2cytosine --gzip --output ${target_root}.CX_report.txt.gz --dir 'output/' --genome 'input/' --parent_dir '/home/dnanexus' \
                   --zero --CX_context ${target_root}.bismark.cov.gz
-pigz output/${target_root}.CX_report.txt
 mv output/${target_root}.CX_report.txt.gz .
 set +x
 if [ $scorched == "earth" ]; then
