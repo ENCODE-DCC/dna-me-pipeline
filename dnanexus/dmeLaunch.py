@@ -180,8 +180,8 @@ class DmeLaunch(Launch):
         # For looking up reference file names.
         # TODO: should use ACCESSION based fileNames
         "dme_ix":   {
-                        "GRCh38": { "SE": "GRCh38_bismark_bowtie1_index.tgz",      # Human only has "PE" so far
-                                    "PE": "GRCh38_bismark_bowtie2_index.tgz" },
+                        "GRCh38": { "SE": "GRCh38_XY_bismark_bowtie1_index.tgz",      # Human only has "PE" so far
+                                    "PE": "GRCh38_XY_bismark_bowtie2_index.tgz" },
                         "hg19":   { "SE": "hg19_male_bismark_bowtie1_index.tgz",
                                     "PE": "hg19_male_bismark_bowtie1_index.tgz" }, # hg19 only has bowtie1 index
                         "mm10":   { "SE": "mm10_male_bismark_bowtie1_index.tgz",
@@ -288,14 +288,18 @@ class DmeLaunch(Launch):
             assert len(river['tributaries']) >= 1  # It could be the case that there is one tech_rep for a bio_rep!
             # river_id for ['a','b'] = 'b-bio_rep1'
             river_id = river['tributaries'][-1] + '-bio_rep' + str(bio_rep)
-            if len(river['tributaries']) > 1:
+            if len(river['tributaries']) > 0: # Single tributary rivers are okay!
                 reps[river_id] = river
                 # Special case of 2 allows for designating sisters
                 if len(river['tributaries']) == 2:
                     reps[river['tributaries'][0]]['sister'] = river['tributaries'][1]
                     reps[river['tributaries'][1]]['sister'] = river['tributaries'][0]
+                elif len(river['tributaries']) == 1:
+                    river['rep_tech'] = "rep" + river['rep_tech'][4:]
                 if debug:
                     print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+            #elif debug:
+            #    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
 
         # Finally a pair of bio_reps are merged and processing finishes up
         if 'COMBINED_REPS' in self.PIPELINE_BRANCH_ORDER:
@@ -306,19 +310,25 @@ class DmeLaunch(Launch):
                 sea['tributaries'] = []
                 sea['rep_tech'] = 'reps'
                 for tributary_id in sorted( reps.keys() ):
-                    if len(tributary_id) == 1:  # ignore the simple reps
+                    if len(tributary_id) == 1:  # ignore the simple reps if there are any combined
                         continue 
                     tributary = reps[tributary_id]
                     if len(sea['tributaries']) > 0:
                         sea['rep_tech'] += '-'
-                    sea['rep_tech'] += tributary['rep_tech'][4:]
+                    if len(tributary['rep_tech']) == 6:
+                        sea['rep_tech'] += tributary['rep_tech'][3:]
+                    else:
+                        sea['rep_tech'] += tributary['rep_tech'][4:]
                     sea['tributaries'].append(tributary_id)
-            
                 psv['rep_tech'] = sea['rep_tech']
                 reps[self.SEA_ID] = sea
-                # Special case of 2 allows for designating sisters
+                # Normal case of 2 allows for designating sisters
                 reps[sea['tributaries'][0]]['sister'] = sea['tributaries'][1]
                 reps[sea['tributaries'][1]]['sister'] = sea['tributaries'][0]
+                if debug:
+                    print "DEBUG: combined: " + self.SEA_ID + " tributaries: " + str(len(sea['tributaries']))
+            #elif debug:
+            #    print "DEBUG: combined: " + self.SEA_ID + " tributaries: " + str(len(sea['tributaries']))
             #else:
             #    print "Found " + str(len(bio_reps)) + " bio_reps.  If exactly two, they would be combined."
             #print json.dumps(reps,indent=4,sort_keys=True)
