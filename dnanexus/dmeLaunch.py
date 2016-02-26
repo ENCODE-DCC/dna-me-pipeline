@@ -259,59 +259,92 @@ class DmeLaunch(Launch):
         
         # First, each tech_rep is processed individually
         bio_reps = []
+        tech_reps = []
         for rep_id in sorted( reps.keys() ):
             if len(rep_id) == 1: # single letter: simple replicate
                 rep = reps[rep_id]
                 rep['branch_id'] = "TECH_REP"
                 if rep['br'] not in bio_reps:
                     bio_reps.append(rep['br'])
-                else:
+                elif not self.compare_techreps:
                     self.combined_reps = True  # More than one tech_rep per bio_rep so combining will be done!
+                if self.compare_techreps and rep['rep_tech'] not in tech_reps: 
+                    tech_reps.append(rep['rep_tech'])
                 if debug:
                     print "DEBUG: rep: " + rep_id
                     
         # Next bio_reps have their technical replicates merged and processing continues
-        for bio_rep in bio_reps:
-            river = {}
-            river['branch_id'] = "BIO_REP"
-            river['tributaries'] = []
-            river['rep_tech'] = 'reps' + str(bio_rep) + '_'  # reps1_1.2.3 is rep1_1 + rep1_2 + rep1_3
-            river['br'] = bio_rep
-            for tributary_id in sorted( reps.keys() ): 
-                if len(tributary_id) == 1:
+        if not self.compare_techreps:
+            for bio_rep in bio_reps:
+                river = {}
+                river['branch_id'] = "BIO_REP"
+                river['tributaries'] = []
+                river['rep_tech'] = 'reps' + str(bio_rep) + '_'  # reps1_1.2.3 is rep1_1 + rep1_2 + rep1_3
+                river['br'] = bio_rep
+                for tributary_id in sorted( reps.keys() ): 
+                    if len(tributary_id) == 1:
+                        tributary = reps[tributary_id]
+                        if tributary['br'] == bio_rep:
+                            if len(river['tributaries']) > 0:
+                                river['rep_tech'] += '.'
+                            river['rep_tech'] += tributary['rep_tech'][5:]
+                            river['tributaries'].append(tributary_id)
+                assert len(river['tributaries']) >= 1  # It could be the case that there is one tech_rep for a bio_rep!
+                # river_id for ['a','b'] = 'b-bio_rep1'
+                river_id = river['tributaries'][-1] + '-bio_rep' + str(bio_rep)
+                if len(river['tributaries']) > 0: # Single tributary rivers are okay!
+                    reps[river_id] = river
+                    # Special case of 2 allows for designating sisters
+                    if len(river['tributaries']) == 2:
+                        reps[river['tributaries'][0]]['sister'] = river['tributaries'][1]
+                        reps[river['tributaries'][1]]['sister'] = river['tributaries'][0]
+                    elif len(river['tributaries']) == 1:
+                        river['rep_tech'] = "rep" + river['rep_tech'][4:]
+                    if debug:
+                        print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+                #elif debug:
+                #    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+
+        # if comparing tech_reps then techreps are NOT merged, but pipeline must continue!
+        if self.compare_techreps:
+            for tech_rep in tech_reps:
+                river = {}
+                river['branch_id'] = "BIO_REP" # The tributary follows onto this pipeline branch, regardless of its 'id'
+                river['tributaries'] = []
+                #river['rep_tech'] = 'rep' + str(bio_rep) + '_'  # reps1_1.2.3 is rep1_1 + rep1_2 + rep1_3
+                river['br'] = None
+                river['rep_tech'] = tech_rep
+                for tributary_id in sorted( reps.keys() ): 
+                    if len(tributary_id) != 1 or reps[tributary_id]['rep_tech'] != tech_rep:
+                        continue
                     tributary = reps[tributary_id]
-                    if tributary['br'] == bio_rep:
-                        if len(river['tributaries']) > 0:
-                            river['rep_tech'] += '.'
-                        river['rep_tech'] += tributary['rep_tech'][5:]
-                        river['tributaries'].append(tributary_id)
-            assert len(river['tributaries']) >= 1  # It could be the case that there is one tech_rep for a bio_rep!
-            # river_id for ['a','b'] = 'b-bio_rep1'
-            river_id = river['tributaries'][-1] + '-bio_rep' + str(bio_rep)
-            if len(river['tributaries']) > 0: # Single tributary rivers are okay!
-                reps[river_id] = river
-                # Special case of 2 allows for designating sisters
-                if len(river['tributaries']) == 2:
-                    reps[river['tributaries'][0]]['sister'] = river['tributaries'][1]
-                    reps[river['tributaries'][1]]['sister'] = river['tributaries'][0]
-                elif len(river['tributaries']) == 1:
-                    river['rep_tech'] = "rep" + river['rep_tech'][4:]
-                if debug:
-                    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
-            #elif debug:
-            #    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+                    river['br'] = tributary['br']
+                    river['tr'] = tributary['tr']
+                    river['tributaries'].append(tributary_id)
+                    break
+                    
+                assert len(river['tributaries']) == 1  # When comparing tech_reps the river just continues the tributary
+                # river_id for ['a','b'] = 'b-bio_rep1'
+                river_id = river['tributaries'][0] + '-tech_' + str(tech_rep)
+                if len(river['tributaries']) > 0: # Single tributary rivers are okay!
+                    reps[river_id] = river
+                    if debug:
+                        print "DEBUG: techrep: " + river_id + " tributaries: " + str(len(river['tributaries']))
+                #elif debug:
+                #    print "DEBUG: biorep: " + river_id + " tributaries: " + str(len(river['tributaries']))
 
         # Finally a pair of bio_reps are merged and processing finishes up
         if 'COMBINED_REPS' in self.PIPELINE_BRANCH_ORDER:
-            if len(bio_reps) == 2:
-                self.combined_reps = True  # More than one bio_rep so combining will be done!
+            if len(bio_reps) == 2 \
+            or len(bio_reps) == 1 and self.compare_techreps and len(tech_reps) == 2: 
+                #self.combined_reps = True  # More than one bio_rep so combining will be done!
                 sea = {} # SEA is the final branch into which all tributaries flow
                 sea['branch_id'] = 'COMBINED_REPS'
                 sea['tributaries'] = []
                 sea['rep_tech'] = 'reps'
                 for tributary_id in sorted( reps.keys() ):
                     if len(tributary_id) == 1:  # ignore the simple reps if there are any combined
-                        continue 
+                            continue 
                     tributary = reps[tributary_id]
                     if len(sea['tributaries']) > 0:
                         sea['rep_tech'] += '-'

@@ -77,7 +77,7 @@ main() {
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."
         set -x
-        samtools sort -@ 16 -m 3200M -f sofar.bam sorted.bam
+        samtools sort -@ 16 -m 3G -f sofar.bam sorted.bam
         mv sorted.bam ${target_root}.bam
         rm sofar.bam # STORAGE IS LIMITED
         set +x
