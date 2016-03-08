@@ -77,7 +77,7 @@ main() {
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."
         set -x
-        samtools sort -@ 16 -m 3G -f sofar.bam sorted.bam
+        samtools sort -@ 16 2900M -f sofar.bam sorted.bam
         mv sorted.bam ${target_root}.bam
         rm sofar.bam # STORAGE IS LIMITED
         set +x
@@ -114,7 +114,7 @@ main() {
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
     set -x
-    dname_extract_se.sh index.tgz ${target_root}.bam 32 --scorched_earth
+    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam --scorched_earth
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
 

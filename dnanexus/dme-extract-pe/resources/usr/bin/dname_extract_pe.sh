@@ -1,17 +1,19 @@
 #!/bin/bash -e
 
-if [ $# -lt 4 ] || [ $# -gt 4 ]; then
+if [ $# -lt 4 ] || [ $# -gt 5 ]; then
     echo "usage v1: dname_extract_pe.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth]"
     echo "Extracts methylation from paired-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
     exit -1; 
 fi
-index_tgz=$1   # Index archive containing input/*.fa reference, input/Bisulfite_Genome/* index made with chosen bowtie version.
+index_tgz=$1  # Index archive containing input/*.fa reference, input/Bisulfite_Genome/* index made with chosen bowtie version.
                # Also input/lambda/*, input/lambda/Bisulfite_Genome/*.  Will be expanded and REMOVED for storage efficiency
-bismark_bam=$2 # bam input aligned with bismark and bowtie version that matches index_tgz.
-ncpus=$3       # Number of cores available for bismark --multi
-scorched="no"  # --scorched_earth will remove everything, including input bam and index in order to maximize available storage.
-if [ $# -eq 4 ] && [ "$4" == "--scorched_earth" ]; then
+bismark_bam=$2  # bam input aligned with bismark and bowtie version that matches index_tgz.
+ncpus=$3         # Number of cores available for bismark --multi
+uncompress_bam=$4 # Uncompress bam if possible: trade off: storage vs threads available during bismark
+scorched="no"   # --scorched_earth will remove everything, including input bam and index in order to maximize available storage.
+if [ $# -eq 5 ] && [ "$5" == "--scorched_earth" ]; then
+    echo "-- Scorched earth policy to maximize available storage..."
     scorched="earth"
 fi
 target_root=${bismark_bam%.bam}
@@ -41,7 +43,7 @@ alignments_file=${target_root}.bam
 # However, this was before splitting out bismark2bedGraph and more aggresively removing files.
 bam_size=`ls -go ${target_root}.bam | awk '{print $3}'`
 # TODO: find real limit. if [ "$uncompress_bam" == "true" ] && [ $bam_size -le 171637122454 ]; then
-if [ "$uncompress_bam" == "true" ] && [ $bam_size -le 200000000000 ]; then
+if [ "$uncompress_bam" == "true" ] && [ $bam_size -le 150000000000 ]; then
     alignments_file=${target_root}.sam
     echo "-- Decompressing biorep bam (size: $bam_size)..."
     set -x
@@ -55,33 +57,45 @@ if [ "$uncompress_bam" == "true" ] && [ $bam_size -le 200000000000 ]; then
     ncores=$ncpus
 else
     ncores=`expr $ncpus / 2`
-    if [ "$uncompress_bam" != "true" ]; then
-        echo "-- Using compressed biorep bam (size: $bam_size) and $ncores cores..."
-    else
+    if [ "$uncompress_bam" == "true" ]; then
         echo "-- Using compressed bam and $ncores cores because bam_size: $bam_size exceeds limit."
+    else
+        echo "-- Using compressed biorep bam (size: $bam_size) and $ncores cores..."
     fi
+fi
+
+if [ $scorched == "earth" ]; then
+    # Storage can be maximized by aggressively splitting out bismark2bedGraph and coverage2cytosine... and aggressively
+    # removing no longer needed files.
+    echo "-- Scoreged earth means remove index, only keeping the *.fa file..."
+    df -k .
+    set -x
+    mv input/*.fa .
+    rm -rf input   # Removing indexes before next step may be helpful!
+    mkdir -p input
+    mv *.fa input/
+    pigz input/*.fa
+    set +x
+    df -k .
 fi
 
 echo "-- Analyse methylation in ${alignments_file} and using $ncores threads..."
 # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
 set -x
 mkdir -p output/
-bismark_methylation_extractor --multicore $ncores --paired-end -s --comprehensive -output output/ ${alignments_file}
+bismark_methylation_extractor --multicore $ncores --paired-end --comprehensive -output output/ ${alignments_file}
 mv output/*_splitting_report.txt .
 mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
 set +x
 
+txt_suffix="txt"
 if [ $scorched == "earth" ]; then
     # Storage can be maximized by aggressively splitting out bismark2bedGraph and coverage2cytosine... and aggressively
     # removing no longer needed files.
-    echo "-- Ensure cleanup to maximize available storage..."
+    echo "-- Scorched Earth means cleanup to maximize available storage..."
     df -k .
     set -x
     rm -f ${alignments_file} # STORAGE IS LIMITED
-    mv input/*.fa .
-    rm -rf input   # Removing indexes before next step may be helpful!
-    mkdir -p input
-    mv *.fa input/
     ls -l output/ # Not expected to gain anything
     mv output/CpG_context_${target_root}.txt .
     mv output/CHG_context_${target_root}.txt .
@@ -91,6 +105,10 @@ if [ $scorched == "earth" ]; then
     mv CpG_context_${target_root}.txt output/
     mv CHG_context_${target_root}.txt output/
     mv CHH_context_${target_root}.txt output/
+    pigz input/CpG_context_${target_root}.txt
+    pigz input/CHG_context_${target_root}.txt
+    pigz input/CHH_context_${target_root}.txt
+    txt_suffix="txt.gz"
     set +x
     df -k .
 fi
@@ -98,7 +116,8 @@ fi
 echo "-- Bismark to bedGraph..."
 set -x
 bismark2bedGraph --CX_context --ample_mem --dir output/ -output ${target_root}.bedGraph \
-                 CpG_context_${target_root}.txt CHG_context_${target_root}.txt CHH_context_${target_root}.txt
+                 CpG_context_${target_root}.${txt_suffix} CHG_context_${target_root}.${txt_suffix} \
+                 CHH_context_${target_root}.${txt_suffix}
 set +x
 if [ -f output/${target_root}.bedGraph ]; then
     set -x
@@ -118,6 +137,11 @@ if [ $scorched == "earth" ]; then
     mkdir -p output
     mv ${target_root}.bismark.cov.gz output/
     set +x
+    echo "-- Must expand genome fasta file, though..."
+    # Must expand input/*.fa.gz, though
+    set -x
+    gunzip input/*.fa.gz
+    set +x    
     df -k .
 fi
     
