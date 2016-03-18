@@ -105,9 +105,9 @@ if [ $scorched == "earth" ]; then
     mv CpG_context_${target_root}.txt output/
     mv CHG_context_${target_root}.txt output/
     mv CHH_context_${target_root}.txt output/
-    pigz input/CpG_context_${target_root}.txt
-    pigz input/CHG_context_${target_root}.txt
-    pigz input/CHH_context_${target_root}.txt
+    pigz output/CpG_context_${target_root}.txt
+    pigz output/CHG_context_${target_root}.txt
+    pigz output/CHH_context_${target_root}.txt
     txt_suffix="txt.gz"
     set +x
     df -k .
