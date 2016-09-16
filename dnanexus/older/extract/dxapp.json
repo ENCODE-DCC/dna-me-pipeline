@@ -1,0 +1,107 @@
+{
+  "name": "extract",
+  "title": "WGBS-extract-report",
+  "summary": "WGBS ENCODE Pipeline step: Extract methylation and report Whole Genome Bisulphite Analysis",
+  "dxapi": "1.0.0",
+  "version": "1.0.2",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "genome",
+      "label": "A genome",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.gz"]
+      },
+    {
+      "name": "chrom_sizes",
+      "label": "Chromosome Sizes",
+      "class": "file",
+      "optional": false
+      },
+    {
+      "name": "gzip",
+      "label": "Add --gzip to bismark_extractoin",
+      "class": "boolean",
+      "optional": true
+      },
+    {
+      "name": "mapped_files",
+      "label": "tgz file of mapped bismark outputs",
+      "class": "file",
+      "patterns": ["*.tgz"]
+    }
+   ],
+  "outputSpec": [
+    {
+      "name": "CG",
+      "label": "CG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_CG_bismark.bed.gz"]
+    },
+    {
+      "name": "CHG",
+      "label": "CHG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_CHG_bismark.bed.gz"]
+    },
+    {
+      "name": "CHH",
+      "label": "CHH methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_CHH_bismark.bed.gz"]
+    },
+    {
+      "name": "CGbb",
+      "label": "CG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_CG_bismark.bb"]
+    },
+    {
+      "name": "CHGbb",
+      "label": "CHG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_CHG_bismark.bb"]
+    },
+    {
+      "name": "CHHbb",
+      "label": "CHH methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_CHH_bismark.bb"]
+    },
+    {
+      "name": "mapped_reads",
+      "label": "the BAM file",
+      "class": "file",
+      "patterns": ["*_bismark.bam"]
+    },
+    {
+      "name": "map_report",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_map_report.txt"]
+    },
+    {
+      "name": "M_bias_report",
+      "label": "M-Biast QC report",
+      "class": "file",
+      "patterns": ["*_bismark.M-bias.txt"]
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/extract.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

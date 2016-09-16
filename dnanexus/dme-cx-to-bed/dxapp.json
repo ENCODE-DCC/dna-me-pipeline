@@ -1,0 +1,84 @@
+{
+  "name": "dme-cx-to-bed",
+  "title": "convert methylation context to bed files (v1.0.1)",
+  "summary": "WGBS ENCODE Pipeline step: Convert methylation context report to bed and bigBed files.",
+  "dxapi": "1.0.0",
+  "version": "1.0.1",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "cx_report",
+      "label": "Context report from bismark extraction",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_biorep.CX_report.txt.gz","*_bismark.CX_report.txt.gz"]
+    },
+    {
+      "name": "chrom_sizes",
+      "label": "chomosome/name length file",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*chrom.sizes","*.txt"]
+   }
+   ],
+  "outputSpec": [
+    {
+      "name": "CpG_bed",
+      "label": "CpG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CpG.bed.gz"]
+    },
+    {
+      "name": "CHG_bed",
+      "label": "CHG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bed.gz"]
+    },
+    {
+      "name": "CHH_bed",
+      "label": "CHH methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bed.gz"]
+    },
+    {
+      "name": "CpG_bb",
+      "label": "CpG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CpG.bb"]
+    },
+    {
+      "name": "CHG_bb",
+      "label": "CHG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bb"]
+    },
+    {
+      "name": "CHH_bb",
+      "label": "CHH methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bb"]
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-cx-to-bed.sh",
+    "execDepends": [{"name": "pigz"}],
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

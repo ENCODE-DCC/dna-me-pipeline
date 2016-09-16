@@ -1,0 +1,40 @@
+{
+  "name": "index",
+  "title": "WGBS-genome-index",
+  "summary": "WGBS ENCODE Pipeline step: Creates C->T indexed genomic files used for Whole Genome Bisulphite Analysis",
+  "dxapi": "1.0.0",
+  "version": "1.0.1",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "genomes",
+      "label": "A  set of genomes",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*.gz"]
+      }
+  ],
+  "outputSpec": [
+    {
+      "name": "meIndex",
+      "label": "Converted Genome Index",
+      "class": "file"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/index.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x2"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x2"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

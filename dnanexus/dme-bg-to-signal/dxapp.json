@@ -1,0 +1,53 @@
+{
+  "name": "dme-bg-to-signal",
+  "title": "convert methylation bedGraph to bigWig file (v1.0.1)",
+  "summary": "WGBS ENCODE Pipeline step: Convert methylation bedGraph to bigWig signal file.",
+  "dxapi": "1.0.0",
+  "version": "1.0.1",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "bg_gz",
+      "label": "BedGraph from bismark extraction",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_biorep.bedGraph.gz","*_bismark.bedGraph.gz"]
+    },
+    {
+      "name": "chrom_sizes",
+      "label": "chomosome/name length file",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*chrom.sizes","*.txt"]
+   }
+   ],
+  "outputSpec": [
+    {
+      "name": "signal",
+      "label": "Signal file (bigWig format)",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bw"]
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-bg-to-signal.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x8"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x8"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

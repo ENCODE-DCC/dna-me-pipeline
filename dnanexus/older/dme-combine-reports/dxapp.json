@@ -1,0 +1,52 @@
+{
+  "name": "dme-combine-reports",
+  "title": "Combines old genome and lambda map reports to new style (v1.0.0)",
+  "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark",
+  "dxapi": "1.0.0",
+  "version": "1.0.0",
+  "categories": [
+    "DNA Methylation"
+  ],
+  "inputSpec": [
+    {
+      "name": "map_report_genome",
+      "label": "Genome mapping report to merge",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.fq_bismark_map_report.txt"]
+    },
+    {
+      "name": "map_report_lambda",
+      "label": "Lambda mapping report to merge",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*.fq_bismark_map_report.txt"]
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "map_techrep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_techrep_bismark_map_report.txt"]
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-combine-reports.sh",
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem3_hdd2_x4"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem3_hdd2_x4"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

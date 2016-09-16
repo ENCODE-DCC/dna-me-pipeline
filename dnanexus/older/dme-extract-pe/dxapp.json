@@ -1,0 +1,129 @@
+{
+  "name": "dme-extract-pe",
+  "title": "extract methylation pe (v2.0.1)",
+  "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract paired-end methylation and report WGBS Analysis.",
+  "dxapi": "1.0.0",
+  "version": "2.0.1",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "bam_set",
+      "label": "Two or more tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_techrep_bismark_pe.bam","*_bismark.bam"]
+    },
+    {
+      "name": "map_report_set",
+      "label": "Two or more mapping reports from tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_techrep_bismark_pe_map_report.txt","*_bismark_map_report.txt"]
+    },
+    {
+      "name": "dme_ix",
+      "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_bowtie1_index.tgz"]
+    },
+    {
+      "name": "uncompress_bam",
+      "label": "Uncompress bam file (faster but more storage needed).",
+      "class": "boolean",
+      "default": true,
+      "optional": false
+   }
+   ],
+  "outputSpec": [
+    {
+      "name": "signal",
+      "label": "Signal file (bigWig format)",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bw"]
+    },
+    {
+      "name": "bam_biorep_qc",
+      "label": "Text file with samtools flagstat results",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_qc.txt"]
+    },
+    {
+      "name": "map_biorep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_map_report.txt"]
+    },
+    {
+      "name": "CpG_bed",
+      "label": "CpG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CpG.bed.gz"]
+    },
+    {
+      "name": "CHG_bed",
+      "label": "CHG methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bed.gz"]
+    },
+    {
+      "name": "CHH_bed",
+      "label": "CHH methyation BED file (gzipped)",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bed.gz"]
+    },
+    {
+      "name": "CpG_bb",
+      "label": "CpG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CpG.bb"]
+    },
+    {
+      "name": "CHG_bb",
+      "label": "CHG methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHG.bb"]
+    },
+    {
+      "name": "CHH_bb",
+      "label": "CHH methyation bigBed file",
+      "class": "file",
+      "patterns": ["*_bismark_CHH.bb"]
+    },
+    {
+      "name": "mbias_report",
+      "label": "M-Bias QC report",
+      "class": "file",
+      "patterns": ["*_bismark_mbias_report.txt"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the merged biorep bam",
+      "optional": true,
+      "class": "string"
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-extract-pe.sh",
+    "file": "src/dme-extract-se.sh",
+    "execDepends": [{"name": "pigz"}],
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem1_hdd2_x32"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem1_hdd2_x32"
+      }
+    }
+  },
+  "authorizedUsers": []
+}

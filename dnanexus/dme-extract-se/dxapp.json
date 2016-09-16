@@ -1,0 +1,99 @@
+{
+  "name": "dme-extract-se",
+  "title": "extract methylation se (v2.0.6)",
+  "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
+  "dxapi": "1.0.0",
+  "version": "2.0.6",
+  "categories": [
+    "DNA Methylation",
+    "ENCODE"
+  ],
+  "inputSpec": [
+    {
+      "name": "bam_set",
+      "label": "One or more tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_techrep_bismark.bam","*_bismark.bam"]
+    },
+    {
+      "name": "map_report_set",
+      "label": "One or more mapping reports from tech_rep bam files to merge",
+      "class": "array:file",
+      "optional": false,
+      "patterns": ["*_techrep_bismark_map_report.txt","*_bismark_map_report.txt"]
+    },
+    {
+      "name": "dme_ix",
+      "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_bowtie1_index.tgz","*_bismark_bowtie2_index.tgz"]
+    },
+    {
+      "name": "uncompress_bam",
+      "label": "Uncompress bam file (faster but more storage needed).",
+      "class": "boolean",
+      "default": true,
+      "optional": false
+   }
+   ],
+  "outputSpec": [
+    {
+      "name": "bam_biorep_qc",
+      "label": "Text file with samtools flagstat results",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_qc.txt"]
+    },
+    {
+      "name": "map_biorep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_bismark_biorep_map_report.txt"]
+    },
+    {
+      "name": "mbias_report",
+      "label": "M-Bias QC report",
+      "class": "file",
+      "patterns": ["*_bismark_mbias_report.txt"]
+    },
+    {
+      "name": "cx_report",
+      "label": "Context report from bismark extraction",
+      "class": "file",
+      "optional": false,
+      "patterns": ["*_bismark_biorep.CX_report.txt.gz","*_bismark.CX_report.txt.gz"]
+    },
+    {
+      "name": "bg_gz",
+      "label": "BedGraph from bismark extraction",
+      "class": "file",
+      "patterns": ["*_bismark_biorep.bedGraph.gz","*_bismark.bedGraph.gz"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the merged biorep bam",
+      "optional": true,
+      "class": "string"
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+   }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-extract-se.sh",
+    "execDepends": [{"name": "pigz"}],
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem1_hdd2_x32"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem1_hdd2_x32"
+      }
+    }
+  },
+  "authorizedUsers": []
+}
