@@ -1,0 +1,88 @@
+{
+  "name": "dme-align-se-parallel",
+  "title": "align se reads with bismark/bowtie (v1.1.2p) in parallel",
+  "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark by splitting large fastqs up",
+  "dxapi": "1.0.0",
+  "version": "1.0.0",
+  "categories": [
+    "DNA Methylation"
+  ],
+  "inputSpec": [
+    {
+      "name": "reads",
+      "label": "The reads that ought to be methylated",
+      "class": "array:file",
+      "optional": false
+    },
+    {
+      "name": "dme_ix",
+      "label": "Indexed converted (C->T, G->A) genomes in an archive file.",
+      "class": "file",
+      "optional": false
+    },
+    {
+      "name": "ncpus",
+      "label": "Number of cpus PER scatter",
+      "class": "int",
+      "optional": true,
+      "default": 2
+    },
+    {
+      "name": "nscatters",
+      "label": "Number of fastq/splits (subprocesses)",
+      "class": "int",
+      "optional": true,
+      "default": 16
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "bam_techrep",
+      "label": "mapped bismark outputs",
+      "class": "file",
+      "patterns": ["*_techrep_bismark.bam"]
+    },
+    {
+      "name": "bam_techrep_qc",
+      "label": "Text file with samtools flagstat/stats results",
+      "class": "file",
+      "patterns": ["*_techrep_bismark_qc.txt"]
+    },
+    {
+      "name": "map_techrep",
+      "label": "Mapping QC report",
+      "class": "file",
+      "patterns": ["*_techrep_bismark_map_report.txt"]
+    },
+    {
+      "name": "reads",
+      "label": "Count of reads in the techrep bam",
+      "optional": true,
+      "class": "string"
+    },
+    {
+      "name": "metadata",
+      "label": "JSON formatted string of metadata",
+      "class": "string"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/dme-align-se-parallel.sh",
+    "execDepends": [
+        {"name": "cutadapt",
+         "package_manager": "pip",
+         "version": "1.9.1"}
+    ],
+    "systemRequirements": {
+      "main": {
+        "instanceType": "mem2_hdd2_x4"
+      },
+      "myEntryPoint": {
+        "instanceType": "mem2_hdd2_x4"
+      }
+    }
+  },
+  "access": { "network": ["*"] },
+  "authorizedUsers": []
+}
