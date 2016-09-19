@@ -3,4 +3,4 @@ Basically, this is a bismark_pipeline for paired-end fastqs. The idea would be t
 
 
 [Usage:]
-
+./bismark_pipeline_main.sh 
