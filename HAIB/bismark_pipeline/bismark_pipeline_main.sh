@@ -11,7 +11,7 @@
 ####################################################
 
 
-### Usage: ./call_fastq_split.sh
+### Usage: ./bismark_pipeline_main.sh ### This would further call on other 3 scripts in bismark_pipeline dir.
 ### Input should be provided to the variables: OUTPUT_LOC, INPUT_LOC, LIB_LIST, GENOME_PATH, BISMARK_PATH, SAMTOOLS_PATH, TRIMGALORE_PATH, BOWTIE_PATH, CORE_NUM
 
 
