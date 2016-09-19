@@ -4,3 +4,16 @@ Basically, this is a bismark_pipeline for paired-end fastqs. The idea would be t
 
 [Usage:]
 ./bismark_pipeline_main.sh 
+
+[List of variables]:
+Following variables must be changed in 'bismark_pipeline_main.sh'
+
+OUTPUT_LOC, 
+INPUT_LOC, 
+LIB_LIST, 
+GENOME_PATH, 
+BISMARK_PATH, 
+SAMTOOLS_PATH, 
+TRIMGALORE_PATH, 
+BOWTIE_PATH, 
+CORE_NUM
