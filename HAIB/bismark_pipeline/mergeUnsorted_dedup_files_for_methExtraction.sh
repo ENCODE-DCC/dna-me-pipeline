@@ -19,7 +19,7 @@ for LIB in ${LIST}; do
 	### Merge the unsorted bam files:
 	if [[ $BAM_COUNT > 1 ]]; then
                 BAM_LIST=$( ls $BAM_DIR/$LIB/bam_files/*.bam | tr '\n' ' ' )
-                samtools merge -nf $OUTPUT_DIR/$LIB/unsortedButMerged_ForBismark_file/${LIB}_unsorted_merged.bam $BAM_LIST
+                $SAMTOOLS_PATH/samtools merge -nf $OUTPUT_DIR/$LIB/unsortedButMerged_ForBismark_file/${LIB}_unsorted_merged.bam $BAM_LIST
 
         else if [[ $BAM_COUNT = 1 ]]; then
                 cp $BAM_DIR/$LIB/bam_files/*.bam $OUTPUT_DIR/$LIB/unsortedButMerged_ForBismark_file/${LIB}_unsorted_merged.bam
