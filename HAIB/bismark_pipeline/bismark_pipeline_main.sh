@@ -49,14 +49,14 @@ export LIB_LIST='SL160916 SL160917 SL160918 SL160919 SL160920 SL160921'
 ### Set the main output dir location to retain all the splitted fastq files:
 export OUTPUT_LOC="/gpfs/gpfs1/home/schhetri/wgbs_run/wgbs_split_Vth_batch"
 
-### Set the genome path location, hg19 or grch38:
+### Set the genome path location, hg19 or grch38 (or maybe lambda genome for non-bisulfite-conversion):
 export GENOME_PATH=" /gpfs/gpfs1/home/schhetri/bismark_genome_link/bismark_genome/"
 
 ### Though bismark could be in path, set full bismark path location for consistency:
 export BISMARK_PATH="/opt/bismark-0.11.1"
 
 ### Though samtools could be in path, set full samtools path location for consistency:
-export SAMTOOLS_PATH="/usr/local/bin"
+export SAMTOOLS_PATH="/opt/samtools"
 
 ### Set trimgalore path location for consistency:
 export TRIMGALORE_PATH="/gpfs/gpfs1/home/schhetri/Tools/trim_galore_zip"
