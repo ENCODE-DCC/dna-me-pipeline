@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Instructions: This script executes bismark and trim galore for each paired-end fastqs, and is being called by other call_step1_split_ENCODE_bismark_PE_selectLib_orig.sh script
+### Instructions: This script executes bismark and trim galore for each paired-end fastqs, and is being called by other call_trim_galore_bismark_alignment.sh script
 ### residing in the bismark_pipeline dir. 
 
 SOURCE_DIR="/opt/HAIB/myerslab/etc"
