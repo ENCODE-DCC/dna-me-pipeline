@@ -67,8 +67,8 @@
     }
   ],
   "runSpec": {
-    "interpreter": "bash",
-    "file": "src/dme-align-se-parallel.sh",
+    "interpreter": "python2.7",
+    "file": "src/dme-align-se-parallel.py",
     "execDepends": [
         {"name": "cutadapt",
          "package_manager": "pip",
