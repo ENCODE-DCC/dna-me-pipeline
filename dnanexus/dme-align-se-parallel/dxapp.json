@@ -28,11 +28,11 @@
       "default": 2
     },
     {
-      "name": "nscatters",
-      "label": "Number of fastq/splits (subprocesses)",
+      "name": "splitsize",
+      "label": "Size of fastq to split to (in million reads)",
       "class": "int",
       "optional": true,
-      "default": 16
+      "default": 18
     }
   ],
   "outputSpec": [
