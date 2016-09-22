@@ -1,0 +1,13 @@
+{
+    "reads": [
+        {
+            "$dnanexus_link": "file-BzQvxKj0F1G9k8QgJZK0P1ZQ"
+        }
+    ], 
+    "dme_ix": {
+        "$dnanexus_link": "file-BkY5bP000pJ7pvfqFxzG2G4J"
+    }, 
+    "ncpus": 2, 
+    "splitsize": 18
+}
+
