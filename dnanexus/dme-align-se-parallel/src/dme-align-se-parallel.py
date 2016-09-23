@@ -62,11 +62,11 @@ import dxpy
 import subprocess
 import shlex
 import glob
-import logging
+#import logging
 
-logger = logging.getLogger(__name__)
-logger.addHandler(dxpy.DXLogHandler())
-logger.propagate = False
+#logger = logging.getLogger(__name__)
+#logger.addHandler(dxpy.DXLogHandler())
+#logger.propagate = False
 
 STRIP_EXTENSIONS = ['.gz', '.fq', '.fastq', '.fa', '.fasta']
 
@@ -105,11 +105,14 @@ def process(scattered_input, processed_input):
     dxpy.download_dxfile(dme_ix.get_id(), "index.tgz")
     dxpy.download_dxfile(scattered_input.get_id(), "split.fq")
 
-    logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
+    #logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
+    print("* === Calling DNAnexus and ENCODE independent script... ===")
     # subprocess.check_call('/usr/bin/dname_align_se.sh index.tgz %s %d %s' %
     # (reads_root, ncpus, bam_root))
-    logger.debug('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
-    logger.info("* === Returned from dnanexus post align ===")
+    #logger.debug('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
+    #logger.info("* === Returned from dnanexus post align ===")
+    print('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
+    print("* === Returned from dnanexus post align ===")
 
 
 
@@ -248,7 +251,7 @@ def main(reads, dme_ix, ncpus, splitsize):
     output["bam_techrep_qc"] = dxpy.dxlink(bam_techrep_qc)
     output["map_techrep"] = dxpy.dxlink(map_techrep)
     output["reads"] = reads
-    output["metadata"] = metadata
+    output["metadata"] = postprocess_job.get_output_ref("metadata")
 
     return output
 
