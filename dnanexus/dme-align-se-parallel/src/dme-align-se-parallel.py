@@ -152,7 +152,7 @@ def scatter(scatter_input):
                              (orig_file, splitsize, 'splits/'+strip_extensions(orig_file)), shell=True)
 
     splits = os.listdir('splits')
-    logger.info("Return from scatter: %s" % splits)
+    #logger.info("Return from scatter: %s" % splits)
     return {"array_of_scattered_input":
             [dxpy.dxlink(dxpy.upload_local_file(split_file)) for split_file in splits]}
 
@@ -173,17 +173,18 @@ def main(reads, dme_ix, ncpus, splitsize):
     # The following line(s) initialize your data object inputs on the platform
     # into dxpy.DXDataObject instances that you can start using immediately.
 
-    reads = [dxpy.DXFile(item) for item in reads]
+    #dx_reads = [dxpy.DXFile(item) for item in reads]
 
     # The following line(s) download your file inputs to the local file system
     # using variable names for the filenames.
+
 
     read_files = []
     for i, f in enumerate(reads):
         reads_filename = dxpy.describe(f)['name']
         reads_basename = strip_extensions(reads_filename, STRIP_EXTENSIONS)
         fn = reads_basename + '_' + str(i) + 'fq.gz'
-        dxpy.download_dxfile(f.get_id(), fn)
+        dxpy.download_dxfile(dxpy.DXFile(f).get_id(), fn)
         read_files.append(fn)
 
     reads_root_name = simplify_name() or reads_basename
