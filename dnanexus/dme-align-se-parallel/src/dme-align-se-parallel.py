@@ -62,11 +62,19 @@ import dxpy
 import subprocess
 import shlex
 import glob
-#import logging
+import logging
 
-#logger = logging.getLogger(__name__)
-#logger.addHandler(dxpy.DXLogHandler())
-#logger.propagate = False
+DEBUG = True
+
+logger = logging.getLogger(__name__)
+logger.addHandler(dxpy.DXLogHandler())
+logger.propagate = False
+
+if DEBUG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
 
 STRIP_EXTENSIONS = ['.gz', '.fq', '.fastq', '.fa', '.fasta']
 
@@ -85,35 +93,56 @@ def postprocess(process_outputs, additional_input):
     # additional computation after the "map" (and therefore after all
     # the "process") jobs are done.
 
-    for item in process_outputs:
-        print item
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
-    return { "final_output": "postprocess placeholder output" }
+    logger.debug("* In Postprocess *")
+    myfiles = []
+    for i, item in enumerate(process_outputs):
+        print item
+        myfiles.append(item)
+
+
+    # The following line(s) use the Python bindings to upload your file outputs
+    # after you have created them on the local file system.  It assumes that you
+    # have used the output field name for the filename for each output, but you
+    # can change that behavior to suit your needs.
+
+    output = {
+        "bam_techrep": dxpy.dxlink(myfiles[0]),
+        "bam_techrep_qc": dxpy.dxlink(myfiles[1]),
+        "map_techrep": dxpy.dxlink(myfiles[2]),
+        "reads": "2888888",
+        "metadata": '{ "Some": "Stuff"}'
+    }
+    return output
 
 @dxpy.entry_point("process")
-def process(scattered_input, processed_input):
+def process(scattered_input, dme_ix, ncpus, reads_root):
     # Fill in code here to process the input and create output.
 
-    dme_ix = dxpy.DXFile(processed_input['dme_ix'])
-    ncpus = processed_input['ncpus']
-    reads_root = processed_input['reads_root']
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    dme_ix = dxpy.DXFile(dme_ix)
     bam_root = reads_root + '_techrep'
 
     # The following line(s) download your file inputs to the local file system
     # using variable names for the filenames.
 
     dxpy.download_dxfile(dme_ix.get_id(), "index.tgz")
-    dxpy.download_dxfile(scattered_input.get_id(), "split.fq")
+    dxpy.download_dxfile(dxpy.DXFile(scattered_input).get_id(), "split.fq")
 
-    #logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
-    print("* === Calling DNAnexus and ENCODE independent script... ===")
+    logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
     # subprocess.check_call('/usr/bin/dname_align_se.sh index.tgz %s %d %s' %
     # (reads_root, ncpus, bam_root))
-    #logger.debug('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
-    #logger.info("* === Returned from dnanexus post align ===")
-    print('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
-    print("* === Returned from dnanexus post align ===")
-
+    logger.debug('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
+    logger.info("* === Returned from dnanexus post align ===")
+ 
 
 
     # As always, you can choose not to return output if the
@@ -124,7 +153,7 @@ def process(scattered_input, processed_input):
     # finish using the depends_on argument (this is already done for
     # you in the invocation of the "postprocess" job in "main").
 
-    return {"process_output": "process placeholder output"}
+    return {"process_output": dxpy.dxlink(dxpy.upload_local_file("split.fq"))}
 
 
 @dxpy.entry_point("map")
@@ -132,29 +161,49 @@ def map_entry_point(array_of_scattered_input, process_input):
     # The following calls "process" for each of the items in
     # *array_of_scattered_input*, using as input the item in the
     # array, as well as the rest of the fields in *process_input*.
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    logger.debug("* in map entry point with %s *" % process_input)
     process_jobs = []
     for item in array_of_scattered_input:
+        logger.debug("* scattering: %s *" % item )
         process_input["scattered_input"] = item
         process_jobs.append(dxpy.new_dxjob(fn_input=process_input, fn_name="process"))
     return { "process_outputs": [subjob.get_output_ref("process_output") for subjob in process_jobs] }
 
 
 @dxpy.entry_point("scatter")
-def scatter(scatter_input):
+def scatter(orig_reads, split_size):
     # Fill in code here to do whatever is necessary to scatter the
     # input.
-    array_of_scattered_input = []
-    splitsize = scatter_input['split_size'] * 1000000
-    subprocess.check_call('mkdir splits')
-    for orig_file in scatter_input['orig_reads']:
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
-        subprocess.check_call('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' %
-                             (orig_file, splitsize, 'splits/'+strip_extensions(orig_file)), shell=True)
+    splitsize = split_size * 1000000 * 4
+    # each FQ read is 4 lines
+    os.mkdir('splits')
+
+    for f in orig_reads:
+        reads_filename = dxpy.describe(f)['name']
+        reads_basename = strip_extensions(reads_filename, STRIP_EXTENSIONS)
+        dxpy.download_dxfile(dxpy.DXFile(f).get_id(), reads_filename)
+
+        reads_root_name = simplify_name() or reads_basename
+
+        subprocess.check_call('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name), shell=True)
 
     splits = os.listdir('splits')
-    #logger.info("Return from scatter: %s" % splits)
-    return {"array_of_scattered_input":
-            [dxpy.dxlink(dxpy.upload_local_file(split_file)) for split_file in splits]}
+    logger.info("* Return from scatter: %s *" % splits)
+
+    return {
+        "reads_root_name": reads_root_name,
+        "array_of_scattered_input": [ dxpy.dxlink(dxpy.upload_local_file('splits/' + split_file)) for split_file in splits]
+        }
 
 
 def simplify_name():
@@ -179,21 +228,13 @@ def main(reads, dme_ix, ncpus, splitsize):
     # using variable names for the filenames.
 
 
-    read_files = []
-    for i, f in enumerate(reads):
-        reads_filename = dxpy.describe(f)['name']
-        reads_basename = strip_extensions(reads_filename, STRIP_EXTENSIONS)
-        fn = reads_basename + '_' + str(i) + 'fq.gz'
-        dxpy.download_dxfile(dxpy.DXFile(f).get_id(), fn)
-        read_files.append(fn)
-
-    reads_root_name = simplify_name() or reads_basename
 
     # We first create the "scatter" job which will scatter some input
     # (replace with your own input as necessary).
+    logger.debug("* Start Scatter with %d files %sM read splits *" % (len(reads), splitsize))
+
     scatter_job = dxpy.new_dxjob(fn_input={
-                                 'reads_name': reads_root_name,
-                                 'orig_reads': read_files,
+                                 'orig_reads': reads,
                                  'split_size': splitsize,
                                  },
                                  fn_name="scatter")
@@ -205,12 +246,13 @@ def main(reads, dme_ix, ncpus, splitsize):
     # add rows of data.
     map_input = {
         "array_of_scattered_input": scatter_job.get_output_ref("array_of_scattered_input"),
-        "reads_root": reads_root_name,
         "process_input": {
+            "reads_root": scatter_job.get_output_ref("reads_root_name"),
             "ncpus": ncpus,
             "dme_ix": dme_ix
             }
         }
+    logger.debug("* Start Map with: %s *" % map_input)
     map_job = dxpy.new_dxjob(fn_input=map_input, fn_name="map")
 
     # Finally, we want the "postprocess" job to run after "map" is
@@ -221,18 +263,10 @@ def main(reads, dme_ix, ncpus, splitsize):
         "process_outputs": map_job.get_output_ref("process_outputs"),
         "additional_input": "gtable ID, for example"
         }
+    logger.debug("* Start Post process with: %s *" % postprocess_input)
     postprocess_job = dxpy.new_dxjob(fn_input=postprocess_input,
                                      fn_name="postprocess",
                                      depends_on=[map_job])
-
-    # The following line(s) use the Python bindings to upload your file outputs
-    # after you have created them on the local file system.  It assumes that you
-    # have used the output field name for the filename for each output, but you
-    # can change that behavior to suit your needs.
-
-    bam_techrep = dxpy.upload_local_file("bam_techrep")
-    bam_techrep_qc = dxpy.upload_local_file("bam_techrep_qc")
-    map_techrep = dxpy.upload_local_file("map_techrep")
 
     # If you would like to include any of the output fields from the
     # postprocess_job as the output of your app, you should return it
@@ -248,10 +282,10 @@ def main(reads, dme_ix, ncpus, splitsize):
     # finished.
 
     output = {}
-    output["bam_techrep"] = dxpy.dxlink(bam_techrep)
-    output["bam_techrep_qc"] = dxpy.dxlink(bam_techrep_qc)
-    output["map_techrep"] = dxpy.dxlink(map_techrep)
-    output["reads"] = reads
+    output["bam_techrep"] = dxpy.dxlink(postprocess_job.get_output_ref("bam_techrep"))
+    output["bam_techrep_qc"] = dxpy.dxlink(postprocess_job.get_output_ref("bam_techrep_qc"))
+    output["map_techrep"] = dxpy.dxlink(postprocess_job.get_output_ref("map_techrep"))
+    output["reads"] = postprocess_job.get_output_ref("reads")
     output["metadata"] = postprocess_job.get_output_ref("metadata")
 
     return output
