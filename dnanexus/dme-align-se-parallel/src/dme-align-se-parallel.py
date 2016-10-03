@@ -86,9 +86,8 @@ def strip_extensions(filename, extensions):
     return basename
 
 
-
 @dxpy.entry_point("postprocess")
-def postprocess(process_outputs, additional_input):
+def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, use_sort=False):
     # This is the "gather" phase which aggregates and performs any
     # additional computation after the "map" (and therefore after all
     # the "process") jobs are done.
@@ -98,17 +97,56 @@ def postprocess(process_outputs, additional_input):
     else:
         logger.setLevel(logging.INFO)
 
-    logger.debug("* In Postprocess *")
-    myfiles = []
-    for i, item in enumerate(process_outputs):
-        print item
-        myfiles.append(item)
+    logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
+
+    fnames = []
+    for bam in bam_files:
+        dxbam = dxpy.DXFile(bam)
+        dxfn = dxbam.describe()['name']
+        logger.info("* Downloading %s... *" % dxfn)
+        dxpy.download_dxfile(bam, )
+        fnames.append(bam_root + '_bismark_techrep.bam')
+
+    outfile_name = bam_root
+    logger.info("* Merged alignments file will be: %s *" % outfile_name + '.bam')
+    if len(fnames) == 1:
+        rep_outfile_name = bam_root + '_bismark_biorep'
+        os.rename('sofar.bam', rep_outfile_name + '.bam')
+        logger.info("* Only one input file, no merging required.")
+
+    else:
+        if use_cat:
+            for fn in fnames:
+                if not os.path.isfile('sofar.bam'):
+                    os.rename(fn, 'sofar.bam')
+                else:
+                    logger.info("* Merging...")
+                    # NOTE: keeps the first header
+                    catout = subprocess.check_output('samtools cat sofar.bam %s > merging.bam' % fn)
+                    logger.info(catout)
+                    os.rename('merging.bam', 'sofar.bam')
+
+            # At this point there is a 'sofar.bam' with one or more input bams
+
+            logger.info("* Files merged into %s (via cat) *" % outfile_name + '.bam')
+
+        else:
+            # use samtools merge
+            filelist = " ".join(fnames)
+            logger.info("Merging via merge %s " % filelist)
+            mergeout = subprocess.check_output('samtools merge -nf %s %s' % ('merging.bam', filelist))
+            logger.info(mergeout)
+
+        if use_sort:
+            # sorting needed due to samtools cat
+            logger.info("* Sorting merged bam...")
+            sortout = subprocess.check_output(['samtools sort -@', nthreads, '-m 6G -f sofar.bam sorted.bam'])
+            logger.info(sortout)
+            os.rename('sorted.bam', outfile_name + '.bam')
+        else:
+            os.rename('sofar.bam', outfile_name + '.bam')
 
 
-    # The following line(s) use the Python bindings to upload your file outputs
-    # after you have created them on the local file system.  It assumes that you
-    # have used the output field name for the filename for each output, but you
-    # can change that behavior to suit your needs.
 
     output = {
         "bam_techrep": dxpy.dxlink(myfiles[0]),
@@ -129,21 +167,20 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
         logger.setLevel(logging.INFO)
 
     dme_ix = dxpy.DXFile(dme_ix)
-    bam_root = reads_root + '_techrep'
 
     # The following line(s) download your file inputs to the local file system
     # using variable names for the filenames.
 
     dxpy.download_dxfile(dme_ix.get_id(), "index.tgz")
-    dxpy.download_dxfile(dxpy.DXFile(scattered_input).get_id(), "split.fq")
+    fq = dxpy.DXFile(scattered_input)
+    name = fq.describe()['name']
+    dxpy.download_dxfile(fq.get_id(), name)
+    bam_root = name + '_techrep'
 
     logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
-    # subprocess.check_call('/usr/bin/dname_align_se.sh index.tgz %s %d %s' %
-    # (reads_root, ncpus, bam_root))
-    logger.debug('EXAMPLE dname_align_se.sh index.tgz %s %d %s' % (reads_root, ncpus, bam_root))
+    logger.debug('command line: dname_align_se.sh index.tgz %s %d %s' % (name, ncpus, bam_root))
+    subprocess.check_call('/usr/bin/dname_align_se.sh index.tgz %s %d %s' % (name, ncpus, bam_root))
     logger.info("* === Returned from dnanexus post align ===")
- 
-
 
     # As always, you can choose not to return output if the
     # "postprocess" stage does not require any input, e.g. rows have
@@ -153,7 +190,11 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     # finish using the depends_on argument (this is already done for
     # you in the invocation of the "postprocess" job in "main").
 
-    return {"process_output": dxpy.dxlink(dxpy.upload_local_file("split.fq"))}
+    os.rename(name, bam_root+'.bam')
+    return {
+        "bam_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.bam')),
+        "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.report'))
+    }
 
 
 @dxpy.entry_point("map")
@@ -169,10 +210,20 @@ def map_entry_point(array_of_scattered_input, process_input):
     logger.debug("* in map entry point with %s *" % process_input)
     process_jobs = []
     for item in array_of_scattered_input:
-        logger.debug("* scattering: %s *" % item )
+        logger.debug("* scattering: %s *" % item)
         process_input["scattered_input"] = item
         process_jobs.append(dxpy.new_dxjob(fn_input=process_input, fn_name="process"))
-    return { "process_outputs": [subjob.get_output_ref("process_output") for subjob in process_jobs] }
+
+    bams = []
+    reports = []
+    for subjob in process_jobs():
+        bams.append(subjob.get_output_ref('bam_file'))
+        reports.append(subjob.get_output_ref('report_file'))
+
+    return {
+        "bam_files": bams,
+        "report_files": reports,
+    }
 
 
 @dxpy.entry_point("scatter")
@@ -200,9 +251,11 @@ def scatter(orig_reads, split_size):
     splits = os.listdir('splits')
     logger.info("* Return from scatter: %s *" % splits)
 
+    # SHould we gzip here?
     return {
         "reads_root_name": reads_root_name,
-        "array_of_scattered_input": [ dxpy.dxlink(dxpy.upload_local_file('splits/' + split_file)) for split_file in splits]
+        "array_of_scattered_input": [ 
+            dxpy.dxlink(dxpy.upload_local_file('splits/' + split_file)) for split_file in splits]
         }
 
 
@@ -244,10 +297,11 @@ def main(reads, dme_ix, ncpus, splitsize):
     # here additional input that we want each "process" entry point to
     # receive, e.g. a GTable ID to which the "process" function should
     # add rows of data.
+    reads_root = scatter_job.get_output_ref("reads_root_name")
     map_input = {
         "array_of_scattered_input": scatter_job.get_output_ref("array_of_scattered_input"),
         "process_input": {
-            "reads_root": scatter_job.get_output_ref("reads_root_name"),
+            "reads_root": reads_root,
             "ncpus": ncpus,
             "dme_ix": dme_ix
             }
@@ -260,8 +314,9 @@ def main(reads, dme_ix, ncpus, splitsize):
     # is marked as "done" only after all of its child jobs are also
     # marked "done".
     postprocess_input = {
-        "process_outputs": map_job.get_output_ref("process_outputs"),
-        "additional_input": "gtable ID, for example"
+        "bam_files": map_job.get_output_ref("bam_files"),
+        "report_files": map_job.get_output_ref("report_files"),
+        "bam_root": reads_root + '_techrep'
         }
     logger.debug("* Start Post process with: %s *" % postprocess_input)
     postprocess_job = dxpy.new_dxjob(fn_input=postprocess_input,
