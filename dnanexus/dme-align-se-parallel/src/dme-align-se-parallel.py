@@ -239,7 +239,7 @@ def map_entry_point(array_of_scattered_input, process_input):
 
     bams = []
     reports = []
-    for subjob in process_jobs():
+    for subjob in process_jobs:
         bams.append(subjob.get_output_ref('bam_file'))
         reports.append(subjob.get_output_ref('report_file'))
 
@@ -269,6 +269,7 @@ def scatter(orig_reads, split_size):
 
         reads_root_name = simplify_name() or reads_basename
 
+        logger.info('* RUNNING /bin/zcat %s | /usr/bin/split -l %d -d - %s * ' % (reads_filename, splitsize, 'splits/' + reads_root_name))
         subprocess.check_call('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name), shell=True)
 
     splits = os.listdir('splits')
@@ -276,7 +277,6 @@ def scatter(orig_reads, split_size):
 
     # SHould we gzip here?
     return {
-        "reads_root_name": reads_root_name,
         "array_of_scattered_input": [ 
             dxpy.dxlink(dxpy.upload_local_file('splits/' + split_file)) for split_file in splits]
         }
@@ -320,7 +320,9 @@ def main(reads, dme_ix, ncpus, splitsize):
     # here additional input that we want each "process" entry point to
     # receive, e.g. a GTable ID to which the "process" function should
     # add rows of data.
-    reads_root = scatter_job.get_output_ref("reads_root_name")
+
+    reads_root = simplify_name() or strip_extensions(dxpy.describe(reads[0])['name'], STRIP_EXTENSIONS)
+
     map_input = {
         "array_of_scattered_input": scatter_job.get_output_ref("array_of_scattered_input"),
         "process_input": {
