@@ -85,19 +85,7 @@ def strip_extensions(filename, extensions):
         basename = basename.rpartition(extension)[0] or basename
     return basename
 
-
-@dxpy.entry_point("postprocess")
-def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, use_sort=False):
-    # This is the "gather" phase which aggregates and performs any
-    # additional computation after the "map" (and therefore after all
-    # the "process") jobs are done.
-
-    if DEBUG:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-
-    logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
+def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
 
     fnames = []
     for bam in bam_files:
@@ -146,14 +134,49 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
         else:
             os.rename('sofar.bam', outfile_name + '.bam')
 
+    return outfile_name + '.bam'
 
+
+def merge_reports():
+    # dummy
+    fh = open('fake_report', 'w')
+    fh.write("test")
+    fh.close()
+    return 'fake_report'
+
+
+def merge_qc():
+    fh = open('fake_qc', 'w')
+    fh.write("test qc")
+    fh.close()
+    return ('fake_qc', '444242', "{'key': 'value'}")
+
+
+@dxpy.entry_point("postprocess")
+def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, use_sort=False):
+    # This is the "gather" phase which aggregates and performs any
+    # additional computation after the "map" (and therefore after all
+    # the "process") jobs are done.
+
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
+
+    merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
+
+    merged_report = merge_reports(report_files, bam_root)
+
+    merged_qc, nreads, metadata = merge_qc()
 
     output = {
-        "bam_techrep": dxpy.dxlink(myfiles[0]),
-        "bam_techrep_qc": dxpy.dxlink(myfiles[1]),
-        "map_techrep": dxpy.dxlink(myfiles[2]),
-        "reads": "2888888",
-        "metadata": '{ "Some": "Stuff"}'
+        "bam_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_bam)),
+        "bam_techrep_qc": dxpy.dxlink(merged_qc),
+        "map_techrep": dxpy.dxlink(merged_report),
+        "reads": nreads,
+        "metadata": metadata
     }
     return output
 
