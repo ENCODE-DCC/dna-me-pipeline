@@ -78,8 +78,8 @@
       "main": {
         "instanceType": "mem2_hdd2_x4"
       },
-      "myEntryPoint": {
-        "instanceType": "mem2_hdd2_x4"
+      "process": {
+        "instanceType": "mem3_sdd1_x2"
       }
     }
   },

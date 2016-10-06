@@ -210,7 +210,7 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
         logger.debug("Executable %s DOES NOT exist" % ALIGN_SCRIPT)
         exit(1)
     logger.debug('command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
-    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, ncpus, bam_root])
+    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, str(ncpus), bam_root])
     logger.debug("* === Returned from dname_align_se  ===")
 
     # As always, you can choose not to return output if the
