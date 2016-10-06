@@ -184,6 +184,7 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 def process(scattered_input, dme_ix, ncpus, reads_root):
     # Fill in code here to process the input and create output.
 
+    ALIGN_SCRIPT = '/usr/bin/dname_align_se.sh'
     if DEBUG:
         logger.setLevel(logging.DEBUG)
     else:
@@ -201,9 +202,16 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     bam_root = name + '_techrep'
 
     logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
-    logger.debug('command line: dname_align_se.sh index.tgz %s %d %s' % (name, ncpus, bam_root))
-    subprocess.check_call('/usr/bin/dname_align_se.sh index.tgz %s %d %s' % (name, ncpus, bam_root))
-    logger.info("* === Returned from dnanexus post align ===")
+    logger.debug("DIR: %s" % os.listdir('./'))
+    logger.debug(subprocess.check_output(['head', name]))
+    if os.path.isfile(ALIGN_SCRIPT):
+        logger.debug("Executable %s exists" % ALIGN_SCRIPT)
+    else:
+        logger.debug("Executable %s DOES NOT exist" % ALIGN_SCRIPT)
+        exit(1)
+    logger.debug('command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
+    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, ncpus, bam_root])
+    logger.debug("* === Returned from dname_align_se  ===")
 
     # As always, you can choose not to return output if the
     # "postprocess" stage does not require any input, e.g. rows have
@@ -237,6 +245,7 @@ def map_entry_point(array_of_scattered_input, process_input):
         process_input["scattered_input"] = item
         process_jobs.append(dxpy.new_dxjob(fn_input=process_input, fn_name="process"))
 
+    logger.debug("* %s scatter jobs started *" % len(array_of_scattered_input))
     bams = []
     reports = []
     for subjob in process_jobs:
@@ -338,6 +347,7 @@ def main(reads, dme_ix, ncpus, splitsize):
     # done calling "process" on each of its inputs.  Note that a job
     # is marked as "done" only after all of its child jobs are also
     # marked "done".
+    logger.debug("* Waiting for map job to finish...")
     postprocess_input = {
         "bam_files": map_job.get_output_ref("bam_files"),
         "report_files": map_job.get_output_ref("report_files"),
