@@ -1,9 +1,9 @@
 {
   "name": "dme-align-pe",
-  "title": "align pe reads with bismark/bowtie (v1.1.2)",
+  "title": "align pe reads with bismark/bowtie (v1.1.3)",
   "summary": "WGBS ENCODE Pipeline step: Trim and map paired end reads for technical replicate using Bismark",
   "dxapi": "1.0.0",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "categories": [
     "DNA Methylation"
   ],
