@@ -79,7 +79,7 @@
         "instanceType": "mem2_hdd2_x4"
       },
       "process": {
-        "instanceType": "mem3_sdd1_x2"
+        "instanceType": "mem3_ssd1_x4"
       }
     }
   },

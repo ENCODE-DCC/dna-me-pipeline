@@ -224,7 +224,7 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     os.rename(name, bam_root+'.bam')
     return {
         "bam_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.bam')),
-        "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.report'))
+        "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'_map.report'))
     }
 
 

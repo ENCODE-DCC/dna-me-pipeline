@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-if [ $# -ne 4 ]; then
-    echo "usage v1: dname_align_se.sh <index.tgz> <reads.fq> <ncpus> <bam_root>"
+if [ $# -lt 4 ] || [ $# -gt 5 ]; then
+    echo "usage v1: dname_align_se.sh <index.tgz> <reads.fq> <ncpus> <bam_root> [\"no_stats\"]"
     echo "Align se reads with bismark.  Bowtie version is determined by index.tgz content. Is independent of DX and encodeD."
     echo "Requires cutadapt and trim_galore, bismark, bowtie1/bowtie2, and samtools on path."
     exit -1; 
@@ -104,13 +104,15 @@ echo " "                            >> ${bam_root}_map_report.txt
 echo "===== bismark lambda ====="   >> ${bam_root}_map_report.txt
 cat output/lambda/*SE_report.txt    >> ${bam_root}_map_report.txt
 
-echo "-- Collect bam stats..."
-set -x
-samtools flagstat ${bam_root}.bam > ${bam_root}_flagstat.txt
-samtools stats ${bam_root}.bam > ${bam_root}_samstats.txt
-head -3 ${bam_root}_samstats.txt
-grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
-set +x
+if [ $# -lt 5 ]; then
+    echo "-- Collect bam stats..."
+    set -x
+    samtools flagstat ${bam_root}.bam > ${bam_root}_flagstat.txt
+    samtools stats ${bam_root}.bam > ${bam_root}_samstats.txt
+    head -3 ${bam_root}_samstats.txt
+    grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
+    set +x
+fi
 
 echo "-- The results..."
 ls -l ${target_root}*
