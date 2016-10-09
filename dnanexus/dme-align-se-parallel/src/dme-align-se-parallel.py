@@ -92,7 +92,7 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
         dxbam = dxpy.DXFile(bam)
         dxfn = dxbam.describe()['name']
         logger.info("* Downloading %s... *" % dxfn)
-        dxpy.download_dxfile(bam, )
+        dxpy.download_dxfile(bam, dxfn)
         fnames.append(bam_root + '_bismark_techrep.bam')
 
     outfile_name = bam_root
@@ -210,7 +210,7 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
         logger.debug("Executable %s DOES NOT exist" % ALIGN_SCRIPT)
         exit(1)
     logger.debug('command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
-    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, str(ncpus), bam_root])
+    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, str(ncpus), bam_root, 'no_stats'])
     logger.debug("* === Returned from dname_align_se  ===")
 
     # As always, you can choose not to return output if the
@@ -221,10 +221,13 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     # finish using the depends_on argument (this is already done for
     # you in the invocation of the "postprocess" job in "main").
 
+    logger.debug("DIR: %s" % os.listdir('./'))
+    logger.debug("OURTPUR DIR: %s" % os.listdir('output/'))
+
     os.rename(name, bam_root+'.bam')
     return {
         "bam_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.bam')),
-        "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'_map.report'))
+        "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'_bismark_map_report.txt'))
     }
 
 
