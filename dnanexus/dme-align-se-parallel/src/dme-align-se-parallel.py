@@ -93,11 +93,12 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
         dxfn = dxbam.describe()['name']
         logger.info("* Downloading %s... *" % dxfn)
         dxpy.download_dxfile(bam, dxfn)
-        fnames.append(bam_root + '_bismark_techrep.bam')
+        fnames.append(dxfn)
 
     outfile_name = bam_root
     logger.info("* Merged alignments file will be: %s *" % outfile_name + '.bam')
     if len(fnames) == 1:
+        # UNTESTED 
         rep_outfile_name = bam_root + '_bismark_biorep'
         os.rename('sofar.bam', rep_outfile_name + '.bam')
         logger.info("* Only one input file, no merging required.")
@@ -110,7 +111,7 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
                 else:
                     logger.info("* Merging...")
                     # NOTE: keeps the first header
-                    catout = subprocess.check_output('samtools cat sofar.bam %s > merging.bam' % fn)
+                    catout = subprocess.check_output(['samtools', 'cat', 'sofar.bam', fn, '> merging.bam'])
                     logger.info(catout)
                     os.rename('merging.bam', 'sofar.bam')
 
@@ -120,15 +121,17 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
 
         else:
             # use samtools merge
+            # UNTESTED
             filelist = " ".join(fnames)
             logger.info("Merging via merge %s " % filelist)
-            mergeout = subprocess.check_output('samtools merge -nf %s %s' % ('merging.bam', filelist))
+            mergeout = subprocess.check_output(['samtools', 'merge', '-nf', 'merging.bam'] + fnames)
             logger.info(mergeout)
 
         if use_sort:
             # sorting needed due to samtools cat
+            # UNTESTED
             logger.info("* Sorting merged bam...")
-            sortout = subprocess.check_output(['samtools sort -@', nthreads, '-m 6G -f sofar.bam sorted.bam'])
+            sortout = subprocess.check_output(['samtools', 'sort', '-@', nthreads, '-m 6G', '-f,' 'sofar.bam', 'sorted.bam'])
             logger.info(sortout)
             os.rename('sorted.bam', outfile_name + '.bam')
         else:
