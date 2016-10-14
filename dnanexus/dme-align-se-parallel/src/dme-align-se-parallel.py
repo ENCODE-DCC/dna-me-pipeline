@@ -156,7 +156,7 @@ def merge_qc():
 
 
 @dxpy.entry_point("postprocess")
-def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, use_sort=False):
+def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=True, use_sort=False):
     # This is the "gather" phase which aggregates and performs any
     # additional computation after the "map" (and therefore after all
     # the "process") jobs are done.
