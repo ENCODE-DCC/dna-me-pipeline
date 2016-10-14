@@ -65,9 +65,10 @@ else
 fi
 echo "-- Mapping to reference with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/
+mkdir -p output/tmp
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
-    bismark --bowtie2 -N 1 -L 28 --output_dir output --temp_dir output --multi $ncores \
+    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output --temp_dir output/tmp -n $ncores \
             input ${reads_root}_trimmed.fq
     set +x
 else
@@ -83,9 +84,10 @@ set +x
 
 echo "-- Mapping to lambda with bismark/${bowtie_ver} on $ncores cores..."
 mkdir -p output/lambda/
+mkdir -p output/lambda/tmp
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
-    bismark --bowtie2 -N 1 -L 28 --output_dir output/lambda/ --temp_dir output/lambda/ --multi $ncores \
+    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output/lambda/ --temp_dir output/lambda/tmp -n $ncores \
             input/lambda ${reads_root}_trimmed.fq
     set +x
 else
