@@ -111,7 +111,7 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
                 else:
                     logger.info("* Merging...")
                     # NOTE: keeps the first header
-                    catout = subprocess.check_output(['samtools', 'cat', 'sofar.bam', fn, '> merging.bam'])
+                    catout = subprocess.check_output(['samtools', 'cat', 'sofar.bam', fn, '>', 'merging.bam'])
                     logger.info(catout)
                     os.rename('merging.bam', 'sofar.bam')
 
@@ -124,14 +124,15 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
             # UNTESTED
             filelist = " ".join(fnames)
             logger.info("Merging via merge %s " % filelist)
-            mergeout = subprocess.check_output(['samtools', 'merge', '-nf', 'merging.bam'] + fnames)
+            mergeout = subprocess.check_output(['samtools', 'merge', '-nf', 'sofar.bam'] + fnames)
+            # this gets renamed later
             logger.info(mergeout)
 
         if use_sort:
             # sorting needed due to samtools cat
             # UNTESTED
             logger.info("* Sorting merged bam...")
-            sortout = subprocess.check_output(['samtools', 'sort', '-@', nthreads, '-m 6G', '-f,' 'sofar.bam', 'sorted.bam'])
+            sortout = subprocess.check_output(['samtools', 'sort', '-@', nthreads, '-m', '6G', '-f,' 'sofar.bam', 'sorted.bam'])
             logger.info(sortout)
             os.rename('sorted.bam', outfile_name + '.bam')
         else:
@@ -156,7 +157,7 @@ def merge_qc():
 
 
 @dxpy.entry_point("postprocess")
-def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=True, use_sort=False):
+def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, use_sort=False):
     # This is the "gather" phase which aggregates and performs any
     # additional computation after the "map" (and therefore after all
     # the "process") jobs are done.
@@ -225,9 +226,9 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     # you in the invocation of the "postprocess" job in "main").
 
     logger.debug("DIR: %s" % os.listdir('./'))
-    logger.debug("OURTPUR DIR: %s" % os.listdir('output/'))
+    logger.debug("OUTPUT DIR: %s" % os.listdir('output/'))
 
-    os.rename(name, bam_root+'.bam')
+    os.rename(bam_root+'_bismark.bam', bam_root+'.bam')
     return {
         "bam_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'.bam')),
         "report_file": dxpy.dxlink(dxpy.upload_local_file(bam_root+'_bismark_map_report.txt'))
@@ -284,9 +285,10 @@ def scatter(orig_reads, split_size):
 
         reads_root_name = simplify_name() or reads_basename
 
-        logger.info('* RUNNING /bin/zcat %s | /usr/bin/split -l %d -d - %s * ' % (reads_filename, splitsize, 'splits/' + reads_root_name))
-        subprocess.check_call('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name), shell=True)
+        logger.info('* RUNNING /bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name))
+        split_out = subprocess.check_output('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name), shell=True)
 
+    logger.info(split_out)
     splits = os.listdir('splits')
     logger.info("* Return from scatter: %s *" % splits)
 
