@@ -68,7 +68,7 @@ mkdir -p output/
 mkdir -p output/tmp
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
-    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output --temp_dir output/tmp -n $ncores \
+    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output --temp_dir output/tmp -multi $ncores \
             input ${reads_root}_trimmed.fq
     set +x
 else
@@ -87,7 +87,7 @@ mkdir -p output/lambda/
 mkdir -p output/lambda/tmp
 if [ "$bowtie_ver" == "bowtie2" ]; then
     set -x
-    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output/lambda/ --temp_dir output/lambda/tmp -n $ncores \
+    bismark --bowtie2 -N 1 -L 28 --bam --output_dir output/lambda/ --temp_dir output/lambda/tmp -multi $ncores \
             input/lambda ${reads_root}_trimmed.fq
     set +x
 else

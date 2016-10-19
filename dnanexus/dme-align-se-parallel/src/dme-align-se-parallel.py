@@ -141,12 +141,12 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
     return outfile_name + '.bam'
 
 
-def merge_reports():
+def merge_reports(report_files, bam_root):
     # dummy
     fh = open('fake_report', 'w')
     fh.write("test")
     fh.close()
-    return 'fake_report'
+    return "fake_report"
 
 
 def merge_qc():
@@ -173,12 +173,12 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 
     merged_report = merge_reports(report_files, bam_root)
 
-    merged_qc, nreads, metadata = merge_qc()
+    (merged_qc, nreads, metadata) = merge_qc()
 
     output = {
         "bam_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_bam)),
-        "bam_techrep_qc": dxpy.dxlink(merged_qc),
-        "map_techrep": dxpy.dxlink(merged_report),
+        "bam_techrep_qc": dxpy.dxlink(dxpy.upload_local_file(merged_qc)),
+        "map_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_report)),
         "reads": nreads,
         "metadata": metadata
     }
