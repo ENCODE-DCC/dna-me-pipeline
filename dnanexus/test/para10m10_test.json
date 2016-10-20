@@ -1,0 +1,18 @@
+{
+    "reads": [
+        {
+            "$dnanexus_link": {
+                "project": "project-BQkYKg00F1GP55qQ9Qy00VP0",
+                "id": "file-F02Y8QQ0Q3Fy36yz3b33x828"
+            }
+        }
+    ],
+    "dme_ix": {
+        "$dnanexus_link": {
+            "project": "project-BKbfvF00Qy5PZF5V7Gv003v7",
+            "id": "file-BpG4jV002bFGFgxY8kFbBFP0"
+        }
+    }, 
+    "ncpus": 4, 
+    "splitsize": 10
+}

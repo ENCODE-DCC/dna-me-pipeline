@@ -100,8 +100,8 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
     if len(fnames) == 1:
         # UNTESTED 
         rep_outfile_name = bam_root + '_bismark_biorep'
-        os.rename('sofar.bam', rep_outfile_name + '.bam')
-        logger.info("* Only one input file, no merging required.")
+        logger.info("* Only one input file (%s), no merging required." % fnames[0])
+        os.rename(fnames[0], rep_outfile_name + '.bam')
 
     else:
         if use_cat:
