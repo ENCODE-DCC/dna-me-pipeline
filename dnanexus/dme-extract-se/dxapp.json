@@ -36,8 +36,15 @@
       "class": "boolean",
       "default": true,
       "optional": false
-   }
-   ],
+   },
+    {
+      "name": "dedup",
+      "label": "De-duplicate BAM file using bismark",
+      "class": "boolean",
+      "default": false,
+      "optional": true
+   }  
+  ],
   "outputSpec": [
     {
       "name": "bam_biorep_qc",

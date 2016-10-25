@@ -1,9 +1,10 @@
 #!/bin/bash -e
 
 if [ $# -lt 4 ] || [ $# -gt 5 ]; then
-    echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth]"
+    echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth] [--dedup]"
     echo "Extracts methylation from single-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
+    echo "If --dedup will run bismark PCR duplicate remover"
     exit -1; 
 fi
 index_tgz=$1  # Index archive containing input/*.fa reference, input/Bisulfite_Genome/* index made with chosen bowtie version.
@@ -12,9 +13,14 @@ bismark_bam=$2  # bam input aligned with bismark and bowtie version that matches
 ncpus=$3         # Number of cores available for bismark --multi
 uncompress_bam=$4 # Uncompress bam if possible: trade off: storage vs threads available during bismark
 scorched="no"   # --scorched_earth will remove everything, including input bam and index in order to maximize available storage.
-if [ $# -eq 5 ] && [ "$5" == "--scorched_earth" ]; then
+dedup="no"
+if [ $# -ge 5 ] && [ "$5" == "--scorched_earth" ]; then
     echo "-- Scorched earth policy to maximize available storage..."
     scorched="earth"
+fi
+if [ $# -ge 6 ] && [ "$6" == "--dedup" ]; then
+    echo "-- Run deduplication"
+    dedup="yes"
 fi
 target_root=${bismark_bam%.bam}
 
@@ -67,7 +73,7 @@ fi
 if [ $scorched == "earth" ]; then
     # Storage can be maximized by aggressively splitting out bismark2bedGraph and coverage2cytosine... and aggressively
     # removing no longer needed files.
-    echo "-- Scoreged earth means remove index, only keeping the *.fa file..."
+    echo "-- Scorched earth means remove index, only keeping the *.fa file..."
     df -k .
     set -x
     mv input/*.fa .
@@ -83,7 +89,17 @@ echo "-- Analyse methylation in ${alignments_file} and using $ncores threads..."
 # NOTE: reading a bam and outputting .gz will triple the number of cores used on multi-core.
 set -x
 mkdir -p output/
+
+if [ $dedupe == "yes" ]; then
+    echo "-- Deduplicating reads"
+    ### from HAIB
+    ### Run the deduplication, and remove the pcr duplicates from unsorted_bam_files (i.e the sequence aligning to the same genomic positions).
+    deduplicate_bismark -p --bam ${alignments_file}
+fi
+
 bismark_methylation_extractor --multicore $ncores --single-end --comprehensive -output output/ ${alignments_file}
+
+
 mv output/*_splitting_report.txt .
 mv output/${target_root}.M-bias.txt ${target_root}_mbias_report.txt
 set +x

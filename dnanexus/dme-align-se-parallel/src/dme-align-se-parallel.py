@@ -101,7 +101,7 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
         # UNTESTED 
         rep_outfile_name = bam_root + '_bismark_biorep'
         logger.info("* Only one input file (%s), no merging required." % fnames[0])
-        os.rename(fnames[0], rep_outfile_name + '.bam')
+        os.rename(fnames[0], outfile_name + '.bam')
 
     else:
         if use_cat:
@@ -141,12 +141,21 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
     return outfile_name + '.bam'
 
 
-def merge_reports(report_files, bam_root):
-    # dummy
-    fh = open('fake_report', 'w')
-    fh.write("test")
-    fh.close()
-    return "fake_report"
+def merge_reports(outfile_name, report_files, bam_root):
+    out = ["### Combined Bismark map report for split fastq ### "]
+    logger.info(out[0])
+    for report in report_files:
+        dxreport = dxpy.DXFile(report)
+        rfn = dxreport.describe()['name']
+        logger.info("* Downloading %s... *" % rfn)
+        dxpy.download_dxfile(report, rfn)
+        out.append("###################################")
+        out.append("### Map report for %s ###" % rfn)
+        out = out + open(rfn, 'r').readlines()
+
+    outfh = open(outfile_name+'_map_report.txt', 'w')
+    outfh.write("\n".join(out))
+    return outfile_name+'_map_report.txt'
 
 
 def merge_qc():
@@ -171,7 +180,7 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 
     merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
 
-    merged_report = merge_reports(report_files, bam_root)
+    merged_report = merge_reports(bam_root, report_files, bam_root)
 
     (merged_qc, nreads, metadata) = merge_qc()
 

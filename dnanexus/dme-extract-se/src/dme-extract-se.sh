@@ -12,6 +12,7 @@ main() {
     echo "* Value of map_report_set: '$map_report_set'"
     echo "* Value of dme_ix:         '$dme_ix'"
     echo "* Value of uncompress_bam: '$uncompress_bam'"
+    echo "* Value of dedup:          '$dedup'"
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
     #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
@@ -114,7 +115,7 @@ main() {
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
     set -x
-    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam --scorched_earth
+    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam --scorched_earth ${dedup}
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
