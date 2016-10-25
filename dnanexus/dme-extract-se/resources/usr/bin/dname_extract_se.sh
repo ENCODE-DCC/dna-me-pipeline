@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [ $# -lt 4 ] || [ $# -gt 5 ]; then
-    echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [--scorched_earth] [--dedup]"
+    echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [uncompress_bam] [dedup] [--scorched_earth]"
     echo "Extracts methylation from single-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
     echo "If --dedup will run bismark PCR duplicate remover"
@@ -12,16 +12,13 @@ index_tgz=$1  # Index archive containing input/*.fa reference, input/Bisulfite_G
 bismark_bam=$2  # bam input aligned with bismark and bowtie version that matches index_tgz.
 ncpus=$3         # Number of cores available for bismark --multi
 uncompress_bam=$4 # Uncompress bam if possible: trade off: storage vs threads available during bismark
+dedup=$5
 scorched="no"   # --scorched_earth will remove everything, including input bam and index in order to maximize available storage.
-dedup="no"
-if [ $# -ge 5 ] && [ "$5" == "--scorched_earth" ]; then
+if [ $# -eq 6 ] && [ "$6" == "--scorched_earth" ]; then
     echo "-- Scorched earth policy to maximize available storage..."
     scorched="earth"
 fi
-if [ $# -ge 6 ] && [ "$6" == "--dedup" ]; then
-    echo "-- Run deduplication"
-    dedup="yes"
-fi
+
 target_root=${bismark_bam%.bam}
 
 echo "-- Uncompress index archive..."
@@ -90,7 +87,7 @@ echo "-- Analyse methylation in ${alignments_file} and using $ncores threads..."
 set -x
 mkdir -p output/
 
-if [ $dedupe == "yes" ]; then
+if [ $dedup == "true" ]; then
     echo "-- Deduplicating reads"
     ### from HAIB
     ### Run the deduplication, and remove the pcr duplicates from unsorted_bam_files (i.e the sequence aligning to the same genomic positions).

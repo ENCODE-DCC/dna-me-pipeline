@@ -115,7 +115,7 @@ main() {
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
     set -x
-    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam --scorched_earth ${dedup}
+    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam ${dedup} --scorched_earth 
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
