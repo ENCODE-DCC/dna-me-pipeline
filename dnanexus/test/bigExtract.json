@@ -1,0 +1,38 @@
+{
+        "map_report_set": [
+            {
+                "$dnanexus_link": {
+                    "project": "project-BbF4J2Q0J6Z0q4K79k9V5fv0", 
+                    "id": "file-Bjb99v80j8vFX1y9zQYqVYZy"
+                }
+            }, 
+            {
+                "$dnanexus_link": {
+                    "project": "project-BbF4J2Q0J6Z0q4K79k9V5fv0", 
+                    "id": "file-Bjb99v003vxKYvJgXj7bF35X"
+                }
+            }
+        ], 
+        "dme_ix": {
+            "$dnanexus_link": {
+                "project": "project-BKbfvF00Qy5PZF5V7Gv003v7", 
+                "id": "file-BpG46BQ02KX11x8ZqQKjXk30"
+            }
+        }, 
+        "uncompress_bam": true, 
+	"dedup": true,
+        "bam_set": [
+            {
+                "$dnanexus_link": {
+                    "project": "project-BbF4J2Q0J6Z0q4K79k9V5fv0", 
+                    "id": "file-BXXfGfj0Y5111986P049Z2YZ"
+                }
+            }, 
+            {
+                "$dnanexus_link": {
+                    "project": "project-BbF4J2Q0J6Z0q4K79k9V5fv0", 
+                    "id": "file-BXZgj880054q9X0KgJF0qQKG"
+                }
+            }
+        ]
+    }

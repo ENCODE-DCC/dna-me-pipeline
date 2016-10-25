@@ -1,0 +1,23 @@
+{
+    "bam_set": [
+        {
+            "$dnanexus_link": {
+                "project": "project-BQkYKg00F1GP55qQ9Qy00VP0", 
+                "id": "file-F07vVq80z6yPGB4VyVPqjG4G"
+            }
+        }
+    ], 
+    "map_report_set": [
+        {
+            "$dnanexus_link": {
+                "project": "project-BQkYKg00F1GP55qQ9Qy00VP0", 
+                "id": "file-F07vXG00z6yPGB4VyVPqjGFz"
+            }
+        }
+    ], 
+    "dme_ix": {
+        "$dnanexus_link": "file-BpG46BQ02KX11x8ZqQKjXk30"
+    }, 
+    "dedup": true
+}
+
