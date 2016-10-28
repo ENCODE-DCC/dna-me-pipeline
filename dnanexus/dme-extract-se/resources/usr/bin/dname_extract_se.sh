@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-if [ $# -lt 4 ] || [ $# -gt 5 ]; then
+if [ $# -lt 4 ] || [ $# -gt 6 ]; then
     echo "usage v1: dname_extract_se.sh <index.tgz> <bismark.bam> <ncpus> [uncompress_bam] [dedup] [--scorched_earth]"
     echo "Extracts methylation from single-end bismark bam.  Is independent of DX and ENCODE."
     echo "If --scorched_earth will remove everything, including input bam and index in order to maximize available storage."
@@ -91,7 +91,7 @@ if [ $dedup == "true" ]; then
     echo "-- Deduplicating reads"
     ### from HAIB
     ### Run the deduplication, and remove the pcr duplicates from unsorted_bam_files (i.e the sequence aligning to the same genomic positions).
-    deduplicate_bismark -p --bam ${alignments_file}
+    deduplicate_bismark --sam ${alignments_file}
 fi
 
 bismark_methylation_extractor --multicore $ncores --single-end --comprehensive -output output/ ${alignments_file}
