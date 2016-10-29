@@ -73,7 +73,7 @@ if [ "$bowtie_ver" == "bowtie2" ]; then
     set +x
 else
     set -x
-    bismark --bowtie1 -n 1 -l 28 --output_dir output --temp_dir output --multi $ncores \
+    bismark --bowtie1 -n 1 -l 28 --output_dir output --temp_dir output/tmp --multi $ncores \
             input ${reads_root}_trimmed.fq
     set +x
 fi
