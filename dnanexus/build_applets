@@ -5,7 +5,7 @@
 #       but all other applet contents are temporary symlinks to the true applets's contents.  This script handles the symlinks.
 
 applet_dest=`cat ~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME`
-applets="dme-index-bismark dme-index-bismark-bowtie2 dme-align-pe dme-align-se"
+applets="dme-index-bismark dme-index-bismark-bowtie2 dme-align-pe dme-align-se dme-align-se-parallel"
 applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr"
 
 tools="tool_versions.py qc_metrics.py parse_property.py"

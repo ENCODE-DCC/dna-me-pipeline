@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-se",
-  "title": "extract methylation se (v2.0.6)",
+  "title": "extract methylation se (v2.0.7)",
   "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "categories": [
     "DNA Methylation",
     "ENCODE"
