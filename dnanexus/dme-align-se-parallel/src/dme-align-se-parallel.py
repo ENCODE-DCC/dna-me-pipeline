@@ -63,6 +63,7 @@ import subprocess
 import shlex
 import glob
 import logging
+import json
 
 DEBUG = True
 
@@ -77,6 +78,9 @@ else:
 
 
 STRIP_EXTENSIONS = ['.gz', '.fq', '.fastq', '.fa', '.fasta']
+ALIGN_SCRIPT = '/usr/bin/dname_align_se.sh'
+QC_SCRIPT = '/usr/bin/qc_metrics.py'
+VERSION_SCRIPT = '/usr/bin/tool_versions.py'
 
 
 def strip_extensions(filename, extensions):
@@ -144,25 +148,58 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
 def merge_reports(outfile_name, report_files, bam_root):
     out = ["### Combined Bismark map report for split fastq ### "]
     logger.info(out[0])
+    report_file_names = []
     for report in report_files:
         dxreport = dxpy.DXFile(report)
         rfn = dxreport.describe()['name']
         logger.info("* Downloading %s... *" % rfn)
         dxpy.download_dxfile(report, rfn)
+        report_file_names.append(rfn)
         out.append("###################################")
         out.append("### Map report for %s ###" % rfn)
         out = out + open(rfn, 'r').readlines()
 
     outfh = open(outfile_name+'_map_report.txt', 'w')
     outfh.write("\n".join(out))
-    return outfile_name+'_map_report.txt'
+    return (outfile_name+'_map_report.txt', report_file_names)
 
 
-def merge_qc():
-    fh = open('fake_qc', 'w')
-    fh.write("test qc")
+def merge_qc(outfile_name, report_files):
+
+    qc_stats = ''
+    if os.path.isfile(QC_SCRIPT):
+        qc_stats = json.loads(subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + report_files))
+
+    logger.info("* Collect bam stats...")
+    subprocess.check_call(['samtools', 'flagstat', outfile_name+'bam', '>', outfile_name + '}_flagstat.txt'])
+    subprocess.check_call(['samtools', 'stats', outfile_name+'.bam', '>', outfile_name + '_samstats.txt'])
+    logger.info(subprocess.check_output(['head', '-3', outfile_name + '_samstats.txt']))
+    logger.info(subprocess.check_ouptput(['grep', '^SN', outfile_name + '_samstats.txt', '|', 'cut', '-f', '2-', '>', outfile_name + ' _samstats_summary.txt']))
+
+    logger.info("* Prepare metadata...")
+    reads = 0
+    read_len = 0
+    if os.path.isfile(QC_SCRIPT):
+        meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt'])
+        qc_stats.extend(json.loads(meta))
+        reads = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt', '-k', 'total'])
+        meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats', '-d', ':', '-f', outfile_name+'_samstats.txt'])
+        qc_stats.extend(json.loads(meta))
+        read_len = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats',  '-d', ':', '-f', outfile_name+'_samstats_summary.txt', '-k', 'average length'])
+
+    logger.info(json.dumps(qc_stats))
+    # All qc to one file per target file:
+    qc_file = outfile_name + '_qc.txt'
+    fh = open(qc_file, 'w')
+    fh.write("===== samtools flagstat =====\n")
+
+    subprocess.check_call(['cat', outfile_name + '_flagstat.txt', '>>', qc_file])
+    fh.write("===== samtools stats =====\n")
+    subprocess.check_call(['cat', outfile_name + '_samstats.txt', '>>', qc_file])
+
     fh.close()
-    return ('fake_qc', '444242', "{'key': 'value'}")
+
+    return (qc_file, reads, read_len, json.dumps(qc_stats))
 
 
 @dxpy.entry_point("postprocess")
@@ -178,16 +215,25 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 
     logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
 
+    if os.path.isfile(VERSION_SCRIPT):
+        versions = subprocess.checkcall(['tool_versions.py', '--dxjson', 'dnanexus-executable.json'])
+
+
     merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
 
-    merged_report = merge_reports(bam_root, report_files, bam_root)
+    (merged_report, report_file_names) = merge_reports(bam_root, report_files, bam_root)
 
-    (merged_qc, nreads, metadata) = merge_qc()
+    (merged_qc, nreads, read_length, metadata) = merge_qc(bam_root, report_file_names)
 
+    props = {
+        'SW': versions,
+        'reads': nreads,
+        'read_length': read_length
+    }
     output = {
-        "bam_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_bam)),
-        "bam_techrep_qc": dxpy.dxlink(dxpy.upload_local_file(merged_qc)),
-        "map_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_report)),
+        "bam_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_bam, details=metadata, properties=props)),
+        "bam_techrep_qc": dxpy.dxlink(dxpy.upload_local_file(merged_qc), detais=metadata, properties={'SW': versions}),
+        "map_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_report), detais=metadata, properties={'SW': versions}),
         "reads": nreads,
         "metadata": metadata
     }
@@ -197,7 +243,6 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 def process(scattered_input, dme_ix, ncpus, reads_root):
     # Fill in code here to process the input and create output.
 
-    ALIGN_SCRIPT = '/usr/bin/dname_align_se.sh'
     if DEBUG:
         logger.setLevel(logging.DEBUG)
     else:
