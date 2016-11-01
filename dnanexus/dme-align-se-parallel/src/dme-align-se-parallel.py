@@ -81,6 +81,7 @@ STRIP_EXTENSIONS = ['.gz', '.fq', '.fastq', '.fa', '.fasta']
 ALIGN_SCRIPT = '/usr/bin/dname_align_se.sh'
 QC_SCRIPT = '/usr/bin/qc_metrics.py'
 VERSION_SCRIPT = '/usr/bin/tool_versions.py'
+PROPERTY_SCRIPT = '/usr/bin/parse_property.py'
 
 
 def strip_extensions(filename, extensions):
@@ -216,7 +217,7 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
     logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
 
     if os.path.isfile(VERSION_SCRIPT):
-        versions = subprocess.checkcall(['tool_versions.py', '--dxjson', 'dnanexus-executable.json'])
+        versions = subprocess.check_call(['tool_versions.py', '--dxjson', 'dnanexus-executable.json'])
 
 
     merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
@@ -357,9 +358,10 @@ def simplify_name():
     # Try to simplify the names
 
     rep_root = ''
-    if os.path.isfile('/usr/bin/parse_property.py'):
-        rep_root = subprocess.check_output(['parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet'], shell=True)
-
+    if os.path.isfile(PROPERTY_SCRIPT):
+        logger.debug(" ".join(["Simplify Name:", 'parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet']))
+        rep_root = subprocess.check_output(['parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet'])
+        logger.debug("Simplified Name: %s", rep_root)
     return rep_root
 
 

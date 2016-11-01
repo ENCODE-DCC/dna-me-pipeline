@@ -7,18 +7,19 @@ import sys, os, argparse, json, commands
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
     # Aligns default to PE: trim_galore/bowtie2;  SE: mott-trim/bowtie1
-    "dme-align-pe":         [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
-    "dme-align-se":         [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
+    "dme-align-pe":          [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    "dme-align-se":          [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
+    "dme-align-se-parallel": [ "dname_align_se.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
 
     # Aligns and extracts could use other bowtie...
     #"dme-align-pe-bowtie1": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
     #"dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
-    "dme-extract-se":       [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-extract-pe":       [ "dname_extract_pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-cx-to-bed":        [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
-    "dme-bg-to-signal":     [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
-    "dme-rep-corr":         [ "dname_bed_corr.sh", "intersectBed (bedtools)", "bedmethyl_corr.py" ],
+    "dme-extract-se":          [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-se-parallel": [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-cx-to-bed":           [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
+    "dme-bg-to-signal":        [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
+    "dme-rep-corr":            [ "dname_bed_corr.sh", "intersectBed (bedtools)", "bedmethyl_corr.py" ],
 
     # utility:    
     "dme-combine-reports":  [ "bismark" ],

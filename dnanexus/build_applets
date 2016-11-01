@@ -129,9 +129,9 @@ if [ "$virtual_applets" != "" ]; then
             cp ../tools/$tool ${applet}/resources/usr/bin
         done
         dx build "${applet}" --archive --destination "${applet_dest}:/"
-        for tool in $tools; do
-            rm -f ${applet}/resources/usr/bin/$tool 
-        done
+        #for tool in $tools; do
+        #    rm -f ${applet}/resources/usr/bin/$tool 
+        #done
         for link in $virtual_links; do
             rm -f ${applet}/$link
         done
