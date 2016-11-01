@@ -3,7 +3,7 @@
   "title": "align se reads with bismark/bowtie (v1.1.2p) in parallel",
   "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark by splitting large fastqs up",
   "dxapi": "1.0.0",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "categories": [
     "DNA Methylation"
   ],

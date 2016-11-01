@@ -169,7 +169,7 @@ def merge_qc(outfile_name, report_files):
 
     qc_stats = ''
     if os.path.isfile(QC_SCRIPT):
-        qc_stats = json.loads(subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + report_files))
+        qc_stats = json.loads(subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + [','.join(report_files)]))
 
     logger.info("* Collect bam stats...")
     subprocess.check_call(['samtools', 'flagstat', outfile_name+'bam', '>', outfile_name + '}_flagstat.txt'])
