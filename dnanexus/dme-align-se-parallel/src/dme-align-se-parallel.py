@@ -64,6 +64,7 @@ import shlex
 import glob
 import logging
 import json
+import re
 
 DEBUG = True
 
@@ -171,8 +172,9 @@ def merge_qc(outfile_name, report_files):
     if os.path.isfile(QC_SCRIPT):
         qc_stats = json.loads('{'+subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + [','.join(report_files)])+'}')
 
+    logger.debug("** merge_qc: %s " % outfile_name)
     logger.info("* Collect bam stats...")
-    subprocess.check_call(['samtools', 'flagstat', outfile_name+'bam', '>', outfile_name + '_flagstat.txt'])
+    subprocess.check_call(['samtools', 'flagstat', outfile_name+'.bam', '>', outfile_name + '_flagstat.txt'])
     subprocess.check_call(['samtools', 'stats', outfile_name+'.bam', '>', outfile_name + '_samstats.txt'])
     logger.info(subprocess.check_output(['head', '-3', outfile_name + '_samstats.txt']))
     logger.info(subprocess.check_ouptput(['grep', '^SN', outfile_name + '_samstats.txt', '|', 'cut', '-f', '2-', '>', outfile_name + ' _samstats_summary.txt']))
@@ -214,7 +216,7 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
     else:
         logger.setLevel(logging.INFO)
 
-    logger.debug("* In Postprocess - refactoed dme-merge-bams - *")
+    logger.debug("** In Postprocess - refactoed dme-merge-bams - *")
 
     if os.path.isfile(VERSION_SCRIPT):
         versions = subprocess.check_call(['tool_versions.py', '--dxjson', 'dnanexus-executable.json'])
@@ -261,16 +263,16 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     bam_root = name + '_techrep'
 
     logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
-    logger.debug("DIR: %s" % os.listdir('./'))
+    logger.debug("** DIR: %s" % os.listdir('./'))
     logger.debug(subprocess.check_output(['head', name]))
     if os.path.isfile(ALIGN_SCRIPT):
-        logger.debug("Executable %s exists" % ALIGN_SCRIPT)
+        logger.debug("** Executable %s exists" % ALIGN_SCRIPT)
     else:
-        logger.debug("Executable %s DOES NOT exist" % ALIGN_SCRIPT)
+        logger.debug("** Executable %s DOES NOT exist" % ALIGN_SCRIPT)
         exit(1)
-    logger.debug('command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
+    logger.debug('** command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
     map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, str(ncpus), bam_root, 'no_stats'])
-    logger.debug("* === Returned from dname_align_se  ===")
+    logger.info("* === Returned from dname_align_se  ===")
 
     # As always, you can choose not to return output if the
     # "postprocess" stage does not require any input, e.g. rows have
@@ -280,8 +282,8 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
     # finish using the depends_on argument (this is already done for
     # you in the invocation of the "postprocess" job in "main").
 
-    logger.debug("DIR: %s" % os.listdir('./'))
-    logger.debug("OUTPUT DIR: %s" % os.listdir('output/'))
+    logger.debug("** DIR: %s" % os.listdir('./'))
+    logger.debug("** OUTPUT DIR: %s" % os.listdir('output/'))
 
     os.rename(bam_root+'_bismark.bam', bam_root+'.bam')
     return {
@@ -300,14 +302,14 @@ def map_entry_point(array_of_scattered_input, process_input):
     else:
         logger.setLevel(logging.INFO)
 
-    logger.debug("* in map entry point with %s *" % process_input)
+    logger.debug("** in map entry point with %s *" % process_input)
     process_jobs = []
     for item in array_of_scattered_input:
-        logger.debug("* scattering: %s *" % item)
+        logger.debug("** scattering: %s *" % item)
         process_input["scattered_input"] = item
         process_jobs.append(dxpy.new_dxjob(fn_input=process_input, fn_name="process"))
 
-    logger.debug("* %s scatter jobs started *" % len(array_of_scattered_input))
+    logger.info("* %s scatter jobs started *" % len(array_of_scattered_input))
     bams = []
     reports = []
     for subjob in process_jobs:
@@ -361,7 +363,10 @@ def simplify_name():
     if os.path.isfile(PROPERTY_SCRIPT):
         logger.debug(" ".join(["Simplify Name:", 'parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet']))
         rep_root = subprocess.check_output(['parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet'])
-        logger.debug("Simplified Name: %s", rep_root)
+        rep_root.strip()
+        if not re.match('\w', rep_root):
+            return ''
+        logger.debug("** Simplified Name: %s", rep_root)
     return rep_root
 
 
@@ -380,7 +385,7 @@ def main(reads, dme_ix, ncpus, splitsize):
 
     # We first create the "scatter" job which will scatter some input
     # (replace with your own input as necessary).
-    logger.debug("* Start Scatter with %d files %sM read splits *" % (len(reads), splitsize))
+    logger.info("* Start Scatter with %d files %sM read splits *" % (len(reads), splitsize))
 
     scatter_job = dxpy.new_dxjob(fn_input={
                                  'orig_reads': reads,
@@ -404,20 +409,20 @@ def main(reads, dme_ix, ncpus, splitsize):
             "dme_ix": dme_ix
             }
         }
-    logger.debug("* Start Map with: %s *" % map_input)
+    logger.info("* Start Map with: %s *" % map_input)
     map_job = dxpy.new_dxjob(fn_input=map_input, fn_name="map")
 
     # Finally, we want the "postprocess" job to run after "map" is
     # done calling "process" on each of its inputs.  Note that a job
     # is marked as "done" only after all of its child jobs are also
     # marked "done".
-    logger.debug("* Waiting for map job to finish...")
+    logger.info("* Waiting for map job to finish...")
     postprocess_input = {
         "bam_files": map_job.get_output_ref("bam_files"),
         "report_files": map_job.get_output_ref("report_files"),
         "bam_root": reads_root + '_techrep'
         }
-    logger.debug("* Start Post process with: %s *" % postprocess_input)
+    logger.info("* Start Post process with: %s *" % postprocess_input)
     postprocess_job = dxpy.new_dxjob(fn_input=postprocess_input,
                                      fn_name="postprocess",
                                      depends_on=[map_job])
