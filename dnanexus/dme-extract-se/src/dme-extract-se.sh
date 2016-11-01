@@ -13,6 +13,7 @@ main() {
     echo "* Value of dme_ix:         '$dme_ix'"
     echo "* Value of uncompress_bam: '$uncompress_bam'"
     echo "* Value of dedup:          '$dedup'"
+    echo "* Value of nosort:         '$nosort'"
 
     # NOTE: dme-align produces *_techrep_bismark.bam and dme-extract merges 1+ techrep bams into a *_bismark_biorep.bam.
     #       The reason for the name 'word' order is so thal older *_bismark.bam alignments are recognizable as techrep bams
@@ -68,12 +69,19 @@ main() {
     echo "* Merged alignments file will be: '${target_root}.bam'"
 
     # At this point there is a 'sofar.bam' with one or more input bams
+    if [ "${nosort}"] == "true"]; then
+        merged=""
+        echo "* Sorting skipped with --nosort."
+        # just copy as if nothing to merge
+    elif [ "${merged}" == "" ]; then
+        echo "* Only one input file, no merging required."
+    fi
+
     if [ "${merged}" == "" ]; then
         target_root="${file_root}_bismark_biorep"
         set -x
         mv sofar.bam ${target_root}.bam
         set +x
-        echo "* Only one input file, no merging required."
     else
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."

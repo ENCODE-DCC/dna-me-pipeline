@@ -169,7 +169,7 @@ def merge_qc(outfile_name, report_files):
 
     qc_stats = ''
     if os.path.isfile(QC_SCRIPT):
-        qc_stats = json.loads(subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + [','.join(report_files)]))
+        qc_stats = json.loads('{'+subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + [','.join(report_files)])+'}')
 
     logger.info("* Collect bam stats...")
     subprocess.check_call(['samtools', 'flagstat', outfile_name+'bam', '>', outfile_name + '}_flagstat.txt'])
@@ -182,10 +182,10 @@ def merge_qc(outfile_name, report_files):
     read_len = 0
     if os.path.isfile(QC_SCRIPT):
         meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt'])
-        qc_stats.extend(json.loads(meta))
+        qc_stats.extend(json.loads('{'+meta+'}'))
         reads = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt', '-k', 'total'])
         meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats', '-d', ':', '-f', outfile_name+'_samstats.txt'])
-        qc_stats.extend(json.loads(meta))
+        qc_stats.extend(json.loads('{'+meta+'}'))
         read_len = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats',  '-d', ':', '-f', outfile_name+'_samstats_summary.txt', '-k', 'average length'])
 
     logger.info(json.dumps(qc_stats))

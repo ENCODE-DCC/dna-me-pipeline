@@ -3,7 +3,7 @@
   "title": "extract methylation se (v2.0.7)",
   "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -36,7 +36,14 @@
       "class": "boolean",
       "default": true,
       "optional": false
-   },
+    },
+    {
+      "name": "nosort",
+      "label": "Do not sort merged bam (faster)",
+      "class": "boolean",
+      "default": false,
+      "optional": true
+    },
     {
       "name": "dedup",
       "label": "De-duplicate BAM file using bismark",
