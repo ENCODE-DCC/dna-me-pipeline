@@ -21,7 +21,7 @@
         }, 
         "uncompress_bam": true, 
 	"dedup": true,
-	"nosort": false,
+	"nosort": true,
         "bam_set": [
             {
                 "$dnanexus_link": {

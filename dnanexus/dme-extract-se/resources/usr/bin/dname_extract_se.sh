@@ -91,7 +91,7 @@ if [ $dedup == "true" ]; then
     echo "-- Deduplicating reads"
     ### from HAIB
     ### Run the deduplication, and remove the pcr duplicates from unsorted_bam_files (i.e the sequence aligning to the same genomic positions).
-    deduplicate_bismark -s --barcode ${alignments_file}
+    deduplicate_bismark -s ${alignments_file}
 fi
 
 bismark_methylation_extractor --multicore $ncores --single-end --comprehensive -output output/ ${alignments_file}

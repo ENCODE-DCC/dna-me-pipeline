@@ -69,7 +69,7 @@ main() {
     echo "* Merged alignments file will be: '${target_root}.bam'"
 
     # At this point there is a 'sofar.bam' with one or more input bams
-    if [ "${nosort}"] == "true"]; then
+    if [ "${nosort}"] == "true" ]; then
         merged=""
         echo "* Sorting skipped with --nosort."
         # just copy as if nothing to merge
