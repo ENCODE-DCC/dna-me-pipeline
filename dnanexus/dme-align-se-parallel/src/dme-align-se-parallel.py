@@ -174,6 +174,7 @@ def merge_qc(outfile_name, report_files):
 
     logger.debug("** merge_qc: %s " % outfile_name)
     logger.info("* Collect bam stats...")
+    subprocess.check_call(['samtools', 'index', outfile_name+'.bam'])
     subprocess.check_call(['samtools', 'flagstat', outfile_name+'.bam', '>', outfile_name + '_flagstat.txt'])
     subprocess.check_call(['samtools', 'stats', outfile_name+'.bam', '>', outfile_name + '_samstats.txt'])
     logger.info(subprocess.check_output(['head', '-3', outfile_name + '_samstats.txt']))
