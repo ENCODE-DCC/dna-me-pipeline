@@ -102,7 +102,7 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
         fnames.append(dxfn)
 
     outfile_name = bam_root
-    logger.info("* Merged alignments file will be: %s *" % outfile_name + '.bam')
+    logger.info("* Merged alignments file will be: %s *" % (outfile_name + '.bam'))
     if len(fnames) == 1:
         # UNTESTED 
         rep_outfile_name = bam_root + '_bismark_biorep'
@@ -117,28 +117,30 @@ def merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads):
                 else:
                     logger.info("* Merging...")
                     # NOTE: keeps the first header
-                    catout = subprocess.check_output(['samtools', 'cat', 'sofar.bam', fn, '>', 'merging.bam'])
-                    logger.info(catout)
+                    cat_cmd = 'samtools cat sofar.bam %s > merging.bam' %fn
+                    subprocess.check_call(shlex.split(cat_cmd))
                     os.rename('merging.bam', 'sofar.bam')
 
             # At this point there is a 'sofar.bam' with one or more input bams
 
-            logger.info("* Files merged into %s (via cat) *" % outfile_name + '.bam')
+            logger.info("* Files merged into %s (via cat) *" % (outfile_name + '.bam'))
 
         else:
             # use samtools merge
             # UNTESTED
             filelist = " ".join(fnames)
-            logger.info("Merging via merge %s " % filelist)
-            mergeout = subprocess.check_output(['samtools', 'merge', '-nf', 'sofar.bam'] + fnames)
+            merge_cmd = 'samtools merge sofar.bam ' + filelist
+            logger.info("Merging via merge: %s " % merge_cmd)
+            mergeout = subprocess.check_output(shlex.split(merge_cmd))
             # this gets renamed later
             logger.info(mergeout)
 
         if use_sort:
             # sorting needed due to samtools cat
             # UNTESTED
-            logger.info("* Sorting merged bam...")
-            sortout = subprocess.check_output(['samtools', 'sort', '-@', nthreads, '-m', '6G', '-f,' 'sofar.bam', 'sorted.bam'])
+            sort_cmd = 'samtools sort -@ %s -m 6G -f sofar.bam sorted.bam' % nthreads
+            logger.info("* Sorting merged bam: %s" % sort_cmd)
+            sortout = subprocess.check_output(shlex.split(sort_cmd))
             logger.info(sortout)
             os.rename('sorted.bam', outfile_name + '.bam')
         else:
@@ -170,26 +172,38 @@ def merge_qc(outfile_name, report_files):
 
     qc_stats = ''
     if os.path.isfile(QC_SCRIPT):
-        qc_stats = json.loads('{'+subprocess.check_output(['qc_metrics.py', '-n', 'bismark_map', '-f'] + [','.join(report_files)])+'}')
+        qc_map_cmd = 'qc_metrics.py -n bismark_map -f ' + ','.join(report_files)
+        qc_stats = json.loads('{'+subprocess.check_output(shlex.split(qc_map_cmd))+'}')
 
     logger.debug("** merge_qc: %s " % outfile_name)
+    logger.debug("** DIR: %s" % os.listdir('./'))
+
     logger.info("* Collect bam stats...")
-    subprocess.check_call(['samtools', 'index', outfile_name+'.bam'])
-    subprocess.check_call(['samtools', 'flagstat', outfile_name+'.bam', '>', outfile_name + '_flagstat.txt'])
-    subprocess.check_call(['samtools', 'stats', outfile_name+'.bam', '>', outfile_name + '_samstats.txt'])
-    logger.info(subprocess.check_output(['head', '-3', outfile_name + '_samstats.txt']))
-    logger.info(subprocess.check_ouptput(['grep', '^SN', outfile_name + '_samstats.txt', '|', 'cut', '-f', '2-', '>', outfile_name + ' _samstats_summary.txt']))
+    logger.debug("** index bam")
+    subprocess.check_call(shlex.split('samtools index %s' %outfile_name+'.bam'))
+    flagstats_cmd = 'samtools flagstat %s > %s' % (outfile_name + '.bam', outfile_name + '_flatstat.txt')
+    logger.debug("** run flagstats: %s" % flagstats_cmd)
+    subprocess.check_call(shlex.split(flagstats_cmd))
+    stats_cmd = 'samtools stats %s > %s' % (outfile_name + '.bam', outfile_name + '_samstats.txt')
+    logger.debug("** run stats: %s " % stats_cmd)
+    subprocess.check_call(shlex.split(stats_cmd))
+
+    logger.info(subprocess.check_output(shlex.split('head -3 %s' % outfile_name + '_samstats.txt')))
+    logger.info(subprocess.check_output('grep ^SN %s | cut -f 2- > %s' %
+               (outfile_name + '_samstats.txt', outfile_name + ' _samstats_summary.txt')))
+
 
     logger.info("* Prepare metadata...")
     reads = 0
     read_len = 0
     if os.path.isfile(QC_SCRIPT):
-        meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt'])
+
+        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f' % outfile_name+'_flagstat.txt'))
         qc_stats.extend(json.loads('{'+meta+'}'))
-        reads = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_flagstats', '-f', outfile_name+'_flagstat.txt', '-k', 'total'])
-        meta = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats', '-d', ':', '-f', outfile_name+'_samstats.txt'])
+        reads = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s -k total' % outfile_name+'_flagstat.txt'))
+        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % outfile_name+'_samstats.txt'))
         qc_stats.extend(json.loads('{'+meta+'}'))
-        read_len = subprocess.check_output(['qc_metrics.py', '-n', 'samtools_stats',  '-d', ':', '-f', outfile_name+'_samstats_summary.txt', '-k', 'average length'])
+        read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % outfile_name+'_samstats_summary.txt'))
 
     logger.info(json.dumps(qc_stats))
     # All qc to one file per target file:
@@ -197,9 +211,9 @@ def merge_qc(outfile_name, report_files):
     fh = open(qc_file, 'w')
     fh.write("===== samtools flagstat =====\n")
 
-    subprocess.check_call(['cat', outfile_name + '_flagstat.txt', '>>', qc_file])
+    subprocess.check_call(shlex.split('cat %s  >> %s' % (outfile_name + '_flagstat.txt', qc_file)))
     fh.write("===== samtools stats =====\n")
-    subprocess.check_call(['cat', outfile_name + '_samstats.txt', '>>', qc_file])
+    subprocess.check_call(shlex.split('cat %s  >> %s' % (outfile_name + '_samstats.txt', qc_file)))
 
     fh.close()
 
@@ -217,10 +231,10 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
     else:
         logger.setLevel(logging.INFO)
 
-    logger.debug("** In Postprocess - refactoed dme-merge-bams - *")
+    logger.debug("** In Postprocess - refactored dme-merge-bams - *")
 
     if os.path.isfile(VERSION_SCRIPT):
-        versions = subprocess.check_call(['tool_versions.py', '--dxjson', 'dnanexus-executable.json'])
+        versions = subprocess.check_call(shlex.split('tool_versions.py --dxjson dnanexus-executable.json'))
 
 
     merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
@@ -265,14 +279,15 @@ def process(scattered_input, dme_ix, ncpus, reads_root):
 
     logger.info("* === Calling DNAnexus and ENCODE independent script... ===")
     logger.debug("** DIR: %s" % os.listdir('./'))
-    logger.debug(subprocess.check_output(['head', name]))
+    logger.debug(subprocess.check_output(shlex.split('head %s' % name)))
     if os.path.isfile(ALIGN_SCRIPT):
         logger.debug("** Executable %s exists" % ALIGN_SCRIPT)
     else:
         logger.debug("** Executable %s DOES NOT exist" % ALIGN_SCRIPT)
         exit(1)
-    logger.debug('** command line: %s index.tgz %s %s %s' % (ALIGN_SCRIPT, name, ncpus, bam_root))
-    map_out = subprocess.check_output([ALIGN_SCRIPT, 'index.tgz', name, str(ncpus), bam_root, 'no_stats'])
+    align_cmd = '%s index.tgz %s %s %s no_stats' % (ALIGN_SCRIPT, name, str(ncpus), bam_root)
+    logger.debug('** command line: %s' % align_cmd)
+    map_out = subprocess.check_output(shlex.split(align_cmd))
     logger.info("* === Returned from dname_align_se  ===")
 
     # As always, you can choose not to return output if the
@@ -345,6 +360,7 @@ def scatter(orig_reads, split_size):
 
         logger.info('* RUNNING /bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name))
         split_out = subprocess.check_output('/bin/zcat %s | /usr/bin/split -l %d -d - %s ' % (reads_filename, splitsize, 'splits/' + reads_root_name), shell=True)
+        # can't shlex because of |
 
     logger.info(split_out)
     splits = os.listdir('splits')
@@ -362,8 +378,9 @@ def simplify_name():
 
     rep_root = ''
     if os.path.isfile(PROPERTY_SCRIPT):
-        logger.debug(" ".join(["Simplify Name:", 'parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet']))
-        rep_root = subprocess.check_output(['parse_property.py', '--job', os.environ['DX_JOB_ID'],'--root_name', '--quiet'])
+        simplify_cmd = 'parse_property.py --job %s --root_name --quiet' % os.environ['DX_JOB_ID']
+        logger.debug('** Simplify Name: %s' % simplify_cmd)
+        rep_root = subprocess.check_output(shlex.split(simplify_cmd))
         rep_root.strip()
         if not re.match('\w', rep_root):
             return ''

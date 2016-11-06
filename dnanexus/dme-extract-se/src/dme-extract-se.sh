@@ -51,6 +51,12 @@ main() {
         fi
         echo "* Downloading ${file_root}_techrep_bismark.bam file..."
         dx download "${bam_set[$ix]}" -o ${file_root}_techrep_bismark.bam
+        if [ $dedup == "true" ]; then
+            echo "-- Deduplicating reads"
+            ### from HAIB - can't dedup a combined TR bam
+            ### Run the deduplication, and remove the pcr duplicates from unsorted_bam_files (i.e the sequence aligning to the same genomic positions).
+            deduplicate_bismark -b ${file_root}_techrep_bismark.bam
+        fi
         if [ ! -e sofar.bam ]; then
             mv ${file_root}_techrep_bismark.bam sofar.bam
         else

@@ -28,9 +28,9 @@ class DmeLaunch(Launch):
                 "ORDER": { "se": [ "dme-align-se" ],
                            "pe": [ "dme-align-pe" ] },
                 "STEPS": {
-                            "dme-align-se": {
-                                "inputs": { "reads": "reads", "dme_ix": "dme_ix" },
-                                "app": "dme-align-se", 
+                            "dme-align-se-parallel": {
+                                "inputs": { "reads": "reads", "dme_ix": "dme_ix" , "ncpus": 4, "splitsize": 50},
+                                "app": "dme-align-se-parallel", 
                                 "params": { }, 
                                 "results": {
                                     "bam_techrep":      "bam_techrep", 
