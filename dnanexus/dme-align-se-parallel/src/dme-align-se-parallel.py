@@ -191,8 +191,16 @@ def merge_qc(outfile_name, report_files):
     subprocess.check_call(shlex.split(stats_cmd), stdout=open(outfile_name + '_samstats.txt', 'w'))
 
     logger.info(subprocess.check_output(shlex.split('head -3 %s' % outfile_name + '_samstats.txt')))
-    subprocess.check_call('grep ^SN %s | cut -f 2-' % outfile_name + '_samstats.txt', stdout=open(outfile_name + ' _samstats_summary.txt', 'w'))
-    logger.info(subprocess.check_output('cat %s' % outfile_name + ' _samstats_summary.txt'))
+    grep = subprocess.Popen(shlex.split('grep ^SN %s' % outfile_name + '_samstats.txt'), stdout=subprocess.PIPE)
+    samsum = open(outfile_name + ' _samstats_summary.txt', 'w')
+    cut = subprocess.Popen(shlex.split('cut -f 2-'), stdin=grep.stdout, stdout=samsum)
+    grep.stdout.close()
+    cut.communicate()[0]
+    cut.wait()
+    #subprocess.check_call('grep ^SN %s | cut -f 2-' % outfile_name + '_samstats.txt', stdout=open(outfile_name + ' _samstats_summary.txt', 'w'))
+    samsum.close()
+    #logger.debug("** DIR: %s" % os.listdir('./'))    
+    logger.info(subprocess.check_output('/bin/cat %s' % outfile_name + '_samstats_summary.txt'))
 
     logger.info("* Prepare metadata...")
     reads = 0
@@ -212,9 +220,9 @@ def merge_qc(outfile_name, report_files):
     fh = open(qc_file, 'w')
     fh.write("===== samtools flagstat =====\n")
 
-    subprocess.check_call(shlex.split('cat %s' % outfile_name + '_flagstat.txt'), stdout=open(qc_file,'a'))
+    subprocess.check_call(shlex.split('/bin/cat %s' % outfile_name + '_flagstat.txt'), stdout=open(qc_file,'a'))
     fh.write("===== samtools stats =====\n")
-    subprocess.check_call(shlex.split('cat %s' % outfile_name + '_samstats.txt'), stdout=open(qc_file, 'a'))
+    subprocess.check_call(shlex.split('/bin/cat %s' % outfile_name + '_samstats.txt'), stdout=open(qc_file, 'a'))
 
     fh.close()
 
