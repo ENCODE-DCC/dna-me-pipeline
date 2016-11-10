@@ -184,35 +184,41 @@ def merge_qc(outfile_name, report_files):
     subprocess.check_call(shlex.split('samtools index %s' %outfile_name+'.bam'))
     flagstats_cmd = 'samtools flagstat %s' % (outfile_name + '.bam')
 
-    logger.debug("** run flagstats: %s: %s" % (flagstats_cmd, outfile_name + '_flagstat.txt'))
-    subprocess.check_call(shlex.split(flagstats_cmd), stdout=open(outfile_name + '_flatstat.txt', 'w'))
-    stats_cmd = 'samtools stats %s' % (outfile_name + '.bam')
-    logger.debug("** run stats: %s: %s " % (stats_cmd, outfile_name + '_samstats.txt'))
-    subprocess.check_call(shlex.split(stats_cmd), stdout=open(outfile_name + '_samstats.txt', 'w'))
+    flagstats_fn = outfile_name + '_flagstat.txt'
+    logger.debug("** run flagstats: %s: %s" % (flagstats_cmd, flagstats_fn))
+    subprocess.check_call(shlex.split(flagstats_cmd), stdout=open(flagstats_fn, 'w'))
 
-    logger.info(subprocess.check_output(shlex.split('head -3 %s' % outfile_name + '_samstats.txt')))
-    grep = subprocess.Popen(shlex.split('grep ^SN %s' % outfile_name + '_samstats.txt'), stdout=subprocess.PIPE)
-    samsum = open(outfile_name + ' _samstats_summary.txt', 'w')
+    stats_cmd = 'samtools stats %s' % (outfile_name + '.bam')
+    samstats_fn = outfile_name + '_samstats.txt'
+    logger.debug("** run stats: %s: %s " % (stats_cmd, samstats_fn ))
+    subprocess.check_call(shlex.split(stats_cmd), stdout=open(samstats_fn, 'w'))
+
+    logger.info(subprocess.check_output(shlex.split('head -3 %s' % samstats_fn)))
+    grep = subprocess.Popen(shlex.split('grep ^SN %s' % samstats_fn), stdout=subprocess.PIPE)
+
+    samsummary_fn = outfile_name + '_samstats_summary.txt'
+    samsum = open(samsummary_fn, 'w')
     cut = subprocess.Popen(shlex.split('cut -f 2-'), stdin=grep.stdout, stdout=samsum)
     grep.stdout.close()
     cut.communicate()[0]
     cut.wait()
-    #subprocess.check_call('grep ^SN %s | cut -f 2-' % outfile_name + '_samstats.txt', stdout=open(outfile_name + ' _samstats_summary.txt', 'w'))
+    # subprocess.check_call('grep ^SN %s | cut -f 2-' % outfile_name + '_samstats.txt',
+    # stdout=open(outfile_name + '_samstats_summary.txt', 'w'))
     samsum.close()
-    #logger.debug("** DIR: %s" % os.listdir('./'))    
-    logger.info(subprocess.check_output('/bin/cat %s' % outfile_name + '_samstats_summary.txt'))
+    logger.debug("** DIR: %s" % os.listdir('./'))
+    logger.info(subprocess.check_output('/bin/cat %s' % samsummary_fn))
 
     logger.info("* Prepare metadata...")
     reads = 0
     read_len = 0
     if os.path.isfile(QC_SCRIPT):
 
-        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f' % outfile_name+'_flagstat.txt'))
+        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f' % flagstats_fn))
         qc_stats.extend(json.loads('{'+meta+'}'))
-        reads = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s -k total' % outfile_name+'_flagstat.txt'))
-        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % outfile_name+'_samstats.txt'))
+        reads = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s -k total' % flagstats_fn))
+        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % samstats_fn))
         qc_stats.extend(json.loads('{'+meta+'}'))
-        read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % outfile_name+'_samstats_summary.txt'))
+        read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % samsummary_fn))
 
     logger.info(json.dumps(qc_stats))
     # All qc to one file per target file:
@@ -220,9 +226,9 @@ def merge_qc(outfile_name, report_files):
     fh = open(qc_file, 'w')
     fh.write("===== samtools flagstat =====\n")
 
-    subprocess.check_call(shlex.split('/bin/cat %s' % outfile_name + '_flagstat.txt'), stdout=open(qc_file,'a'))
+    subprocess.check_call(shlex.split('/bin/cat %s' % flagstats_fn), stdout=open(qc_file,'a'))
     fh.write("===== samtools stats =====\n")
-    subprocess.check_call(shlex.split('/bin/cat %s' % outfile_name + '_samstats.txt'), stdout=open(qc_file, 'a'))
+    subprocess.check_call(shlex.split('/bin/cat %s' % samstats_fn), stdout=open(qc_file, 'a'))
 
     fh.close()
 
