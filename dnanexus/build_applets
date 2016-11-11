@@ -6,7 +6,7 @@
 
 applet_dest=`cat ~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME`
 applets="dme-index-bismark dme-index-bismark-bowtie2 dme-align-pe dme-align-se dme-align-se-parallel"
-applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr"
+applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr-alt"
 
 tools="tool_versions.py qc_metrics.py parse_property.py"
 virtual_pairs="dme-cx-to-bed:dme-cx-to-bed-alt dme-bg-to-signal:dme-bg-to-signal-alt dme-rep-corr:dme-rep-corr-alt"
