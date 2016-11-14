@@ -165,6 +165,7 @@ def merge_reports(outfile_name, report_files, bam_root):
 
     outfh = open(outfile_name+'_map_report.txt', 'w')
     outfh.write("\n".join(out))
+    outfh.close()
     return (outfile_name+'_map_report.txt', report_file_names)
 
 
@@ -181,17 +182,17 @@ def merge_qc(outfile_name, report_files):
     logger.info("* Collect bam stats...")
     logger.debug("** index bam")
 
-    subprocess.check_call(shlex.split('samtools index %s' %outfile_name+'.bam'))
-    #flagstats_cmd = 'samtools flagstat %s' % (outfile_name + '.bam')
+    subprocess.check_call(shlex.split('samtools index %s' % outfile_name + '.bam'))
+    # flagstats_cmd = 'samtools flagstat %s' % (outfile_name + '.bam')
 
     flagstats_fn = outfile_name + '_flagstat.txt'
-    #logger.debug("** run flagstats: %s: %s" % (flagstats_cmd, flagstats_fn))
-    #subprocess.check_call(shlex.split(flagstats_cmd), stdout=open(flagstats_fn, 'w'))
+    # logger.debug("** run flagstats: %s: %s" % (flagstats_cmd, flagstats_fn))
+    # subprocess.check_call(shlex.split(flagstats_cmd), stdout=open(flagstats_fn, 'w'))
 
-    #stats_cmd = 'samtools stats %s' % (outfile_name + '.bam')
+    # stats_cmd = 'samtools stats %s' % (outfile_name + '.bam')
     samstats_fn = outfile_name + '_samstats.txt'
-    #logger.debug("** run stats: %s: %s " % (stats_cmd, samstats_fn ))
-    #subprocess.check_call(shlex.split(stats_cmd), stdout=open(samstats_fn, 'w'))
+    # logger.debug("** run stats: %s: %s " % (stats_cmd, samstats_fn ))
+    # subprocess.check_call(shlex.split(stats_cmd), stdout=open(samstats_fn, 'w'))
 
 
     subprocess.check_call(shlex.split('bam-stats.sh %s' % outfile_name + '.bam'))
@@ -201,8 +202,8 @@ def merge_qc(outfile_name, report_files):
     # samsum = open(samsummary_fn, 'r').readlines()
     logger.info("* Prepare metadata...")
     reads = 0
-    #dxpy.upload_local_file(flagstats_fn)
-    #dxpy.upload_local_file(samstats_fn)
+    # dxpy.upload_local_file(flagstats_fn)
+    # dxpy.upload_local_file(samstats_fn)
     if os.path.isfile(QC_SCRIPT):
 
         meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s' % flagstats_fn))
@@ -210,7 +211,7 @@ def merge_qc(outfile_name, report_files):
         reads = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s -k total' % flagstats_fn))
         meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % samsummary_fn))
         qc_stats.update(json.loads('{'+meta+'}'))
-        #read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % samsummary_fn))
+        # read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % samsummary_fn))
 
     logger.info(json.dumps(qc_stats))
     # All qc to one file per target file:
@@ -218,7 +219,7 @@ def merge_qc(outfile_name, report_files):
     fh = open(qc_file, 'w')
     fh.write("===== samtools flagstat =====\n")
 
-    subprocess.check_call(shlex.split('/bin/cat %s' % flagstats_fn), stdout=open(qc_file,'a'))
+    subprocess.check_call(shlex.split('/bin/cat %s' % flagstats_fn), stdout=open(qc_file, 'a'))
     fh.write("===== samtools stats =====\n")
     subprocess.check_call(shlex.split('/bin/cat %s' % samstats_fn), stdout=open(qc_file, 'a'))
 
@@ -390,10 +391,10 @@ def simplify_name():
         simplify_cmd = 'parse_property.py --job %s --root_name --quiet' % os.environ['DX_JOB_ID']
         logger.debug('** Simplify Name: %s' % simplify_cmd)
         rep_root = subprocess.check_output(shlex.split(simplify_cmd))
-        rep_root.strip()
+        rep_root = rep_root.strip()
         if not re.match('\w', rep_root):
             return ''
-        logger.debug("** Simplified Name: %s", rep_root)
+        logger.debug("** Simplified Name: %s **", rep_root)
     return rep_root
 
 
