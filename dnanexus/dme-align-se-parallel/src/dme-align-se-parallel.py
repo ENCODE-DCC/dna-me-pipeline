@@ -193,10 +193,10 @@ def merge_qc(outfile_name, report_files):
     #logger.debug("** run stats: %s: %s " % (stats_cmd, samstats_fn ))
     #subprocess.check_call(shlex.split(stats_cmd), stdout=open(samstats_fn, 'w'))
 
-    logger.info(subprocess.check_output(shlex.split('head -3 %s' % samstats_fn)))
 
     subprocess.check_call(shlex.split('bam-stats.sh %s' % outfile_name + '.bam'))
-    # samsummary_fn = outfile_name + '_samstats_summary.txt'
+    logger.info(subprocess.check_output(shlex.split('head -3 %s' % samstats_fn)))
+    samsummary_fn = outfile_name + '_samstats_summary.txt'
     # subprocess.check_call(shlex.split('grep ^SN %s' % samstats_fn), stdout=open(samsummary_fn, 'w'))
     # samsum = open(samsummary_fn, 'r').readlines()
     logger.info("* Prepare metadata...")
@@ -208,7 +208,7 @@ def merge_qc(outfile_name, report_files):
         meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s' % flagstats_fn))
         qc_stats.update(json.loads('{'+meta+'}'))
         reads = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_flagstats -f %s -k total' % flagstats_fn))
-        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % samstats_fn))
+        meta = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s' % samsummary_fn))
         qc_stats.update(json.loads('{'+meta+'}'))
         #read_len = subprocess.check_output(shlex.split('qc_metrics.py -n samtools_stats -d : -f %s -k average length' % samsummary_fn))
 
@@ -224,7 +224,7 @@ def merge_qc(outfile_name, report_files):
 
     fh.close()
 
-    return (qc_file, reads, json.dumps(qc_stats))
+    return (qc_file, reads, qc_stats)
 
 
 @dxpy.entry_point("postprocess")
@@ -240,9 +240,12 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
 
     logger.debug("** In Postprocess - refactored dme-merge-bams - *")
 
+    versions = "Unknown"
     if os.path.isfile(VERSION_SCRIPT):
-        versions = subprocess.check_call(shlex.split('tool_versions.py --dxjson dnanexus-executable.json'))
-
+        try:
+            versions = subprocess.check_output(shlex.split('tool_versions.py --dxjson dnanexus-executable.json'))
+        except:
+            pass
 
     merged_bam = merge_bams(bam_files, bam_root, use_cat, use_sort, nthreads)
 
@@ -256,10 +259,10 @@ def postprocess(bam_files, report_files, bam_root, nthreads=8, use_cat=False, us
     }
     output = {
         "bam_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_bam, details=metadata, properties=props)),
-        "bam_techrep_qc": dxpy.dxlink(dxpy.upload_local_file(merged_qc), detais=metadata, properties={'SW': versions}),
-        "map_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_report), detais=metadata, properties={'SW': versions}),
+        "bam_techrep_qc": dxpy.dxlink(dxpy.upload_local_file(merged_qc, details=metadata, properties={'SW': versions})),
+        "map_techrep": dxpy.dxlink(dxpy.upload_local_file(merged_report, details=metadata, properties={'SW': versions})),
         "reads": nreads,
-        "metadata": metadata
+        "metadata": json.dumps(metadata)
     }
     return output
 

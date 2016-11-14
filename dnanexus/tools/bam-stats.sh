@@ -18,7 +18,6 @@ samtools stats ${bam_root}.bam > ${bam_root}_samstats.txt
 head -3 ${bam_root}_samstats.txt
 grep ^SN ${bam_root}_samstats.txt | cut -f 2- > ${bam_root}_samstats_summary.txt
 set +x
-fi
 
 echo "-- The results..."
 ls -l ${bam_root}*
