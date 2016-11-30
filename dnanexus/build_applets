@@ -6,7 +6,7 @@
 
 applet_dest=`cat ~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME`
 applets="dme-index-bismark dme-index-bismark-bowtie2 dme-align-pe dme-align-se dme-align-se-parallel"
-applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr-alt"
+applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr-altr"
 
 tools="tool_versions.py qc_metrics.py parse_property.py"
 virtual_pairs="dme-cx-to-bed:dme-cx-to-bed-alt dme-bg-to-signal:dme-bg-to-signal-alt dme-rep-corr:dme-rep-corr-alt"
@@ -119,7 +119,7 @@ if [ "$virtual_applets" != "" ]; then
                 #echo "'$applet' is virtual of '$original'"
                 cd $applet
                 for link in $virtual_links; do
-                    ln -sf ../../${original}/$link $link
+                    cp -rf ../../${original}/$link $link
                 done
                 cd ..
                 break
@@ -132,9 +132,9 @@ if [ "$virtual_applets" != "" ]; then
         #for tool in $tools; do
         #    rm -f ${applet}/resources/usr/bin/$tool 
         #done
-        for link in $virtual_links; do
-            rm -f ${applet}/$link
-        done
+        #for link in $virtual_links; do
+        #    rm -f ${applet}/$link
+        #done
         cd ..
     done
 fi

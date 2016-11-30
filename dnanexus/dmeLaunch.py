@@ -25,13 +25,13 @@ class DmeLaunch(Launch):
     PIPELINE_BRANCHES = {
     #'''Each branch must define the 'steps' and their (artificially) linear order.'''
         "TECH_REP": {
-                "ORDER": { "se": [ "dme-align-se" ],
+                "ORDER": { "se": [ "dme-align-se-parallel" ],
                            "pe": [ "dme-align-pe" ] },
                 "STEPS": {
                             "dme-align-se-parallel": {
-                                "inputs": { "reads": "reads", "dme_ix": "dme_ix" , "ncpus": 4, "splitsize": 50},
+                                "inputs": { "reads": "reads", "dme_ix": "dme_ix" ,},
                                 "app": "dme-align-se-parallel", 
-                                "params": { }, 
+                                "params": { "ncpus": "ncpus", "splitsize": "splitsize"}, 
                                 "results": {
                                     "bam_techrep":      "bam_techrep", 
                                     #"bam_techrep_qc":   "bam_techrep_qc", # Don't include this: old alignments didn't make it
@@ -70,6 +70,7 @@ class DmeLaunch(Launch):
                             "dme-extract-se": {
                                 "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
                                 "app": "dme-extract-se", 
+                                "params": { "dedup": "dedup", "nosort": "nosort"},
                                 "results": {
                                     ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
                                     "bam_biorep_qc":"bam_biorep_qc",
@@ -146,8 +147,8 @@ class DmeLaunch(Launch):
         #"reads1":                   "/*.fq.gz",
         #"reads2":                   "/*.fq.gz",
         # dme-align-pe/se results:
-        "bam_techrep":              "/*_bismark.bam", 
-        "map_techrep":              "/*_techrep_bismark_map_report.txt",
+        "bam_techrep":              "/*_techrep.bam", 
+        "map_techrep":              "/*_techrep_map_report.txt",
         "bam_techrep_qc":           "/*_techrep_bismark_qc.txt",
         "bam_techrep_pe":           "/*_techrep_bismark_pe.bam", 
         "map_techrep_pe":           "/*_techrep_bismark_pe_map_report.txt",
@@ -184,13 +185,13 @@ class DmeLaunch(Launch):
                                     "PE": "GRCh38_XY_bismark_bowtie2_index.tgz" },
                         "hg19":   { "SE": "hg19_male_bismark_bowtie1_index.tgz",
                                     "PE": "hg19_male_bismark_bowtie1_index.tgz" }, # hg19 only has bowtie1 index
-                        "mm10":   { "SE": "mm10_male_bismark_bowtie1_index.tgz",
-                                    "PE": "mm10_male_bismark_bowtie2_index.tgz" }, # Mouse only has "SE" so far
+                        "mm10":   { "SE": "mm10_XY_bismark_bowtie1_index.tgz",
+                                    "PE": "mm10_XY_bismark_bowtie2_index.tgz" }, # Mouse only has "SE" so far, this reference has not been built
                         },
         "chrom_sizes":  {
                         "GRCh38": "GRCh38_EBV.chrom.sizes",
                         "hg19":   "male.hg19.chrom.sizes",
-                        "mm10":   "male.mm10.chrom.sizes"
+                        "mm10":   "mm10_no_alt.chrom.sizes"
                         },
         }
 
@@ -217,6 +218,10 @@ class DmeLaunch(Launch):
         psv['nthreads']    = 8
         psv['min_insert']  = 0
         psv['max_insert']  = 500
+        psv['ncpus'] = 4
+        psv['splitsize'] = 50
+        psv['dedup'] = False
+        psv['nosort'] = True
         
         if verbose:
             print "Pipeline Specific Vars:"
