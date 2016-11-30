@@ -149,13 +149,13 @@ class DmeLaunch(Launch):
         # dme-align-pe/se results:
         "bam_techrep":              "/*_techrep.bam", 
         "map_techrep":              "/*_techrep_map_report.txt",
-        "bam_techrep_qc":           "/*_techrep_bismark_qc.txt",
+        "bam_techrep_qc":           "/*_techrep_qc.txt",
         "bam_techrep_pe":           "/*_techrep_bismark_pe.bam", 
         "map_techrep_pe":           "/*_techrep_bismark_pe_map_report.txt",
         "bam_techrep_pe_qc":        "/*_techrep_bismark_pe_qc.txt",
         # dme-extract-pe/se inp/results:
-        "bam_ABC":                  "/*_bismark.bam", 
-        "map_report_ABC":           "/*_techrep_bismark_map_report.txt",
+        "bam_ABC":                  "/*_techrep.bam", 
+        "map_report_ABC":           "/*_techrep_map_report.txt",
         "bam_pe_ABC":               "/*_techrep_bismark_pe.bam", 
         "map_report_pe_ABC":        "/*_techrep_bismark_pe_map_report.txt",
         ###"bam_biorep":               "/*_bismark_biorep.bam", ### Not holding on to biorep bam
