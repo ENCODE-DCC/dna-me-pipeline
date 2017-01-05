@@ -22,6 +22,13 @@ main() {
 
     # NOTE: not expecting an array of files, but supporting it nonetheless.
     # load and concat reads
+    exp_rep_root=""
+    if [ -f /usr/bin/parse_property.py ]; then
+        new_root=`parse_property.py -f "'${reads[0]}'" --project "${DX_PROJECT_CONTEXT_ID}" --root_name --quiet`
+        if [ "$new_root" != "" ]; then
+            exp_rep_root="${new_root}"
+        fi
+    fi
     outfile_name=""
     concat=""
     rm -f concat.fq
@@ -43,14 +50,12 @@ main() {
         dx download "${reads[$ix]}" -o - | gunzip >> concat.fq
     done
     # Try to simplify the names
-    rep_root=""
-    if [ -f /usr/bin/parse_property.py ]; then
-        rep_root=`parse_property.py --job "${DX_JOB_ID}" --root_name --quiet`
-    fi
-    if [ "$rep_root" != "" ]; then
-        outfile_name="${rep_root}_reads"
-    else
-        outfile_name="${outfile_name}_reads"
+    if [ "${concat}" != "" ]; then
+        if [ "${exp_rep_root}" != "" ]; then
+            outfile_name="${exp_rep_root}"
+        elif [ ${#outfile_name} -gt 200 ]; then
+            outfile_name="concatenated_reads"
+        fi
     fi
     mv concat.fq ${outfile_name}.fq
     #echo "* Gzipping file..."
@@ -64,8 +69,8 @@ main() {
 
     bam_root="${reads_root}_techrep"
     # Try to simplify the names
-    if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_techrep"
+    if [ "$exp_rep_root" != "" ]; then
+        bam_root="${exp_rep_root}_techrep"
     fi
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="

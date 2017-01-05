@@ -25,6 +25,13 @@ main() {
 
     # NOTE: not expecting an array of files, but supporting it nonetheless.
     # load and concat reads1
+    exp_rep_root=""
+    if [ -f /usr/bin/parse_property.py ]; then
+        new_root=`parse_property.py -f "'${reads1[0]}'" --project "${DX_PROJECT_CONTEXT_ID}" --root_name --quiet`
+        if [ "$new_root" != "" ]; then
+            exp_rep_root="${new_root}"
+        fi
+    fi
     outfile_name=""
     concat=""
     rm -f concat.fq
@@ -46,14 +53,12 @@ main() {
         dx download "${reads1[$ix]}" -o - | gunzip >> concat.fq
     done
     # Try to simplify the names
-    rep_root=""
-    if [ -f /usr/bin/parse_property.py ]; then
-        rep_root=`parse_property.py --job "${DX_JOB_ID}" --root_name --quiet`
-    fi
-    if [ "$rep_root" != "" ]; then
-        outfile_name="${rep_root}_reads1"
-    else
-        outfile_name="${outfile_name}_reads1"
+    if [ "${concat}" != "" ]; then
+        if [ "${exp_rep_root}" != "" ]; then
+            outfile_name="${exp_rep_root}_reads1"
+        elif [ ${#outfile_name} -gt 200 ]; then
+            outfile_name="concatenated_reads1"
+        fi
     fi
     mv concat.fq ${outfile_name}.fq
     #echo "* Gzipping file..."
@@ -84,10 +89,12 @@ main() {
         dx download "${reads2[$ix]}" -o - | gunzip >> concat.fq
     done
     # Try to simplify the names
-    if [ "$rep_root" != "" ]; then
-        outfile_name="${rep_root}_reads2"
-    else
-        outfile_name="${outfile_name}_reads2"
+    if [ "${concat}" != "" ]; then
+        if [ "${exp_rep_root}" != "" ]; then
+            outfile_name="${exp_rep_root}_reads2"
+        elif [ ${#outfile_name} -gt 200 ]; then
+            outfile_name="concatenated_reads2"
+        fi
     fi
     mv concat.fq ${outfile_name}.fq
     #echo "* Gzipping file..."
@@ -101,8 +108,8 @@ main() {
 
     bam_root="${reads1_root}_${reads2_root}_techrep"
     # Try to simplify the names
-    if [ "$rep_root" != "" ]; then
-        bam_root="${rep_root}_techrep"
+    if [ "$exp_rep_root" != "" ]; then
+        bam_root="${exp_rep_root}_techrep"
     fi
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
