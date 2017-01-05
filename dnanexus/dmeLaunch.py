@@ -219,7 +219,7 @@ class DmeLaunch(Launch):
         psv['min_insert']  = 0
         psv['max_insert']  = 500
         psv['ncpus'] = 4
-        psv['splitsize'] = 50
+        psv['splitsize'] = 40
         psv['dedup'] = False
         psv['nosort'] = True
         
