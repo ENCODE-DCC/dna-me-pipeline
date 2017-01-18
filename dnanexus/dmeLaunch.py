@@ -15,11 +15,11 @@ class DmeLaunch(Launch):
     PIPELINE_HELP = "Launches '"+PIPELINE_NAME+"' pipeline " + \
                     "analysis for one replicate or combined replicates. "
     ''' This help title should name pipline and whether combined replicates are supported.'''
-                    
+
     RESULT_FOLDER_DEFAULT = '/dname/'
     ''' This the default location to place results folders for each experiment.'''
-    
-    PIPELINE_BRANCH_ORDER = [ "TECH_REP", "BIO_REP", "COMBINED_REPS" ]
+
+    PIPELINE_BRANCH_ORDER = ["TECH_REP","BIO_REP","COMBINED_REPS"]
     '''A pipeline is frequently made of branches that flow into each other, such as replicate level to combined replicate.'''
     
     PIPELINE_BRANCHES = {
