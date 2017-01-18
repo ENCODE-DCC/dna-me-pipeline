@@ -1,13 +1,15 @@
 #!/usr/bin/env python2.7
 # tool_versions.py v1.1  Creates "SW" versions json string for a particular DX applet.
-#                        Write request to stdout and verbose info to stderr.  This allows easy use in dx app scripts.
+#                        Write request to stdout and verbose info to stderr.  This
+#                        allows easy use in dx app scripts.
 
 import sys, os, argparse, json, commands
 
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
     # Aligns default to PE: trim_galore/bowtie2;  SE: mott-trim/bowtie1
-    "dme-align-pe":          [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
+    "dme-align-pe":          [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", 
+                                "bowtie2", "samtools" ],
     "dme-align-se":          [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
     "dme-align-se-parallel": [ "dname_align_se.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
 
