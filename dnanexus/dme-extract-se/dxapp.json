@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-se",
-  "title": "extract methylation se (v2.0.7)",
+  "title": "extract methylation se (v2.0.9)",
   "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -14,14 +14,14 @@
       "label": "One or more tech_rep bam files to merge",
       "class": "array:file",
       "optional": false,
-      "patterns": ["*_techrep_bismark.bam","*_bismark.bam"]
+      "patterns": ["*_techrep.bam","*_bismark.bam"]
     },
     {
       "name": "map_report_set",
       "label": "One or more mapping reports from tech_rep bam files to merge",
       "class": "array:file",
       "optional": false,
-      "patterns": ["*_techrep_bismark_map_report.txt","*_bismark_map_report.txt"]
+      "patterns": ["*_techrep_map_report.txt","*_bismark_map_report.txt"]
     },
     {
       "name": "dme_ix",
@@ -50,7 +50,7 @@
       "class": "boolean",
       "default": false,
       "optional": true
-   }  
+   }
   ],
   "outputSpec": [
     {

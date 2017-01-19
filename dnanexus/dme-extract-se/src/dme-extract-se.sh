@@ -4,7 +4,7 @@
 main() {
     # If available, will print tool versions to stderr and json string to stdout
     versions=''
-    if [ -f /usr/bin/tool_versions.py ]; then 
+    if [ -f /usr/bin/tool_versions.py ]; then
         versions=`tool_versions.py --dxjson dnanexus-executable.json`
     fi
 
@@ -31,7 +31,7 @@ main() {
         else
             target_root="${file_root}_${target_root}"
             if [ "${merged}" == "" ]; then
-                target_root="${target_root}_bismark_biorep" 
+                target_root="${target_root}_bismark_biorep"
                 merged="s merged as"
             fi
         fi
@@ -92,12 +92,12 @@ main() {
         # sorting needed due to samtools cat
         echo "* Sorting merged bam..."
         set -x
-        samtools sort -@ 16 -m 2900M -f sofar.bam sorted.bam
+        samtools sort -@ 16 -m 2000M -f sofar.bam sorted.bam
         mv sorted.bam ${target_root}.bam
         rm sofar.bam # STORAGE IS LIMITED
         set +x
         echo "* Files merged into '${target_root}.bam'"
-    fi 
+    fi
 
     # Working on map_reports now
     all_reports=""
@@ -123,13 +123,13 @@ main() {
     if [ "${all_reports}" == "${file_root}_map_report.txt" ]; then # only one
         cp ${file_root}_map_report.txt ${target_root}_map_report.txt
     fi
-    
+
     echo "* Download index archive..."
     dx download "$dme_ix" -o index.tgz
 
     echo "* ===== Calling DNAnexus and ENCODE independent script... ====="
     set -x
-    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam ${dedup} --scorched_earth 
+    dname_extract_se.sh index.tgz ${target_root}.bam 32 $uncompress_bam ${dedup} --scorched_earth
     set +x
     echo "* ===== Returned from dnanexus and encodeD independent script ====="
 
@@ -153,7 +153,7 @@ main() {
     cat *_splitting_report.txt                                         >> ${target_root}_qc.txt
 
     echo "* Uploading files..."
-    ls -l 
+    ls -l
     # NOTE: Not saving merged bam
     #bam_biorep=$(dx upload ${target_root}.bam --details "{ $qc_stats }" --property SW="$versions" \
     #                                           --property reads="$reads" --property read_length="$read_len" --brief)
