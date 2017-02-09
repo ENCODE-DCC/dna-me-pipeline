@@ -21,7 +21,7 @@ class DmeLaunch(Launch):
 
     PIPELINE_BRANCH_ORDER = ["TECH_REP","BIO_REP","COMBINED_REPS"]
     '''A pipeline is frequently made of branches that flow into each other, such as replicate level to combined replicate.'''
-    
+
     PIPELINE_BRANCHES = {
     #'''Each branch must define the 'steps' and their (artificially) linear order.'''
         "TECH_REP": {
@@ -30,24 +30,24 @@ class DmeLaunch(Launch):
                 "STEPS": {
                             "dme-align-se-parallel": {
                                 "inputs": { "reads": "reads", "dme_ix": "dme_ix" ,},
-                                "app": "dme-align-se-parallel", 
-                                "params": { "ncpus": "ncpus", "splitsize": "splitsize"}, 
+                                "app": "dme-align-se-parallel",
+                                "params": { "ncpus": "ncpus", "splitsize": "splitsize"},
                                 "results": {
-                                    "bam_techrep":      "bam_techrep", 
+                                    "bam_techrep":      "bam_techrep",
                                     #"bam_techrep_qc":   "bam_techrep_qc", # Don't include this: old alignments didn't make it
                                     "map_techrep":      "map_techrep",
                                 },
                             },
                             "dme-align-pe": {
-                                "inputs": { "reads1": "reads1", "reads2": "reads2", "dme_ix": "dme_ix" }, 
-                                "app": "dme-align-pe", 
-                                "params": { "min_insert": "min_insert", "min_insert": "min_insert" }, 
+                                "inputs": { "reads1": "reads1", "reads2": "reads2", "dme_ix": "dme_ix" },
+                                "app": "dme-align-pe",
+                                "params": { "min_insert": "min_insert", "min_insert": "min_insert" },
                                 "results": {
-                                    "bam_techrep_pe":    "bam_techrep", 
+                                    "bam_techrep_pe":    "bam_techrep",
                                     "bam_techrep_pe_qc": "bam_techrep_qc",
                                     "map_techrep_pe":    "map_techrep",
                                 },
-                            }, 
+                            },
                 }
         },
         "BIO_REP":  {
@@ -55,63 +55,63 @@ class DmeLaunch(Launch):
                            "pe": [  "dme-extract-pe", "dme-cx-to-bed",     "dme-bg-to-signal" ] },
                 "STEPS": {
                             "dme-extract-pe": {
-                                "inputs": { "bam_pe_ABC": "bam_set", "map_report_pe_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
-                                "app": "dme-extract-pe", 
-                                "params": { }, 
+                                "inputs": { "bam_pe_ABC": "bam_set", "map_report_pe_ABC": "map_report_set", "dme_ix": "dme_ix" },
+                                "app": "dme-extract-pe",
+                                "params": { },
                                 "results": {
-                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
+                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    "mbias_report": "mbias_report", 
-                                    "cx_report":    "cx_report", 
-                                    "bg_gz":        "bg_gz", 
+                                    "mbias_report": "mbias_report",
+                                    "cx_report":    "cx_report",
+                                    "bg_gz":        "bg_gz",
                                 },
                             },
                             "dme-extract-se": {
-                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" }, 
-                                "app": "dme-extract-se", 
+                                "inputs": { "bam_ABC": "bam_set", "map_report_ABC": "map_report_set", "dme_ix": "dme_ix" },
+                                "app": "dme-extract-se",
                                 "params": { "dedup": "dedup", "nosort": "nosort"},
                                 "results": {
-                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam 
+                                    ###"bam_biorep":   "bam_biorep", ### Not holding on to biorep bam
                                     "bam_biorep_qc":"bam_biorep_qc",
                                     "map_biorep":   "map_biorep",
-                                    "mbias_report": "mbias_report", 
-                                    "cx_report":    "cx_report", 
-                                    "bg_gz":        "bg_gz", 
+                                    "mbias_report": "mbias_report",
+                                    "cx_report":    "cx_report",
+                                    "bg_gz":        "bg_gz",
                                 },
-                            }, 
+                            },
                             "dme-cx-to-bed": {
-                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" }, 
-                                "app": "dme-cx-to-bed", 
+                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" },
+                                "app": "dme-cx-to-bed",
                                 "results": {
-                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
-                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb",
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb",
                                     "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                 },
-                            }, 
+                            },
                             "dme-bg-to-signal": {
-                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" }, 
-                                "app": "dme-bg-to-signal", 
+                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" },
+                                "app": "dme-bg-to-signal",
                                 "results": {
                                     "signal":       "signal",
                                 },
-                            }, 
+                            },
                             "dme-cx-to-bed-alt": {
-                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" }, 
-                                "app": "dme-cx-to-bed-alt", 
+                                "inputs": { "cx_report": "cx_report", "chrom_sizes": "chrom_sizes" },
+                                "app": "dme-cx-to-bed-alt",
                                 "results": {
-                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb", 
-                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb", 
+                                    "CpG_bed":      "CpG_bed",     "CpG_bb":       "CpG_bb",
+                                    "CHG_bed":      "CHG_bed",     "CHG_bb":       "CHG_bb",
                                     "CHH_bed":      "CHH_bed",     "CHH_bb":       "CHH_bb",
                                 },
-                            }, 
+                            },
                             "dme-bg-to-signal-alt": {
-                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" }, 
-                                "app": "dme-bg-to-signal-alt", 
+                                "inputs": { "bg_gz": "bg_gz", "chrom_sizes": "chrom_sizes" },
+                                "app": "dme-bg-to-signal-alt",
                                 "results": {
                                     "signal":       "signal",
                                 },
-                            }, 
+                            },
                 }
         },
         "COMBINED_REPS": {
@@ -120,20 +120,20 @@ class DmeLaunch(Launch):
                 "STEPS": {
                             "dme-rep-corr": {
                                 "inputs": {
-                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B", 
-                                }, 
-                                "app": "dme-rep-corr", 
+                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B",
+                                },
+                                "app": "dme-rep-corr",
                                 "results": {
-                                    "CpG_corr":       "CpG_corr", 
+                                    "CpG_corr":       "CpG_corr",
                                 },
                             },
                             "dme-rep-corr-alt": {
                                 "inputs": {
-                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B", 
-                                }, 
-                                "app": "dme-rep-corr-alt", 
+                                       "CpG_A":    "CpG_A",    "CpG_B":    "CpG_B",
+                                },
+                                "app": "dme-rep-corr-alt",
                                 "results": {
-                                    "CpG_corr":       "CpG_corr", 
+                                    "CpG_corr":       "CpG_corr",
                                 },
                             },
                 }
@@ -147,29 +147,29 @@ class DmeLaunch(Launch):
         #"reads1":                   "/*.fq.gz",
         #"reads2":                   "/*.fq.gz",
         # dme-align-pe/se results:
-        "bam_techrep":              "/*_techrep.bam", 
+        "bam_techrep":              "/*_techrep.bam",
         "map_techrep":              "/*_techrep_map_report.txt",
         "bam_techrep_qc":           "/*_techrep_qc.txt",
-        "bam_techrep_pe":           "/*_techrep_bismark_pe.bam", 
+        "bam_techrep_pe":           "/*_techrep_bismark_pe.bam",
         "map_techrep_pe":           "/*_techrep_bismark_pe_map_report.txt",
         "bam_techrep_pe_qc":        "/*_techrep_bismark_pe_qc.txt",
         # dme-extract-pe/se inp/results:
-        "bam_ABC":                  "/*_techrep.bam", 
+        "bam_ABC":                  "/*_techrep.bam",
         "map_report_ABC":           "/*_techrep_map_report.txt",
-        "bam_pe_ABC":               "/*_techrep_bismark_pe.bam", 
+        "bam_pe_ABC":               "/*_techrep_bismark_pe.bam",
         "map_report_pe_ABC":        "/*_techrep_bismark_pe_map_report.txt",
         ###"bam_biorep":               "/*_bismark_biorep.bam", ### Not holding on to biorep bam
-        "bam_biorep_qc":            "/*_bismark_biorep_qc.txt", 
+        "bam_biorep_qc":            "/*_bismark_biorep_qc.txt",
         "map_biorep":               "/*_bismark_biorep_map_report.txt",
         "mbias_report":             "/*_bismark_biorep_mbias_report.txt",
         "cx_report":                "/*_bismark_biorep.CX_report.txt.gz",
         "bg_gz":                    "/*_bismark_biorep.bedGraph.gz",
-        "signal":                   "/*_bismark_biorep.bw", 
-        "CpG_bed":                  "/*_bismark_biorep_CpG.bed.gz", 
-        "CpG_bb":                   "/*_bismark_biorep_CpG.bb", 
-        "CHG_bed":                  "/*_bismark_biorep_CHG.bed.gz", 
-        "CHG_bb":                   "/*_bismark_biorep_CHG.bb", 
-        "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz", 
+        "signal":                   "/*_bismark_biorep.bw",
+        "CpG_bed":                  "/*_bismark_biorep_CpG.bed.gz",
+        "CpG_bb":                   "/*_bismark_biorep_CpG.bb",
+        "CHG_bed":                  "/*_bismark_biorep_CHG.bed.gz",
+        "CHG_bb":                   "/*_bismark_biorep_CHG.bb",
+        "CHH_bed":                  "/*_bismark_biorep_CHH.bed.gz",
         "CHH_bb":                   "/*_bismark_biorep_CHH.bb",
         "CpG_A":                    "/*_bismark_biorep_CpG.bed.gz",
         "CpG_B":                    "/*_bismark_biorep_CpG.bed.gz",
@@ -198,11 +198,11 @@ class DmeLaunch(Launch):
 
     def __init__(self):
         Launch.__init__(self)
-        
+
     def get_args(self):
         '''Parse the input arguments.'''
         ap = Launch.get_args(self,parse=False)
-        
+
         # NOTE: Could override get_args() to have this non-generic control message
         #ap.add_argument('-c', '--control',
         #                help='The control bam for peak calling.',
@@ -213,7 +213,7 @@ class DmeLaunch(Launch):
     def pipeline_specific_vars(self,args,verbose=False):
         '''Adds pipeline specific variables to a dict, for use building the workflow.'''
         psv = Launch.pipeline_specific_vars(self,args)
-        
+
         # Some specific settings
         psv['nthreads']    = 8
         psv['min_insert']  = 0
@@ -222,7 +222,7 @@ class DmeLaunch(Launch):
         psv['splitsize'] = 40
         psv['dedup'] = False
         psv['nosort'] = True
-        
+
         if verbose:
             print "Pipeline Specific Vars:"
             print json.dumps(psv,indent=4)
@@ -250,18 +250,18 @@ class DmeLaunch(Launch):
             priors['chrom_sizes'] = chrom_sizes_fid
         self.psv['ref_files'] = self.REFERENCE_FILES.keys()
         return priors
-    
+
 
     def add_combining_reps(self, psv):
         '''Defines how replicated are combined.'''
         # OVERRIDING parent because DNase-seq pipeline doesn't follow the standard replicate combination model
         debug=False
-        
+
         reps = psv['reps']
         # In the 'standard combining model' PIPELINE_BRANCH_ORDER = [ "REP", "COMBINED_REPS" ]
         # and all replicates are in psv['reps'] keyed as 'a','b',... and having rep['rep_tech'] = 'rep1_1'
         # All these simple reps will have rep['branch_id'] = "REP"
-        
+
         # First, each tech_rep is processed individually
         bio_reps = []
         tech_reps = []
@@ -271,13 +271,15 @@ class DmeLaunch(Launch):
                 rep['branch_id'] = "TECH_REP"
                 if rep['br'] not in bio_reps:
                     bio_reps.append(rep['br'])
+                    self.combined_reps = True  # Single tech_rep can combine
+                    self.combine_one_or_more = True  # Special case where one or more can combine into one
                 elif not self.compare_techreps:
                     self.combined_reps = True  # More than one tech_rep per bio_rep so combining will be done!
-                if self.compare_techreps and rep['rep_tech'] not in tech_reps: 
+                if self.compare_techreps and rep['rep_tech'] not in tech_reps:
                     tech_reps.append(rep['rep_tech'])
                 if debug:
                     print "DEBUG: rep: " + rep_id
-                    
+
         # Next bio_reps have their technical replicates merged and processing continues
         if not self.compare_techreps:
             for bio_rep in bio_reps:
@@ -286,7 +288,7 @@ class DmeLaunch(Launch):
                 river['tributaries'] = []
                 river['rep_tech'] = 'reps' + str(bio_rep) + '_'  # reps1_1.2.3 is rep1_1 + rep1_2 + rep1_3
                 river['br'] = bio_rep
-                for tributary_id in sorted( reps.keys() ): 
+                for tributary_id in sorted( reps.keys() ):
                     if len(tributary_id) == 1:
                         tributary = reps[tributary_id]
                         if tributary['br'] == bio_rep:
@@ -319,7 +321,7 @@ class DmeLaunch(Launch):
                 #river['rep_tech'] = 'rep' + str(bio_rep) + '_'  # reps1_1.2.3 is rep1_1 + rep1_2 + rep1_3
                 river['br'] = None
                 river['rep_tech'] = tech_rep
-                for tributary_id in sorted( reps.keys() ): 
+                for tributary_id in sorted( reps.keys() ):
                     if len(tributary_id) != 1 or reps[tributary_id]['rep_tech'] != tech_rep:
                         continue
                     tributary = reps[tributary_id]
@@ -327,7 +329,7 @@ class DmeLaunch(Launch):
                     river['tr'] = tributary['tr']
                     river['tributaries'].append(tributary_id)
                     break
-                    
+
                 assert len(river['tributaries']) == 1  # When comparing tech_reps the river just continues the tributary
                 # river_id for ['a','b'] = 'b-bio_rep1'
                 river_id = river['tributaries'][0] + '-tech_' + str(tech_rep)
@@ -341,7 +343,7 @@ class DmeLaunch(Launch):
         # Finally a pair of bio_reps are merged and processing finishes up
         if 'COMBINED_REPS' in self.PIPELINE_BRANCH_ORDER:
             if len(bio_reps) == 2 \
-            or len(bio_reps) == 1 and self.compare_techreps and len(tech_reps) == 2: 
+            or len(bio_reps) == 1 and self.compare_techreps and len(tech_reps) == 2:
                 #self.combined_reps = True  # More than one bio_rep so combining will be done!
                 sea = {} # SEA is the final branch into which all tributaries flow
                 sea['branch_id'] = 'COMBINED_REPS'
@@ -349,7 +351,7 @@ class DmeLaunch(Launch):
                 sea['rep_tech'] = 'reps'
                 for tributary_id in sorted( reps.keys() ):
                     if len(tributary_id) == 1:  # ignore the simple reps if there are any combined
-                            continue 
+                            continue
                     tributary = reps[tributary_id]
                     if len(sea['tributaries']) > 0:
                         sea['rep_tech'] += '-'
