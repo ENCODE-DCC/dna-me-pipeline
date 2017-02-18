@@ -184,13 +184,13 @@ class DmeLaunch(Launch):
                                     "PE": "GRCh38_XY_bismark_bowtie2_index.tgz" },
                         "hg19":   { "SE": "hg19_male_bismark_bowtie1_index.tgz",
                                     "PE": "hg19_male_bismark_bowtie1_index.tgz" }, # hg19 only has bowtie1 index
-                        "mm10":   { "SE": "mm10_male_bismark_bowtie1_index.tgz",
+                        "mm10":   { "SE": "mm10-minimal_male_bismark_bowtie1_index.tgz",
                                     "PE": "mm10_male_bismark_bowtie2_index.tgz" }, # Mouse only has "SE" so far
                         },
         "chrom_sizes":  {
                         "GRCh38": "GRCh38_EBV.chrom.sizes",
                         "hg19":   "male.hg19.chrom.sizes",
-                        "mm10":   "male.mm10.chrom.sizes"
+                        "mm10":   "male.mm10-minimal.chrom.sizes"
                         },
         }
 
