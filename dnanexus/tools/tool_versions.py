@@ -17,7 +17,7 @@ APP_TOOLS = {
     #"dme-align-pe-bowtie1": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
     #"dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
-    "dme-extract-se":          [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-pe":          [ "dname_extract_pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-extract-se-parallel": [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-cx-to-bed":           [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
     "dme-bg-to-signal":        [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
