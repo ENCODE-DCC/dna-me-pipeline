@@ -1,9 +1,9 @@
 {
   "name": "dme-align-se-parallel",
-  "title": "align se reads with bismark/bowtie in parallel (v1.0.3p)",
+  "title": "align se reads with bismark/bowtie in parallel (v1.0.4p)",
   "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark by splitting large fastqs up",
   "dxapi": "1.0.0",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "categories": [
     "DNA Methylation"
   ],
@@ -80,6 +80,9 @@
       },
       "process": {
         "instanceType": "mem3_ssd1_x4"
+      },
+      "*": {
+        "instanceType": "mem2_hdd2_x4"
       }
     }
   },
