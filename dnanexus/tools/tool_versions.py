@@ -8,7 +8,7 @@ import sys, os, argparse, json, commands
 # APP_TOOLS is a dict keyed by applet script name with a list of tools that it uses.
 APP_TOOLS = {
     # Aligns default to PE: trim_galore/bowtie2;  SE: mott-trim/bowtie1
-    "dme-align-pe":          [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", 
+    "dme-align-pe":          [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark",
                                 "bowtie2", "samtools" ],
     "dme-align-se":          [ "dname_align_se.sh", "mott-trim-se.py", "bismark", "bowtie1", "samtools" ],
     "dme-align-se-parallel": [ "dname_align_se.sh", "cutadapt", "trim_galore", "bismark", "bowtie1", "samtools" ],
@@ -18,23 +18,23 @@ APP_TOOLS = {
     #"dme-align-se-bowtie2": [ "dname_align_pe.sh", "cutadapt", "trim_galore", "bismark", "bowtie2", "samtools" ],
 
     "dme-extract-pe":          [ "dname_extract_pe.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
-    "dme-extract-se-parallel": [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
+    "dme-extract-se":          [ "dname_extract_se.sh", "bismark_methylation_extractor", "samtools", "pigz" ],
     "dme-cx-to-bed":           [ "dname_cx_to_bed.sh", "cxrepo-bed.py", "bedToBigBed", "pigz" ],
     "dme-bg-to-signal":        [ "dname_bg_to_signal.sh", "bedGraphToBigWig" ],
     "dme-rep-corr":            [ "dname_bed_corr.sh", "intersectBed (bedtools)", "bedmethyl_corr.py" ],
 
-    # utility:    
+    # utility:
     "dme-combine-reports":  [ "bismark" ],
     "dme-index-bismark-bowtie2": [ "bismark_genome_preparation", "bowtie2" ],
     "dme-index-bismark":    [ "bismark_genome_preparation", "bowtie1" ],
-    # No Longer used:    
+    # No Longer used:
     #"dme-extract-pe":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
     #"dme-extract-se":       [ "bismark_methylation_extractor", "samtools", "cxrepo-bed.py", "bedToBigBed", "bedGraphToBigWig", "pigz" ],
     #"dme-merge-bams":       [ "samtools" ],
     }
-# Virtual apps only differ from their parent by name/version. 
+# Virtual apps only differ from their parent by name/version.
 VIRTUAL_APPS = {
-    # lrna virtuals:    
+    # lrna virtuals:
     "dme-cx-to-bed-alt":      "dme-cx-to-bed",
     "dme-bg-to-signal-alt":   "dme-bg-to-signal",
     "dme-rep-corr-alt":       "dme-rep-corr",
@@ -79,10 +79,10 @@ ALL_TOOLS = {
 
 def parse_dxjson(dxjson):
     '''Parses the dnanexus-executable.json file in the job directory to get applet name and version.'''
-    with open(dxjson) as data_file:    
+    with open(dxjson) as data_file:
         dxapp = json.load(data_file)
 
-    appver = "unknown"    
+    appver = "unknown"
     applet = dxapp.get("name").split()[0]
     if "version" in dxapp:
         appver = dxapp.get("version")
@@ -93,7 +93,7 @@ def parse_dxjson(dxjson):
             appver = last_word[9:-1]
         elif last_word.startswith('(v') and last_word.endswith(')'):
             appver = last_word[2:-1]
-    
+
     return (applet, appver)
 
 
@@ -107,9 +107,9 @@ def main():
                         help="Version of applet")
     parser.add_argument('-j','--dxjson', required=False,
                         help="Use dnanexus json file to discover 'applet' and 'appver'")
-    parser.add_argument('-q', '--quiet', action="store_true", required=False, default=False, 
+    parser.add_argument('-q', '--quiet', action="store_true", required=False, default=False,
                         help="Don't print versions to stderr.")
-    parser.add_argument('-v', '--verbose', action="store_true", required=False, default=False, 
+    parser.add_argument('-v', '--verbose', action="store_true", required=False, default=False,
                         help="Show the command-line that is used to get the version.")
 
 
@@ -117,23 +117,23 @@ def main():
     if len(sys.argv) < 3:
         parser.print_usage()
         return
-        
+
     if (args.applet == None or args.appver == None) and args.dxjson == None:
         parser.print_help()
         return
 
     applet = args.applet
     applet = args.appver
-    
+
     if args.dxjson != None:
         (applet,appver) = parse_dxjson(args.dxjson)
-    
+
     versions = {}
     versions["DX applet"] = { applet: appver }
     if not args.quiet:
         sys.stderr.write("********\n")
         sys.stderr.write("* Running " + applet + ": " + appver+ "\n")
-    
+
     if applet in VIRTUAL_APPS:
         tools = APP_TOOLS[VIRTUAL_APPS[applet]]
     else:
@@ -149,9 +149,9 @@ def main():
 
     if not args.quiet:
         sys.stderr.write("********\n")
-    
-    print json.dumps(versions) 
-     
+
+    print json.dumps(versions)
+
 if __name__ == '__main__':
     main()
 
