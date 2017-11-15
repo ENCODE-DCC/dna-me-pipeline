@@ -1,9 +1,9 @@
 {
   "name": "dme-index-bismark-bowtie2",
-  "title": "index genome with bismark/bowtie2 (v2.0.0)",
+  "title": "index genome with bismark/bowtie2 (v2.0.1)",
   "summary": "WGBS ENCODE Pipeline step: Creates C->T indexed genomic files with Bismark/Bowtie2 used for Whole Genome Bisulphite Analysis",
   "dxapi": "1.0.0",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -61,6 +61,8 @@
     }
   ],
   "runSpec": {
+    "distribution": "Ubuntu",
+    "release": "12.04",
     "interpreter": "bash",
     "file": "src/dme-index-bismark-bowtie2.sh",
     "systemRequirements": {

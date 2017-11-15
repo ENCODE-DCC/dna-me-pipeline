@@ -1,9 +1,9 @@
 {
   "name": "dme-align-se-parallel",
-  "title": "align se reads with bismark/bowtie in parallel (v1.0.4p)",
+  "title": "align se reads with bismark/bowtie in parallel (v1.0.5p)",
   "summary": "WGBS ENCODE Pipeline step: Trim and map single ended reads for technical replicate using Bismark by splitting large fastqs up",
   "dxapi": "1.0.0",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "categories": [
     "DNA Methylation"
   ],
@@ -67,6 +67,8 @@
     }
   ],
   "runSpec": {
+    "distribution": "Ubuntu",
+    "release": "12.04",
     "interpreter": "python2.7",
     "file": "src/dme-align-se-parallel.py",
     "execDepends": [

@@ -1,9 +1,9 @@
 {
   "name": "dme-bg-to-signal",
-  "title": "convert methylation bedGraph to bigWig file (v1.0.1)",
+  "title": "convert methylation bedGraph to bigWig file (v1.0.2)",
   "summary": "WGBS ENCODE Pipeline step: Convert methylation bedGraph to bigWig signal file.",
   "dxapi": "1.0.0",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -38,6 +38,8 @@
    }
   ],
   "runSpec": {
+    "distribution": "Ubuntu",
+    "release": "12.04",
     "interpreter": "bash",
     "file": "src/dme-bg-to-signal.sh",
     "systemRequirements": {

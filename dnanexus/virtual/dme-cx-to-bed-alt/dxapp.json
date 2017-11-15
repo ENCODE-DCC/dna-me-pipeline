@@ -1,9 +1,9 @@
 {
   "name": "dme-cx-to-bed-alt",
-  "title": "convert methylation context to bed files (virtual-1.0.1)",
+  "title": "convert methylation context to bed files (virtual-1.0.2)",
   "summary": "WGBS ENCODE Pipeline step: Convert methylation context report to bed and bigBed files.",
   "dxapi": "1.0.0",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -68,6 +68,8 @@
    }
   ],
   "runSpec": {
+    "distribution": "Ubuntu",
+    "release": "12.04",
     "interpreter": "bash",
     "file": "src/dme-cx-to-bed.sh",
     "execDepends": [{"name": "pigz"}],

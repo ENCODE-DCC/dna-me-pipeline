@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# NOTE: A virtual applet is almost identical to an existing applet.  However we need a separate name/version for 
+# NOTE: A virtual applet is almost identical to an existing applet.  However we need a separate name/version for
 #       ENCODEd analysis-step accounting to work.  To acheave this, the virtual app as a real dxapp.json definitition
 #       but all other applet contents are temporary symlinks to the true applets's contents.  This script handles the symlinks.
 
 applet_dest=`cat ~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME`
 applets="dme-index-bismark dme-index-bismark-bowtie2 dme-align-pe dme-align-se dme-align-se-parallel"
-applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr-altr"
+applets="${applets} dme-extract-se dme-extract-pe dme-cx-to-bed dme-bg-to-signal dme-rep-corr-alt"
 
 tools="tool_versions.py qc_metrics.py parse_property.py"
 virtual_pairs="dme-cx-to-bed:dme-cx-to-bed-alt dme-bg-to-signal:dme-bg-to-signal-alt dme-rep-corr:dme-rep-corr-alt"
@@ -34,7 +34,7 @@ done
 # Parse args
 testing="nope"
 # Only the first arg can be project
-if [ $# -gt 0 ] && [ ! -d $1 ] && [ ! -d "virtual/$1" ]; then 
+if [ $# -gt 0 ] && [ ! -d $1 ] && [ ! -d "virtual/$1" ]; then
     if [ "$1" == "--test" ]; then
         testing=$1
     else
@@ -48,7 +48,7 @@ if [ $# -gt 0 ]; then
     while (( "$#" )); do
         if [ "$1" == '--test' ]; then
             testing=$1
-        else            
+        else
             applet=${1%/}
             if [ -d $applet ]; then
                 applets="$applets $applet"
@@ -96,13 +96,13 @@ fi
 if [ "$applets" != "" ]; then
     for applet in $applets; do
         echo "Building $applet in project $applet_dest..."
-        mkdir -p ${applet}/resources/usr/bin 
+        mkdir -p ${applet}/resources/usr/bin
         for tool in $tools; do
             cp tools/$tool ${applet}/resources/usr/bin
         done
         dx build "${applet}" --archive --destination "${applet_dest}:/"
         for tool in $tools; do
-            rm ${applet}/resources/usr/bin/$tool 
+            rm ${applet}/resources/usr/bin/$tool
         done
     done
 fi
@@ -130,7 +130,7 @@ if [ "$virtual_applets" != "" ]; then
         done
         dx build "${applet}" --archive --destination "${applet_dest}:/"
         #for tool in $tools; do
-        #    rm -f ${applet}/resources/usr/bin/$tool 
+        #    rm -f ${applet}/resources/usr/bin/$tool
         #done
         #for link in $virtual_links; do
         #    rm -f ${applet}/$link

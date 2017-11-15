@@ -1,9 +1,9 @@
 {
   "name": "dme-extract-se",
-  "title": "extract methylation se (v2.0.9)",
+  "title": "extract methylation se (v2.0.10)",
   "summary": "WGBS ENCODE Pipeline step: Merge techrep bams, extract single-end methylation and report WGBS Analysis.",
   "dxapi": "1.0.0",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "categories": [
     "DNA Methylation",
     "ENCODE"
@@ -97,6 +97,8 @@
    }
   ],
   "runSpec": {
+    "distribution": "Ubuntu",
+    "release": "12.04",
     "interpreter": "bash",
     "file": "src/dme-extract-se.sh",
     "execDepends": [{"name": "pigz"}],
