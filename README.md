@@ -1,6 +1,8 @@
-#DCC/DAC methylation pipeline source, runs for both single-end and paired-end data
+# DCC/DAC methylation pipeline source, runs for both single-end and paired-end data
 
-##Pipeline Overview
+## Pipeline Overview
+
+## [Note: click here for the newer ENCODE4 WGBS pipeline.](https://github.com/ENCODE-DCC/wgbs-pipeline)
 
 The ENCODE Whole-Genome Bisulfite Sequencing (WGBS) pipeline is used for discovering methylation patterns to base granularity. 
 Bisulfite treatment is used to convert cytosines into uracils, but leaves methylated cytosines unchanged. 
@@ -14,7 +16,7 @@ These are processed to generate bam alignment files, which in turn produce:
 * SamTools quality metrics, Bismark quality metrics 
 *	Pearson correlation, calculated from the two replicates' methylation states at CpG. 
 
-###Description of bedMethyl file
+### Description of bedMethyl file
 The bedMethyl file is a bed9+2 file containing the number of reads and the percent methylation. 
 Each column represents the following:
 
@@ -30,12 +32,12 @@ Each column represents the following:
 10. Coverage, or number of reads
 11. Percentage of reads that show methylation at this position in the genome
 
-###Genomic References Used in this Pipeline
+### Genomic References Used in this Pipeline
 * Unmodified Genome References and Chromosome Sizes, including lambda genome for generation of comparative statistics (https://www.encodeproject.org/references/ENCSR425FOI/)
 * Bismark/Bowtie reference (https://www.encodeproject.org/references/ENCSR497EUF/)
 
 
-####References
+#### References
 
 Krueger, Felix, and Simon R. Andrews. "Bismark: a flexible aligner and methylation caller for Bisulfite-Seq applications." Bioinformatics 27.11 (2011): 1571-1572. 
 
